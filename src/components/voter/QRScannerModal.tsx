@@ -100,31 +100,41 @@ export const QRScannerModal: React.FC = () => {
 
   // Process decoded QR text
   const handleDecodedText = (text: string) => {
-    // Extract pandal ID from raw id, URL hash, or search parameter
-    let matchedId = text.trim();
-    if (text.includes('#')) {
-      matchedId = text.split('#')[1];
-    } else if (text.includes('pandal=')) {
-      matchedId = text.split('pandal=')[1].split('&')[0];
+    let cleanSlug = text.trim();
+    try {
+      if (cleanSlug.startsWith('http://') || cleanSlug.startsWith('https://')) {
+        const urlObj = new URL(cleanSlug);
+        cleanSlug = urlObj.pathname.replace(/^\/+|\/+$/g, '');
+      }
+    } catch {}
+
+    if (cleanSlug.includes('#')) {
+      cleanSlug = cleanSlug.split('#')[1];
+    } else if (cleanSlug.includes('pandal=')) {
+      cleanSlug = cleanSlug.split('pandal=')[1].split('&')[0];
     }
 
-    // Match with existing pandals
+    cleanSlug = cleanSlug.replace(/^\/+|\/+$/g, '');
+
+    // Match with existing pandals or use raw slug directly
     const target = pandals.find(
-      (p) => p.id === matchedId || p.name.toLowerCase().includes(matchedId.toLowerCase())
+      (p) => p.id === cleanSlug || p.name.toLowerCase().includes(cleanSlug.toLowerCase())
     );
 
-    if (target) {
-      setDetectedPandalName(target.name);
+    const finalSlug = target ? target.id : cleanSlug;
+
+    if (finalSlug) {
+      setDetectedPandalName(target?.name || finalSlug);
       if (html5QrCodeRef.current?.isScanning) {
         html5QrCodeRef.current.stop().catch(() => {});
       }
 
       setTimeout(() => {
         closeQRScanner();
-        openVotingModal(target);
-      }, 1100);
+        window.location.href = `/${finalSlug}`;
+      }, 700);
     } else {
-      setCameraError(`Scanned code "${text}" does not match any registered Durgapur Pandal.`);
+      setCameraError(`Scanned code "${text}" does not match any registered Puja Pandal.`);
     }
   };
 
