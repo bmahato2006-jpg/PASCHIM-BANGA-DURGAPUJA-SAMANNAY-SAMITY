@@ -53,36 +53,34 @@ export const Navbar: React.FC<{
     <>
       <header className="sticky top-0 z-40 w-full glass-nav transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
+          <div className="flex items-center justify-between min-h-[64px] sm:h-20 py-1.5 sm:py-0">
             
             {/* Logo & Brand */}
             <div 
               onClick={() => handleNavClick(isOrganizer ? 'organizer' : 'feed')}
-              className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink min-w-0"
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink min-w-0 max-w-[75%] sm:max-w-none"
             >
-              <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-gold-400 p-0.5 shadow-md group-hover:shadow-festive transition-all duration-300 shrink-0">
+              <div className="relative w-8 h-8 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-gold-400 p-0.5 shadow-md group-hover:shadow-festive transition-all duration-300 shrink-0">
                 <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
-                  <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-sindoor-500 animate-pulse-subtle" />
+                  <Flame className="w-4 h-4 sm:w-6 sm:h-6 text-sindoor-500 animate-pulse-subtle" />
                 </div>
               </div>
 
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <h1 className="font-serif font-black text-lg md:text-xl lg:text-2xl tracking-tight text-gray-900 group-hover:text-sindoor-600 transition-colors leading-tight">
-                    <span className="md:hidden">
-                      PBDS <span className="text-sindoor-600">Samity</span>
+                  <h1 className="font-serif font-black text-[13px] xs:text-[14px] sm:text-base md:text-xl lg:text-2xl tracking-tight text-gray-900 group-hover:text-sindoor-600 transition-colors leading-tight">
+                    <span className="block sm:inline font-extrabold text-gray-900">
+                      Paschim Banga <span className="text-sindoor-600">DurgaPuja </span>
                     </span>
-                    <span className="hidden md:inline">
-                      <span className="font-extrabold text-gray-900">Paschim Banga </span>
-                      <span className="text-sindoor-600">DurgaPuja </span>
-                      <span className="text-gray-900 group-hover:text-amber-800">Samannay Samity</span>
+                    <span className="text-gray-900 group-hover:text-amber-800">
+                      Samannay Samity
                     </span>
                   </h1>
                   <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-marigold-100 text-marigold-800 border border-marigold-300 shrink-0">
                     2026
                   </span>
                 </div>
-                <p className="text-[10px] sm:text-xs text-amber-800 font-medium tracking-wide truncate mt-0.5">
+                <p className="text-[9px] sm:text-xs text-amber-800 font-medium tracking-wide truncate mt-0.5">
                   {isOrganizer ? 'Organizer Portal Desk' : 'The Official Voting Platform'}
                 </p>
               </div>
