@@ -3,13 +3,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { supabase } from '@/lib/supabaseClient';
 import { Navbar } from '@/components/layout/Navbar';
 import { BottomNavDock } from '@/components/layout/BottomNavDock';
 import { Footer } from '@/components/layout/Footer';
 import { LiveLeaderboard } from '@/components/voter/LiveLeaderboard';
 import { MyVotesView } from '@/components/voter/MyVotesView';
-import { OrganizerDashboard } from '@/components/organizer/OrganizerDashboard';
 import { DhakButton } from '@/components/ui/DhakButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -37,58 +35,38 @@ export default function HomePage() {
   const { 
     pandals, 
     openQRScanner, 
-    openVotingModal, 
-    isOrganizer, 
-    isVoter 
+    openVotingModal
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<string>('feed');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedWard, setSelectedWard] = useState<string>('all');
 
-  // Strict Route Guard / Tab Sync
+  // Strict Tab Synchronization for Voter Portal
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab') || params.get('view');
 
+    // If an explicit organizer tab was requested, redirect to standalone organizer page
     if (tabParam === 'organizer') {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) {
-          router.replace('/organizer/auth');
-        } else {
-          setActiveTab('organizer');
-        }
-      });
+      router.replace('/organizer');
       return;
     }
 
-    if (isOrganizer) {
-      if (tabParam !== 'organizer') {
-        params.set('tab', 'organizer');
-        params.delete('view');
-        const newUrl = `${window.location.pathname}?${params.toString()}`;
-        window.history.replaceState({}, '', newUrl);
-      }
-      setActiveTab('organizer');
-    } else if (tabParam === 'leaderboard') {
+    if (tabParam === 'leaderboard') {
       setActiveTab('leaderboard');
     } else if (tabParam === 'my-votes') {
       setActiveTab('my-votes');
     } else {
       setActiveTab('feed');
     }
-  }, [isOrganizer, isVoter, router]);
+  }, [router]);
 
-  const handleTabChange = async (requestedTab: string) => {
+  const handleTabChange = (requestedTab: string) => {
     if (requestedTab === 'organizer') {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push('/organizer/auth');
-        return;
-      }
-      setActiveTab('organizer');
+      router.push('/organizer');
       return;
     }
 
@@ -131,22 +109,11 @@ export default function HomePage() {
       {/* Sticky Top Navbar */}
       <Navbar activeTab={activeTab} setActiveTab={handleTabChange} />
 
-      {/* Main Content Area */}
-      <main className="flex-1 pb-28 md:pb-12">
+      {/* Main Content Area: Always dedicated to the Voter Portal on all screen sizes */}
+      <main className="flex-1 pb-28 md:pb-12 w-full max-w-full">
         <AnimatePresence mode="wait">
           
-          {/* Organizer Dashboard (Only if logged in as organizer) */}
-          {isOrganizer ? (
-            <motion.div
-              key="organizer-view"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.4 }}
-            >
-              <OrganizerDashboard />
-            </motion.div>
-          ) : activeTab === 'my-votes' ? (
+          {activeTab === 'my-votes' ? (
             /* Dedicated Voter History ("My Votes") */
             <motion.div
               key="my-votes-view"
@@ -154,6 +121,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
+              className="w-full"
             >
               <MyVotesView onExplore={() => handleTabChange('feed')} />
             </motion.div>
@@ -165,7 +133,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
-              className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12"
+              className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12"
             >
               <div className="text-center max-w-xl mx-auto mb-8">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-100 to-yellow-100 border border-amber-300 text-amber-950 text-xs font-black shadow-2xs mb-3">
@@ -192,7 +160,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
-              className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-12 pb-16"
+              className="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-12 pb-16"
             >
               {/* Top Welcoming Hero Section */}
               <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
@@ -215,9 +183,9 @@ export default function HomePage() {
 
                 {/* Hero Title */}
                 <h1 className="text-3xl sm:text-5xl md:text-6xl font-serif font-black tracking-tight text-gray-900 leading-[1.15]">
-                  Welcome to the Official <br />
+                  Honor the Art, Celebrate Devotion: <br />
                   <span className="bg-gradient-to-r from-sindoor-600 via-marigold-600 to-amber-600 text-transparent bg-clip-text">
-                    State-Level Voting Portal
+                    Your Voice Matters
                   </span>
                 </h1>
 
