@@ -18,10 +18,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-input, textarea, select {
-  user-select: text;
-  -webkit-user-select: text;
-}
 
 /* Glassmorphism custom classes */
 .glass-panel {
@@ -210,5 +206,15 @@ input, textarea, select {
     animation: none !important;
     display: none !important;
   }
+}
+
+* {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
