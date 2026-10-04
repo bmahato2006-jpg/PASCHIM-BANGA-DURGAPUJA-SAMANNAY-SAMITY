@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { supabase } from '@/lib/supabaseClient';
 import { Pandal, PandalMedia } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -43,6 +45,7 @@ import {
 } from 'recharts';
 
 export const OrganizerDashboard: React.FC = () => {
+  const router = useRouter();
   const { 
     user, 
     organizerPandal, 
@@ -52,10 +55,52 @@ export const OrganizerDashboard: React.FC = () => {
     pandals
   } = useApp();
 
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<'analytics' | 'profile' | 'media-gallery'>('profile');
   const [isMounted, setIsMounted] = useState(false);
   const [qrDownloaded, setQrDownloaded] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Strict Route Protection: Check valid Supabase session
+  useEffect(() => {
+    let isSubscribed = true;
+    const verifySession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          if (isSubscribed) {
+            setIsAuthenticated(false);
+            router.replace('/organizer-login');
+          }
+          return;
+        }
+        if (isSubscribed) {
+          setIsAuthenticated(true);
+        }
+      } catch (err) {
+        if (isSubscribed) {
+          setIsAuthenticated(false);
+          router.replace('/organizer-login');
+        }
+      }
+    };
+
+    verifySession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session && isSubscribed) {
+        setIsAuthenticated(false);
+        router.replace('/organizer-login');
+      } else if (session && isSubscribed) {
+        setIsAuthenticated(true);
+      }
+    });
+
+    return () => {
+      isSubscribed = false;
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
   const currentPandal = organizerPandal || pandals[0];
 
@@ -193,6 +238,20 @@ export const OrganizerDashboard: React.FC = () => {
   const officialVoteUrl = typeof window !== 'undefined' 
     ? `${window.location.origin}/${currentPandal.id}`
     : `https://samannaysamity.org/${currentPandal.id}`;
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-10 h-10 border-3 border-marigold-500 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm font-bold text-gray-700">Verifying Authorized Organizer Session...</p>
+        <p className="text-xs text-gray-500 mt-1">Authenticating with Paschim Banga Samannay Samity</p>
+      </div>
+    );
+  }
+
+  if (isAuthenticated === false) {
+    return null;
+  }
 
   return (
     <div className="py-6 sm:py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { supabase } from '@/lib/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DhakButton } from '@/components/ui/DhakButton';
 import { 
@@ -16,13 +17,12 @@ import {
   ArrowLeft, 
   AlertCircle,
   Sparkles,
-  MapPin,
-  UserCheck
+  MapPin
 } from 'lucide-react';
 
 export default function OrganizerLoginPage() {
   const router = useRouter();
-  const { signInWithEmail, signUpWithEmail, loginWithDemo, isConfigured } = useApp();
+  const { signInWithGoogle, signInWithEmail, signUpWithEmail } = useApp();
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -34,6 +34,37 @@ export default function OrganizerLoginPage() {
 
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check if session already active; if so, redirect immediately
+  useEffect(() => {
+    const checkActiveSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        router.replace('/?tab=organizer');
+      }
+    };
+    checkActiveSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        router.replace('/?tab=organizer');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router]);
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setIsLoading(true);
+    const res = await signInWithGoogle('organizer');
+    if (!res.success) {
+      setError(res.error || 'Google Sign-In failed.');
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,21 +82,11 @@ export default function OrganizerLoginPage() {
 
     setIsLoading(true);
 
-    if (!isConfigured) {
-      // Demo simulation fallback if live API keys are not yet configured
-      setTimeout(() => {
-        loginWithDemo('organizer', secretaryName || 'Club Secretary', email);
-        setIsLoading(false);
-        router.push('/');
-      }, 700);
-      return;
-    }
-
     if (mode === 'signup') {
       const res = await signUpWithEmail(email, password, 'organizer', secretaryName || clubName || 'Organizer');
       setIsLoading(false);
       if (res.success) {
-        router.push('/');
+        router.push('/?tab=organizer');
       } else {
         setError(res.error || 'Failed to register committee organizer account.');
       }
@@ -73,20 +94,11 @@ export default function OrganizerLoginPage() {
       const res = await signInWithEmail(email, password, 'organizer');
       setIsLoading(false);
       if (res.success) {
-        router.push('/');
+        router.push('/?tab=organizer');
       } else {
         setError(res.error || 'Sign in failed. Verify your email and password.');
       }
     }
-  };
-
-  const handleDemoOrganizerLogin = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      loginWithDemo('organizer', 'Marxgunj Club Secretary', 'marxgunj.puja@gmail.com');
-      setIsLoading(false);
-      router.push('/');
-    }, 400);
   };
 
   return (
@@ -138,6 +150,44 @@ export default function OrganizerLoginPage() {
           <p className="text-xs sm:text-sm text-gray-600 mt-1 max-w-xs mx-auto">
             Manage your pandal showcase, inspect scan metrics, and download the Official 300 DPI QR Standee.
           </p>
+        </div>
+
+        {/* Google Sign-In for Organizers */}
+        <div className="mb-4">
+          <DhakButton
+            variant="secondary"
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+            className="w-full py-3.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center gap-3 border border-amber-300/80 bg-white hover:bg-amber-50/70 shadow-xs"
+          >
+            <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.03 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+              />
+            </svg>
+            <span>{isLoading ? 'Connecting to Google...' : 'Continue with Google as Organizer'}</span>
+          </DhakButton>
+        </div>
+
+        <div className="relative flex items-center justify-center mb-4">
+          <div className="border-t border-amber-200/80 w-full" />
+          <span className="bg-[#FFFDF9] px-3 text-[11px] text-gray-500 font-semibold uppercase tracking-wider">
+            Or with Committee Email
+          </span>
         </div>
 
         {/* Mode Toggle Pills */}
@@ -291,22 +341,6 @@ export default function OrganizerLoginPage() {
             </DhakButton>
           </div>
         </form>
-
-        {/* Demo Fast Access for Testing */}
-        <div className="mt-5 pt-4 border-t border-amber-200/60 text-center">
-          <p className="text-[11px] text-gray-500 mb-2 font-medium">
-            Testing credentials without typing?
-          </p>
-          <button
-            type="button"
-            onClick={handleDemoOrganizerLogin}
-            disabled={isLoading}
-            className="w-full py-2 px-3 rounded-xl border border-amber-300 bg-amber-50/70 hover:bg-amber-100/80 text-amber-900 text-xs font-bold transition flex items-center justify-center gap-1.5"
-          >
-            <UserCheck className="w-3.5 h-3.5 text-marigold-600" />
-            <span>One-Tap Test Organizer Login (Marxgunj Club)</span>
-          </button>
-        </div>
 
       </motion.div>
     </div>

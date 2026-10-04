@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Pandal, User, UserRole, VoteCategory, VoteRecord, SupportTicket, PandalMedia } from '@/types';
 import { INITIAL_PANDALS } from '@/data/mockPandals';
+import { supabase } from '@/lib/supabaseClient';
 
 interface AppContextType {
   user: User | null;
@@ -27,7 +28,6 @@ interface AppContextType {
   signInWithGoogle: (role: UserRole) => Promise<{ success: boolean; error?: string }>;
   signUpWithEmail: (email: string, password: string, role: UserRole, name?: string) => Promise<{ success: boolean; error?: string }>;
   signInWithEmail: (email: string, password: string, role: UserRole) => Promise<{ success: boolean; error?: string }>;
-  loginWithDemo: (role: UserRole, name?: string, email?: string) => void;
   logout: () => Promise<void>;
   
   // Modal Actions
@@ -131,9 +131,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   };
 
-  // Load saved state on mount
+  // Load saved state and synchronize Supabase session on mount
   useEffect(() => {
-    let storedUserRole: UserRole | null = null;
     try {
       const storedPandals = localStorage.getItem(STORAGE_KEYS.PANDALS);
       if (storedPandals) {
@@ -152,13 +151,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const storedTickets = localStorage.getItem(STORAGE_KEYS.TICKETS);
       if (storedTickets) {
         setSupportTickets(JSON.parse(storedTickets));
-      }
-
-      const storedUser = localStorage.getItem(STORAGE_KEYS.USER);
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        setUser(parsed);
-        storedUserRole = parsed.role;
       }
 
       // Hydrate 4-Token Gamified voting state from LocalStorage on mount
@@ -203,199 +195,155 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn('LocalStorage load error:', e);
     }
 
-    // Default to device voter if no organizer is logged in
-    if (storedUserRole !== 'organizer') {
-      const defaultAnon = getOrCreateDeviceVoter();
-      setUser((prev) => (prev && prev.role === 'organizer' ? prev : defaultAnon));
-    }
+    // Strict Supabase Session Synchronization
+    const syncSession = (session: any) => {
+      if (session?.user) {
+        const sbUser = session.user;
+        const organizerUser: User = {
+          id: sbUser.id,
+          name: sbUser.user_metadata?.full_name || sbUser.user_metadata?.name || sbUser.email?.split('@')[0] || 'Puja Committee Organizer',
+          email: sbUser.email || 'organizer@samannaysamity.org',
+          role: 'organizer',
+          avatar: sbUser.user_metadata?.avatar_url || sbUser.user_metadata?.picture || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+          clubId: 'marconi-dakshin-palli',
+        };
+        setUser(organizerUser);
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(organizerUser));
+      } else {
+        localStorage.removeItem(STORAGE_KEYS.USER);
+        const defaultAnon = getOrCreateDeviceVoter();
+        setUser(defaultAnon);
+      }
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      syncSession(session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      syncSession(session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Permanent local registry for fallback / caching
-  const getPermanentLocalRole = (identifier?: string): UserRole | null => {
-    if (!identifier) return null;
-    try {
-      const regStr = localStorage.getItem(STORAGE_KEYS.PERMANENT_USERS);
-      if (regStr) {
-        const reg = JSON.parse(regStr);
-        if (reg[identifier]?.role) return reg[identifier].role;
-      }
-    } catch (e) {}
-    return null;
-  };
-
-  const setPermanentLocalRole = (identifier: string, role: UserRole, details?: Partial<User>) => {
-    try {
-      const regStr = localStorage.getItem(STORAGE_KEYS.PERMANENT_USERS);
-      const reg = regStr ? JSON.parse(regStr) : {};
-      if (!reg[identifier]) {
-        reg[identifier] = { role, ...details, lockedAt: Date.now() };
-        localStorage.setItem(STORAGE_KEYS.PERMANENT_USERS, JSON.stringify(reg));
-      }
-    } catch (e) {}
-  };
-
-  // Google Sign-In with Role Locking
+  // Google Sign-In via Real Supabase OAuth
   const signInWithGoogle = async (chosenRole: UserRole): Promise<{ success: boolean; error?: string }> => {
     try {
-      const mockEmail = chosenRole === 'organizer' ? 'organizer@samannaysamity.org' : 'devotee@samannaysamity.org';
-      const existingRole = getPermanentLocalRole(mockEmail);
-      if (existingRole && existingRole !== chosenRole) {
-        return {
-          success: false,
-          error: `Strict Role Lock: This account is permanently registered as a ${existingRole}.`,
-        };
+      const redirectUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/organizer-login`
+        : undefined;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
       }
 
-      setPermanentLocalRole(mockEmail, chosenRole);
-      const profileUser: User = {
-        id: `usr-google-${Date.now().toString(36)}`,
-        name: chosenRole === 'organizer' ? 'Puja Committee Organizer' : 'Verified Devotee',
-        email: mockEmail,
-        role: chosenRole,
-        avatar: chosenRole === 'organizer'
-          ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-          : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        clubId: chosenRole === 'organizer' ? 'marconi-dakshin-palli' : undefined,
-      };
-
-      setUser(profileUser);
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
       setIsAuthModalOpen(false);
-
-      if (chosenRole === 'organizer' && typeof window !== 'undefined') {
-        const url = new URL(window.location.href);
-        url.searchParams.set('tab', 'organizer');
-        window.history.replaceState({}, '', url.toString());
-      }
-
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err?.message || 'Google sign in failed.' };
+      return { success: false, error: err?.message || 'Google Sign-In failed.' };
     }
   };
 
-  // Email/Password Sign Up
+  // Real Supabase Email/Password Sign Up
   const signUpWithEmail = async (
     email: string,
     password: string,
     chosenRole: UserRole,
     displayName?: string
   ): Promise<{ success: boolean; error?: string }> => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const existingRole = getPermanentLocalRole(normalizedEmail);
-    if (existingRole && existingRole !== chosenRole) {
-      return {
-        success: false,
-        error: `Strict Role Lock: '${normalizedEmail}' is permanently registered as a ${existingRole}.`,
-      };
-    }
-
     try {
-      setPermanentLocalRole(normalizedEmail, chosenRole, { name: displayName });
-      const profileUser: User = {
-        id: `usr-${Date.now().toString(36)}`,
-        name: displayName || normalizedEmail.split('@')[0],
-        email: normalizedEmail,
-        role: chosenRole,
-        avatar: chosenRole === 'organizer'
-          ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-          : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        clubId: chosenRole === 'organizer' ? 'marconi-dakshin-palli' : undefined,
-      };
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          data: {
+            full_name: displayName || email.split('@')[0],
+            role: chosenRole,
+          },
+        },
+      });
 
-      setUser(profileUser);
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
-      setIsAuthModalOpen(false);
-
-      if (chosenRole === 'organizer' && typeof window !== 'undefined') {
-        const url = new URL(window.location.href);
-        url.searchParams.set('tab', 'organizer');
-        window.history.replaceState({}, '', url.toString());
+      if (error) {
+        return { success: false, error: error.message };
       }
 
+      if (data.user) {
+        const profileUser: User = {
+          id: data.user.id,
+          name: displayName || data.user.user_metadata?.full_name || email.split('@')[0],
+          email: data.user.email || email,
+          role: chosenRole,
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+          clubId: chosenRole === 'organizer' ? 'marconi-dakshin-palli' : undefined,
+        };
+        setUser(profileUser);
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
+      }
+
+      setIsAuthModalOpen(false);
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err?.message || 'Failed to sign up.' };
+      return { success: false, error: err?.message || 'Failed to register account.' };
     }
   };
 
-  // Email/Password Sign In
+  // Real Supabase Email/Password Sign In
   const signInWithEmail = async (
     email: string,
     password: string,
     chosenRole: UserRole
   ): Promise<{ success: boolean; error?: string }> => {
-    const normalizedEmail = email.trim().toLowerCase();
-    const existingRole = getPermanentLocalRole(normalizedEmail);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
-    if (existingRole && existingRole !== chosenRole) {
-      return {
-        success: false,
-        error: `Strict Role Lock: This account is permanently registered as a ${existingRole}.`,
-      };
-    }
+      if (error) {
+        return { success: false, error: error.message };
+      }
 
-    const lockedRole = existingRole || chosenRole;
-    setPermanentLocalRole(normalizedEmail, lockedRole);
+      if (data.user) {
+        const profileUser: User = {
+          id: data.user.id,
+          name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Organizer',
+          email: data.user.email || email,
+          role: chosenRole,
+          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+          clubId: chosenRole === 'organizer' ? 'marconi-dakshin-palli' : undefined,
+        };
+        setUser(profileUser);
+        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
+      }
 
-    const profileUser: User = {
-      id: `usr-${Date.now().toString(36)}`,
-      name: normalizedEmail.split('@')[0] || (lockedRole === 'organizer' ? 'Organizer' : 'Voter'),
-      email: normalizedEmail,
-      role: lockedRole,
-      avatar: lockedRole === 'organizer'
-        ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      clubId: lockedRole === 'organizer' ? 'marconi-dakshin-palli' : undefined,
-    };
-
-    setUser(profileUser);
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
-    setIsAuthModalOpen(false);
-
-    if (lockedRole === 'organizer' && typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      url.searchParams.set('tab', 'organizer');
-      window.history.replaceState({}, '', url.toString());
-    }
-
-    return { success: true };
-  };
-
-  // Demo login
-  const loginWithDemo = (role: UserRole, name?: string, email?: string) => {
-    const userEmail = (email || (role === 'organizer' ? 'organizer.desk@samannaysamity.org' : 'voter.demo@samannaysamity.org')).trim().toLowerCase();
-    const existingLocked = getPermanentLocalRole(userEmail);
-    if (existingLocked && existingLocked !== role) {
-      alert(`Strict Role Lock: Account '${userEmail}' is locked to role '${existingLocked}'.`);
-      return;
-    }
-    setPermanentLocalRole(userEmail, role, { name, email: userEmail });
-
-    const demoUser: User = {
-      id: `usr-${role}-${Date.now().toString(36)}`,
-      name: name || (role === 'organizer' ? 'Puja Committee Secretary' : 'Verified Devotee'),
-      email: userEmail,
-      role: role,
-      avatar: role === 'organizer'
-        ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      clubId: role === 'organizer' ? 'marconi-dakshin-palli' : undefined,
-    };
-
-    setUser(demoUser);
-    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(demoUser));
-    setIsAuthModalOpen(false);
-
-    if (role === 'organizer' && typeof window !== 'undefined') {
-      const url = new URL(window.location.href);
-      url.searchParams.set('tab', 'organizer');
-      window.history.replaceState({}, '', url.toString());
+      setIsAuthModalOpen(false);
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Sign in failed.' };
     }
   };
 
-  // Sign out and reset to persistent anonymous voter
+  // Sign out from Supabase and reset to persistent anonymous voter
   const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn('Supabase sign out notice:', e);
+    }
     localStorage.removeItem(STORAGE_KEYS.USER);
     const anonVoter = getOrCreateDeviceVoter();
     setUser(anonVoter);
@@ -729,7 +677,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         signInWithGoogle,
         signUpWithEmail,
         signInWithEmail,
-        loginWithDemo,
         logout,
         openAuthModal,
         closeAuthModal,

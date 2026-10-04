@@ -24,9 +24,7 @@ export const AuthModal: React.FC = () => {
     closeAuthModal, 
     signInWithGoogle, 
     signUpWithEmail, 
-    signInWithEmail, 
-    loginWithDemo,
-    isConfigured
+    signInWithEmail
   } = useApp();
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -40,23 +38,15 @@ export const AuthModal: React.FC = () => {
 
   if (!isAuthModalOpen) return null;
 
-  // Organizer Google Sign-In
+  // Organizer Google Sign-In via Real Supabase OAuth
   const handleGoogleSignIn = async () => {
     setError('');
     setIsLoading(true);
 
-    if (!isConfigured) {
-      setTimeout(() => {
-        loginWithDemo('organizer', name || 'Marxgunj Club Secretary', 'marxgunj.puja@gmail.com');
-        setIsLoading(false);
-      }, 500);
-      return;
-    }
-
     const res = await signInWithGoogle('organizer');
-    setIsLoading(false);
     if (!res.success) {
       setError(res.error || 'Organizer Google Sign-In failed.');
+      setIsLoading(false);
     }
   };
 
@@ -76,14 +66,6 @@ export const AuthModal: React.FC = () => {
     }
 
     setIsLoading(true);
-
-    if (!isConfigured) {
-      setTimeout(() => {
-        loginWithDemo('organizer', name || email.split('@')[0], email);
-        setIsLoading(false);
-      }, 600);
-      return;
-    }
 
     if (mode === 'signup') {
       const res = await signUpWithEmail(email.trim(), password, 'organizer', name.trim());
@@ -293,18 +275,6 @@ export const AuthModal: React.FC = () => {
             <ArrowRight className="w-4 h-4" />
           </DhakButton>
         </form>
-
-        {/* Demo Organizer Portal Quick Login */}
-        <div className="mt-5 pt-4 border-t border-gray-100 flex flex-col gap-2">
-          <button
-            type="button"
-            onClick={() => loginWithDemo('organizer', 'Marxgunj Club Secretary', 'marxgunj.puja@gmail.com')}
-            className="w-full py-2.5 rounded-xl border border-amber-300/80 bg-amber-50/60 hover:bg-amber-100/70 text-xs font-bold text-amber-900 transition flex items-center justify-center gap-2"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-marigold-600" />
-            <span>Fast Demo Login as Organizer (Marxgunj Club)</span>
-          </button>
-        </div>
       </motion.div>
     </div>
   );

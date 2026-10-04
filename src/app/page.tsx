@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { supabase } from '@/lib/supabaseClient';
 import { Navbar } from '@/components/layout/Navbar';
 import { BottomNavDock } from '@/components/layout/BottomNavDock';
 import { Footer } from '@/components/layout/Footer';
@@ -23,16 +25,28 @@ import {
 } from 'lucide-react';
 
 export default function HomePage() {
+  const router = useRouter();
   const { openQRScanner, openAuthModal, isOrganizer, isVoter } = useApp();
 
   const [activeTab, setActiveTab] = useState<string>('feed');
 
-  // Route Guard / Tab Sync
+  // Strict Route Guard / Tab Sync
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const params = new URLSearchParams(window.location.search);
     const tabParam = params.get('tab') || params.get('view');
+
+    if (tabParam === 'organizer') {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+          router.replace('/organizer-login');
+        } else {
+          setActiveTab('organizer');
+        }
+      });
+      return;
+    }
 
     if (isOrganizer) {
       if (tabParam !== 'organizer') {
@@ -42,42 +56,23 @@ export default function HomePage() {
         window.history.replaceState({}, '', newUrl);
       }
       setActiveTab('organizer');
-    } else if (isVoter) {
-      if (tabParam === 'organizer') {
-        params.set('tab', 'feed');
-        params.delete('view');
-        const newUrl = `${window.location.pathname}?${params.toString()}`;
-        window.history.replaceState({}, '', newUrl);
-        setActiveTab('feed');
-      } else if (tabParam === 'leaderboard') {
-        setActiveTab('leaderboard');
-      } else if (tabParam === 'my-votes') {
-        setActiveTab('my-votes');
-      } else {
-        setActiveTab('feed');
-      }
+    } else if (tabParam === 'leaderboard') {
+      setActiveTab('leaderboard');
+    } else if (tabParam === 'my-votes') {
+      setActiveTab('my-votes');
     } else {
-      if (tabParam === 'organizer') {
-        openAuthModal('organizer');
-        setActiveTab('feed');
-      } else if (tabParam === 'leaderboard') {
-        setActiveTab('leaderboard');
-      } else if (tabParam === 'my-votes') {
-        setActiveTab('my-votes');
-      } else {
-        setActiveTab('feed');
-      }
+      setActiveTab('feed');
     }
-  }, [isOrganizer, isVoter, openAuthModal]);
+  }, [isOrganizer, isVoter, router]);
 
-  const handleTabChange = (requestedTab: string) => {
-    if (isOrganizer) {
-      setActiveTab('organizer');
-      return;
-    }
-
+  const handleTabChange = async (requestedTab: string) => {
     if (requestedTab === 'organizer') {
-      openAuthModal('organizer');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push('/organizer-login');
+        return;
+      }
+      setActiveTab('organizer');
       return;
     }
 
