@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
 import { DhakButton } from '@/components/ui/DhakButton';
@@ -41,9 +43,15 @@ export const Navbar: React.FC<{
     isGuest
   } = useApp();
 
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleNavClick = (tab: string) => {
+    if (tab === 'organizer') {
+      router.push('/organizer');
+      setIsMobileMenuOpen(false);
+      return;
+    }
     if (setActiveTab) {
       setActiveTab(tab);
     }
@@ -224,16 +232,14 @@ export const Navbar: React.FC<{
                   </div>
 
                   {/* Distinct Organizer Portal Entry Button (Desktop) */}
-                  <motion.button
-                    whileHover={{ scale: 1.04 }}
-                    whileTap={{ scale: 0.92 }}
-                    onClick={() => openAuthModal('organizer')}
-                    className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-amber-950 bg-white/85 hover:bg-amber-50/95 border border-amber-300/80 hover:border-marigold-500 shadow-xs backdrop-blur-md transition-all duration-200 diya-glow-hover"
+                  <Link
+                    href="/organizer/auth"
+                    className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-amber-950 bg-white/85 hover:bg-amber-50/95 border border-amber-300/80 hover:border-marigold-500 shadow-xs backdrop-blur-md transition-all duration-200 diya-glow-hover touch-manipulation active:scale-95"
                     title="Pandal Organizer Access & Management Portal"
                   >
                     <Building2 className="w-4 h-4 text-marigold-600 shrink-0" />
                     <span>Organizer Portal</span>
-                  </motion.button>
+                  </Link>
 
                   {/* Primary CTA: Scan & Vote (Desktop) */}
                   <DhakButton
@@ -272,11 +278,9 @@ export const Navbar: React.FC<{
               {!isOrganizer && (
                 <>
                   {/* Distinct Organizer Portal Entry in Mobile Drawer */}
-                  <button
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      openAuthModal('organizer');
-                    }}
+                  <Link
+                    href="/organizer/auth"
+                    onClick={() => setIsMobileMenuOpen(false)}
                     className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm text-amber-950 bg-gradient-to-r from-amber-50/90 via-marigold-50/70 to-amber-50/90 border border-amber-300/80 hover:bg-amber-100/80 transition-all shadow-xs touch-manipulation active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-2.5">
@@ -286,7 +290,7 @@ export const Navbar: React.FC<{
                     <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-amber-200/70 text-amber-900 border border-amber-300">
                       Club Desk
                     </span>
-                  </button>
+                  </Link>
 
                   <button
                     onClick={() => handleNavClick('feed')}

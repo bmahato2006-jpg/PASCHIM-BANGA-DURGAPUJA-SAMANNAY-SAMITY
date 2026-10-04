@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { supabase } from '@/lib/supabaseClient';
+import { getCommitteeByUser } from '@/lib/committeeService';
+import toast from 'react-hot-toast';
 import { Pandal, PandalMedia } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -29,7 +31,10 @@ import {
   Eye, 
   ShieldCheck,
   Building2,
-  Share2
+  Share2,
+  Copy,
+  Check,
+  ExternalLink
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -43,6 +48,30 @@ import {
   Area,
   Cell
 } from 'recharts';
+
+// Helper to generate clean URL slug
+function slugify(text: string): string {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+}
+
+// Helper to format raw slug into readable title
+function formatPandalName(slug: string): string {
+  if (!slug) return 'Puja Pandal';
+  const decoded = decodeURIComponent(slug).replace(/[-_]+/g, ' ').trim();
+  return decoded
+    .split(' ')
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
 
 export const OrganizerDashboard: React.FC = () => {
   const router = useRouter();
@@ -60,39 +89,82 @@ export const OrganizerDashboard: React.FC = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [qrDownloaded, setQrDownloaded] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [origin, setOrigin] = useState<string>('');
 
-  // Strict Route Protection: Check valid Supabase session
+  // Auto-QR & Pandal Profile identification
+  const [pandalSlug, setPandalSlug] = useState<string>('');
+  const [pandalName, setPandalName] = useState<string>('');
+  const [isFirstTimeSetup, setIsFirstTimeSetup] = useState<boolean>(false);
+  const [isSavingSetup, setIsSavingSetup] = useState<boolean>(false);
+
+  // First-time setup form fields
+  const [setupPandalName, setSetupPandalName] = useState<string>('');
+  const [setupClubName, setSetupClubName] = useState<string>('');
+  const [setupWard, setSetupWard] = useState<string>('Ward 12');
+  const [setupTheme, setSetupTheme] = useState<string>('');
+
+  // Strict Route Protection: Check valid Supabase session & fetch Pandal Slug
   useEffect(() => {
     let isSubscribed = true;
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin);
+    }
+
     const verifySession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError || !user) {
           if (isSubscribed) {
             setIsAuthenticated(false);
-            router.replace('/organizer-login');
+            await supabase.auth.signOut();
+            router.replace('/organizer/auth');
           }
           return;
         }
+
+        // Strict Check: Must have a verified committee record in database
+        const { committee } = await getCommitteeByUser(user.id, user.email);
+        if (!committee) {
+          if (isSubscribed) {
+            setIsAuthenticated(false);
+            router.replace('/organizer/setup');
+          }
+          return;
+        }
+
         if (isSubscribed) {
           setIsAuthenticated(true);
+          setPandalSlug(committee.slug);
+          setPandalName(committee.committee_name);
+          setIsFirstTimeSetup(false);
         }
       } catch (err) {
         if (isSubscribed) {
           setIsAuthenticated(false);
-          router.replace('/organizer-login');
+          await supabase.auth.signOut();
+          router.replace('/organizer/auth');
         }
       }
     };
 
     verifySession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (!session && isSubscribed) {
         setIsAuthenticated(false);
-        router.replace('/organizer-login');
-      } else if (session && isSubscribed) {
-        setIsAuthenticated(true);
+        router.replace('/organizer/auth');
+      } else if (session?.user && isSubscribed) {
+        const { committee } = await getCommitteeByUser(session.user.id, session.user.email);
+        if (!committee) {
+          setIsAuthenticated(false);
+          router.replace('/organizer/setup');
+        } else {
+          setIsAuthenticated(true);
+          setPandalSlug(committee.slug);
+          setPandalName(committee.committee_name);
+          setIsFirstTimeSetup(false);
+        }
       }
     });
 
@@ -102,7 +174,7 @@ export const OrganizerDashboard: React.FC = () => {
     };
   }, [router]);
 
-  const currentPandal = organizerPandal || pandals[0];
+  const currentPandal = pandals.find(p => p.id === pandalSlug) || organizerPandal || pandals[0];
 
   // Form State for Pandal Registration / Profile
   const [formData, setFormData] = useState<Partial<Pandal>>({
@@ -133,7 +205,7 @@ export const OrganizerDashboard: React.FC = () => {
     if (currentPandal) {
       setFormData({
         id: currentPandal.id,
-        name: currentPandal.name,
+        name: pandalName || currentPandal.name,
         clubName: currentPandal.clubName,
         location: currentPandal.location,
         ward: currentPandal.ward,
@@ -149,7 +221,7 @@ export const OrganizerDashboard: React.FC = () => {
         logoUrl: currentPandal.logoUrl,
       });
     }
-  }, [currentPandal]);
+  }, [currentPandal, pandalName]);
 
   // Ranking calculation
   const sortedByVotes = [...pandals].sort((a, b) => b.totalVotes - a.totalVotes);
@@ -171,13 +243,32 @@ export const OrganizerDashboard: React.FC = () => {
     { day: 'Ashtami (Today)', visits: currentPandal.visitsToday || 22100, votes: currentPandal.totalVotes },
   ];
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (currentPandal) {
+      const targetSlug = pandalSlug || currentPandal.id;
       registerOrUpdatePandal({
         ...formData,
-        id: currentPandal.id,
+        id: targetSlug,
       });
+
+      try {
+        await supabase.auth.updateUser({
+          data: {
+            pandal_slug: targetSlug,
+            pandal_name: formData.name || currentPandal.name,
+            club_name: formData.clubName || currentPandal.clubName,
+            ward: formData.ward || currentPandal.ward,
+          },
+        });
+      } catch (err) {
+        console.warn('Profile Supabase sync error:', err);
+      }
+
+      if (formData.name) {
+        setPandalName(formData.name);
+      }
+
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     }
@@ -196,16 +287,22 @@ export const OrganizerDashboard: React.FC = () => {
     }
   };
 
+  // Construct official voting URL for universal QR code
+  const activeOrigin = origin || (typeof window !== 'undefined' ? window.location.origin : 'https://samannaysamity.org');
+  const activeSlug = pandalSlug || currentPandal?.id || 'marconi-dakshin-palli';
+  const votingUrl = `${activeOrigin}/${activeSlug}`;
+
   // REAL QR DOWNLOAD FEATURE: Convert canvas to PNG and download
-  const handleDownloadQr = () => {
-    const canvas = document.getElementById('organizer-qr-canvas') as HTMLCanvasElement;
+  const handleDownloadPrintReadyQr = () => {
+    const canvas = document.getElementById('auto-voting-qr-canvas') as HTMLCanvasElement;
     if (!canvas) return;
 
     try {
       const pngUrl = canvas.toDataURL('image/png');
       const downloadLink = document.createElement('a');
       downloadLink.href = pngUrl;
-      downloadLink.download = `${currentPandal.name.replace(/[^a-zA-Z0-9]/g, '_')}_Official_Voting_QR.png`;
+      const cleanSlug = activeSlug.replace(/[^a-zA-Z0-9_-]/g, '_');
+      downloadLink.download = `${cleanSlug}_Official_PBDS_Voting_QR.png`;
       document.body.appendChild(downloadLink);
       downloadLink.click();
       document.body.removeChild(downloadLink);
@@ -214,6 +311,78 @@ export const OrganizerDashboard: React.FC = () => {
       setTimeout(() => setQrDownloaded(false), 3000);
     } catch (err) {
       console.error('QR download error:', err);
+    }
+  };
+
+  // Copy link handler
+  const handleCopyVotingLink = () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(votingUrl);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    }
+  };
+
+  // First-time setup submission handler
+  const handleFirstTimeSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!setupPandalName.trim()) return;
+
+    setIsSavingSetup(true);
+    const generatedSlug = slugify(setupPandalName);
+    const committeeName = setupClubName.trim() || setupPandalName.trim();
+    const wardNumber = setupWard.trim() || 'Ward 12';
+
+    try {
+      const { error: sbError } = await supabase.auth.updateUser({
+        data: {
+          pandal_slug: generatedSlug,
+          pandal_name: setupPandalName.trim(),
+          club_name: committeeName,
+          ward: wardNumber,
+        },
+      });
+
+      if (sbError) {
+        console.warn('Supabase updateUser error:', sbError);
+      }
+
+      registerOrUpdatePandal({
+        id: generatedSlug,
+        name: setupPandalName.trim(),
+        clubName: committeeName,
+        ward: wardNumber,
+        location: `Durgapur, ${wardNumber}`,
+        theme: setupTheme.trim() || 'Cultural Durgotsav',
+        themeDescription: 'Official puja entry registered with Paschim Banga DurgaPuja Samannay Samity.',
+        presidentName: user?.name || 'Club President',
+        secretaryName: user?.name || 'Club Secretary',
+        contactNumber: '+91 98000 00000',
+        budget: '₹35 Lakhs',
+        budgetNumber: 35,
+        establishedYear: 2026,
+        coverImage: 'https://images.unsplash.com/photo-1567157577867-05ccb1388e66?w=800&auto=format&fit=crop&q=80',
+        totalVotes: 0,
+        visitsToday: 1,
+        votes: { idol: 0, theme: 0, lighting: 0, eco: 0 },
+        isEcoFriendly: true,
+      });
+
+      setPandalSlug(generatedSlug);
+      setPandalName(setupPandalName.trim());
+      setFormData(prev => ({
+        ...prev,
+        id: generatedSlug,
+        name: setupPandalName.trim(),
+        clubName: committeeName,
+        ward: wardNumber,
+        theme: setupTheme.trim() || 'Cultural Durgotsav',
+      }));
+      setIsFirstTimeSetup(false);
+    } catch (err) {
+      console.error('Setup error:', err);
+    } finally {
+      setIsSavingSetup(false);
     }
   };
 
@@ -234,11 +403,6 @@ export const OrganizerDashboard: React.FC = () => {
     setIsFeaturedMedia(false);
   };
 
-  // Construct official voting URL for QR code
-  const officialVoteUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}/${currentPandal.id}`
-    : `https://samannaysamity.org/${currentPandal.id}`;
-
   if (isAuthenticated === null) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center">
@@ -255,50 +419,170 @@ export const OrganizerDashboard: React.FC = () => {
 
   return (
     <div className="py-6 sm:py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      
-      {/* Top Banner Card with Committee Logo & Verified Badge */}
-      <div className="glass-panel-warm rounded-3xl p-6 sm:p-8 mb-8 border-2 border-marigold-200/80 shadow-xl relative overflow-hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-          
-          <div className="flex items-center gap-4">
-            {/* Committee Logo or Cover Image */}
-            <div className="relative">
-              <img
-                src={formData.logoUrl || currentPandal.logoUrl || currentPandal.coverImage}
-                alt={currentPandal.name}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-4 ring-marigold-300 shadow-md bg-white"
+      {isFirstTimeSetup ? (
+        <div className="max-w-2xl mx-auto glass-panel rounded-3xl p-6 sm:p-10 border-2 border-amber-300 shadow-xl my-6">
+          <div className="text-center mb-6">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-xs font-black uppercase tracking-wider mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <span>Organizer Welcome & Activation</span>
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-serif font-black text-gray-900 mt-1">
+              Enter your Pandal Name to generate your Voting QR
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-600 mt-2 max-w-lg mx-auto">
+              Welcome to Paschim Banga DurgaPuja Samannay Samity! Provide your registered Pandal details to instantly generate your official, universally scannable Gate Voting QR Code.
+            </p>
+          </div>
+
+          <form onSubmit={handleFirstTimeSetup} className="space-y-5">
+            <div>
+              <label className="block text-xs font-bold text-gray-800 mb-1.5">
+                Official Pandal Name *
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Bidhan Nagar Sarbojanin Durga Puja"
+                value={setupPandalName}
+                onChange={(e) => setSetupPandalName(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sindoor-500 text-sm bg-white font-medium"
+                required
               />
-              <div className="absolute -bottom-1 -right-1 bg-green-500 text-white p-1 rounded-full ring-2 ring-white">
-                <ShieldCheck className="w-3.5 h-3.5" />
+            </div>
+
+            {/* Live QR Slug Preview */}
+            {setupPandalName.trim() && (
+              <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs space-y-1">
+                <div className="flex items-center justify-between text-gray-600">
+                  <span className="font-semibold">Auto-Generated QR Route:</span>
+                  <span className="font-mono font-bold text-sindoor-600">/{slugify(setupPandalName)}</span>
+                </div>
+                <div className="text-gray-500 font-mono text-[11px] truncate">
+                  Scannable URL: <strong className="text-gray-800">{activeOrigin}/{slugify(setupPandalName)}</strong>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-800 mb-1.5">
+                  Club / Samiti Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Bidhan Nagar Sporting Club"
+                  value={setupClubName}
+                  onChange={(e) => setSetupClubName(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sindoor-500 text-sm bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-800 mb-1.5">
+                  Ward / Location
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Ward 12, Durgapur"
+                  value={setupWard}
+                  onChange={(e) => setSetupWard(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sindoor-500 text-sm bg-white"
+                />
               </div>
             </div>
 
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-marigold-800 bg-marigold-100 px-2.5 py-0.5 rounded-full border border-marigold-300">
-                  Organizer Control Desk
-                </span>
-                <span className="text-xs text-gray-500 font-medium">
-                  {currentPandal.ward}
+              <label className="block text-xs font-bold text-gray-800 mb-1.5">
+                Pandal Theme / Concept (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Bengal Terracotta Art & Heritage"
+                value={setupTheme}
+                onChange={(e) => setSetupTheme(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sindoor-500 text-sm bg-white"
+              />
+            </div>
+
+            <div className="pt-2">
+              <DhakButton
+                type="submit"
+                disabled={isSavingSetup || !setupPandalName.trim()}
+                className="w-full py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-festive disabled:opacity-50 touch-manipulation active:scale-95"
+              >
+                {isSavingSetup ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Configuring Pandal & Generating QR...</span>
+                  </>
+                ) : (
+                  <>
+                    <QrCode className="w-5 h-5" />
+                    <span>Generate Official Voting QR</span>
+                  </>
+                )}
+              </DhakButton>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <>
+          {/* Top Banner Card with Committee Logo & Verified Badge */}
+          <div className="glass-panel-warm rounded-3xl p-6 sm:p-8 mb-8 border-2 border-marigold-200/80 shadow-xl relative overflow-hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+              
+              <div className="flex items-center gap-4">
+                {/* Committee Logo or Cover Image */}
+                <div className="relative">
+                  <img
+                    src={formData.logoUrl || currentPandal.logoUrl || currentPandal.coverImage}
+                    alt={pandalName || currentPandal.name}
+                    className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover ring-4 ring-marigold-300 shadow-md bg-white"
+                  />
+                  <div className="absolute -bottom-1 -right-1 bg-green-500 text-white p-1 rounded-full ring-2 ring-white">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-marigold-800 bg-marigold-100 px-2.5 py-0.5 rounded-full border border-marigold-300">
+                      Organizer Control Desk
+                    </span>
+                    <span className="text-xs text-gray-500 font-medium">
+                      {formData.ward || currentPandal.ward}
+                    </span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-serif font-black text-gray-900 mt-1">
+                    {pandalName || currentPandal.name}
+                  </h1>
+                  <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
+                    Committee: <strong className="text-gray-900">{formData.clubName || currentPandal.clubName}</strong> • President: <strong className="text-gray-900">{formData.presidentName || currentPandal.presidentName}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('profile');
+                    setTimeout(() => {
+                      const el = document.getElementById('auto-voting-qr-canvas');
+                      el?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-sindoor-600 to-marigold-600 text-white text-xs font-black shadow-festive flex items-center gap-1.5 hover:opacity-95 active:scale-95 transition"
+                >
+                  <QrCode className="w-4 h-4" />
+                  <span>Gate QR Standee</span>
+                </button>
+                <span className="px-3.5 py-1.5 rounded-xl bg-amber-100/80 border border-amber-300 text-xs font-black text-amber-900 flex items-center gap-1.5">
+                  <Award className="w-4 h-4 text-marigold-600" />
+                  <span>Regional Rank #{cityRank}</span>
                 </span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-serif font-black text-gray-900 mt-1">
-                {currentPandal.name}
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
-                Committee: <strong className="text-gray-900">{currentPandal.clubName}</strong> • President: <strong className="text-gray-900">{currentPandal.presidentName}</strong>
-              </p>
+
             </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <span className="px-3.5 py-1.5 rounded-xl bg-amber-100/80 border border-amber-300 text-xs font-black text-amber-900 flex items-center gap-1.5">
-              <Award className="w-4 h-4 text-marigold-600" />
-              <span>Regional Rank #{cityRank}</span>
-            </span>
-          </div>
-
-        </div>
 
         {/* Ambient subtle glow background */}
         <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-gradient-to-tr from-sindoor-500/10 to-marigold-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -568,63 +852,121 @@ export const OrganizerDashboard: React.FC = () => {
             </form>
           </div>
 
-          {/* Right Column: Real QR Generation & Download Standee */}
+          {/* Right Column: Auto-Generated Print-Ready QR Standee */}
           <div className="space-y-6">
             
-            <div className="glass-panel rounded-3xl p-6 border-2 border-amber-300 shadow-glass text-center relative overflow-hidden">
-              <span className="text-[11px] font-black uppercase tracking-wider text-sindoor-600 bg-sindoor-50 px-3 py-1 rounded-full border border-sindoor-200 inline-block mb-3">
-                Official Gate QR Standee
-              </span>
-              <h3 className="font-serif font-black text-lg text-gray-900 leading-tight">
-                {currentPandal.name}
+            <div className="glass-panel rounded-3xl p-6 sm:p-7 border-2 border-amber-300 shadow-glass text-center relative overflow-hidden bg-gradient-to-b from-white via-amber-50/20 to-amber-100/20">
+              
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sindoor-50 border border-sindoor-200 text-sindoor-600 text-[11px] font-black uppercase tracking-wider mb-3">
+                <QrCode className="w-3.5 h-3.5 text-sindoor-500" />
+                <span>Official Gate Voting QR Standee</span>
+              </div>
+
+              <h3 className="font-serif font-black text-xl text-gray-900 leading-tight">
+                {pandalName || currentPandal.name}
               </h3>
               <p className="text-xs text-gray-500 mt-1 mb-4">
-                Scan to vote directly across all 4 judging categories
+                {currentPandal.ward || 'Registered Puja Pandal'} • Scannable by any phone camera
               </p>
 
-              {/* Real QR Canvas Generation using qrcode.react */}
-              <div className="inline-block p-4 rounded-2xl bg-white border-2 border-amber-300 shadow-md">
-                <QRCodeCanvas
-                  id="organizer-qr-canvas"
-                  value={officialVoteUrl}
-                  size={200}
-                  level="H"
-                  includeMargin={true}
-                  imageSettings={{
-                    src: 'https://images.unsplash.com/photo-1601655781320-20593452243d?w=80&auto=format&fit=crop&q=80',
-                    height: 38,
-                    width: 38,
-                    excavate: true,
-                  }}
-                />
+              {/* Real Auto-Generated QR Canvas using qrcode.react */}
+              <div className="inline-flex flex-col items-center justify-center p-4 sm:p-5 rounded-2xl bg-white border-2 border-amber-300 shadow-md max-w-full">
+                <div className="max-w-full overflow-hidden flex items-center justify-center">
+                  <QRCodeCanvas
+                    id="auto-voting-qr-canvas"
+                    value={votingUrl}
+                    size={300}
+                    level="H"
+                    includeMargin={true}
+                    className="max-w-full h-auto"
+                    imageSettings={{
+                      src: '/logo.jpg',
+                      height: 50,
+                      width: 50,
+                      excavate: true,
+                    }}
+                  />
+                </div>
+
+                <div className="mt-3 flex items-center gap-1.5 text-[11px] font-bold text-gray-700">
+                  <Sparkles className="w-3 h-3 text-marigold-500" />
+                  <span>Paschim Banga DurgaPuja Samannay Samity</span>
+                </div>
               </div>
 
-              <div className="mt-3 text-[11px] font-mono font-bold text-gray-500 bg-gray-50 py-1 px-3 rounded-lg border border-gray-200 truncate">
-                Pandal ID: {currentPandal.id}
+              {/* Scannable Absolute URL Display + Copy Button */}
+              <div className="mt-4 p-2.5 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between gap-2 text-left">
+                <div className="min-w-0 flex-1">
+                  <span className="text-[10px] text-gray-400 block font-semibold uppercase tracking-wider">
+                    Official Voter Destination URL
+                  </span>
+                  <p className="text-xs font-mono font-bold text-gray-800 truncate">
+                    {votingUrl}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyVotingLink}
+                  className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-gray-100 border border-gray-300 text-xs font-bold text-gray-700 shrink-0 flex items-center gap-1 transition shadow-2xs touch-manipulation active:scale-95"
+                  title="Copy link to clipboard"
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-600">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Copy</span>
+                    </>
+                  )}
+                </button>
               </div>
 
-              {/* REAL WORKING DOWNLOAD BUTTON */}
-              <div className="mt-5">
+              {/* Action Buttons: Download Print-Ready PNG & Test Link */}
+              <div className="mt-4 space-y-2">
                 <DhakButton
                   variant="gold"
-                  onClick={handleDownloadQr}
-                  className="w-full py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-gold-glow"
+                  onClick={handleDownloadPrintReadyQr}
+                  className="w-full py-3 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-gold-glow touch-manipulation active:scale-95"
                 >
                   <Download className="w-4 h-4" />
-                  <span>Download QR Standee (PNG)</span>
+                  <span>Download Print-Ready QR (PNG)</span>
                 </DhakButton>
 
                 {qrDownloaded && (
                   <p className="text-xs font-bold text-emerald-600 mt-2 flex items-center justify-center gap-1">
                     <CheckCircle className="w-3.5 h-3.5" />
-                    <span>High-Res QR Standee downloaded!</span>
+                    <span>Print-Ready 300px QR downloaded successfully!</span>
                   </p>
                 )}
+
+                <a
+                  href={votingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2 px-3 rounded-xl border border-gray-200 hover:border-marigold-300 bg-white/80 hover:bg-white text-xs font-bold text-gray-700 hover:text-sindoor-600 flex items-center justify-center gap-1.5 transition shadow-2xs touch-manipulation active:scale-95"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Test Live Voter Ballot in Browser</span>
+                </a>
               </div>
 
-              <p className="text-[11px] text-gray-400 mt-4 leading-tight">
-                Print this QR code on flex banners or wooden stands and place at your entrance gates.
-              </p>
+              {/* Universal Compatibility Guidance */}
+              <div className="mt-4 pt-4 border-t border-amber-200/60 text-left space-y-1.5">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-gray-800">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>Universal Mobile Compatibility:</span>
+                </div>
+                <p className="text-[11px] text-gray-600 leading-snug">
+                  • Universally scannable by default iOS Camera, Samsung Camera, Google Lens, and generic barcode readers without installing an app.
+                </p>
+                <p className="text-[11px] text-gray-600 leading-snug">
+                  • Level H error correction with central PBDS insignia allows high contrast outdoor reading even under sunlight or at angled perspectives.
+                </p>
+              </div>
+
             </div>
 
             {/* Quick Stats Card */}
@@ -852,6 +1194,8 @@ export const OrganizerDashboard: React.FC = () => {
           </div>
 
         </div>
+      )}
+        </>
       )}
 
     </div>

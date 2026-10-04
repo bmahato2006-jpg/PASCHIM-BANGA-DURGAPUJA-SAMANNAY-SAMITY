@@ -41,7 +41,7 @@ export default function HomePage() {
     if (tabParam === 'organizer') {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (!session) {
-          router.replace('/organizer-login');
+          router.replace('/organizer/auth');
         } else {
           setActiveTab('organizer');
         }
@@ -70,7 +70,7 @@ export default function HomePage() {
     if (requestedTab === 'organizer') {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        router.push('/organizer-login');
+        router.push('/organizer/auth');
         return;
       }
       setActiveTab('organizer');

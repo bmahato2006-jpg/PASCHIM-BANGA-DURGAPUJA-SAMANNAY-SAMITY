@@ -1,28 +1,26 @@
 'use client';
 
-import { useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
+import { Navbar } from '@/components/layout/Navbar';
+import { Footer } from '@/components/layout/Footer';
+import { OrganizerDashboard } from '@/components/organizer/OrganizerDashboard';
 
-export default function OrganizerRouteGuard() {
+export default function OrganizerPage() {
   const router = useRouter();
 
-  useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        router.replace('/?tab=organizer');
-      } else {
-        router.replace('/organizer-login');
-      }
-    };
-    checkSession();
-  }, [router]);
+  const handleTabChange = (tab: string) => {
+    if (tab === 'organizer') return;
+    router.push(`/?tab=${tab}`);
+  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FFFDF9] text-center p-4">
-      <div className="w-10 h-10 border-3 border-marigold-500 border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="text-sm font-bold text-gray-700">Checking Organizer Authorization...</p>
+    <div className="relative min-h-screen flex flex-col z-10 selection:bg-marigold-200 selection:text-amber-950 overflow-x-hidden w-full max-w-full">
+      <Navbar activeTab="organizer" setActiveTab={handleTabChange} />
+      <main className="flex-1 pb-16">
+        <OrganizerDashboard />
+      </main>
+      <Footer onNavigateTab={handleTabChange} />
     </div>
   );
 }

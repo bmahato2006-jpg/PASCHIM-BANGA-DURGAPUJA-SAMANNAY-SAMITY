@@ -124,11 +124,11 @@ export const Footer: React.FC<{
                   </li>
                   <li>
                     <a
-                      href="/organizer-login"
+                      href="/organizer/auth"
                       className="text-gray-500 hover:text-marigold-600 font-medium transition flex items-center gap-1.5 min-h-[32px]"
                     >
                       <Lock className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Organizer Portal Login</span>
+                      <span>Organizer Portal</span>
                     </a>
                   </li>
                 </>

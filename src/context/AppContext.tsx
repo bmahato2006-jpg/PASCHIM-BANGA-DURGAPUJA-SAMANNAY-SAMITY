@@ -205,7 +205,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           email: sbUser.email || 'organizer@samannaysamity.org',
           role: 'organizer',
           avatar: sbUser.user_metadata?.avatar_url || sbUser.user_metadata?.picture || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-          clubId: 'marconi-dakshin-palli',
+          clubId: sbUser.user_metadata?.pandal_slug || sbUser.user_metadata?.club_id || '',
         };
         setUser(organizerUser);
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(organizerUser));
@@ -233,7 +233,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const signInWithGoogle = async (chosenRole: UserRole): Promise<{ success: boolean; error?: string }> => {
     try {
       const redirectUrl = typeof window !== 'undefined'
-        ? `${window.location.origin}/organizer-login`
+        ? `${window.location.origin}/organizer/callback?action=login`
         : undefined;
 
       const { data, error } = await supabase.auth.signInWithOAuth({
@@ -288,7 +288,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           email: data.user.email || email,
           role: chosenRole,
           avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-          clubId: chosenRole === 'organizer' ? 'marconi-dakshin-palli' : undefined,
+          clubId: chosenRole === 'organizer' ? (data.user.user_metadata?.pandal_slug || data.user.user_metadata?.club_id || '') : undefined,
         };
         setUser(profileUser);
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
@@ -324,7 +324,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           email: data.user.email || email,
           role: chosenRole,
           avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-          clubId: chosenRole === 'organizer' ? 'marconi-dakshin-palli' : undefined,
+          clubId: chosenRole === 'organizer' ? (data.user.user_metadata?.pandal_slug || data.user.user_metadata?.club_id || '') : undefined,
         };
         setUser(profileUser);
         localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
@@ -560,21 +560,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const registerOrUpdatePandal = (pandalData: Partial<Pandal>): Pandal => {
-    let resultPandal: Pandal;
-    if (pandalData.id) {
-      const updated = pandals.map(p => {
-        if (p.id === pandalData.id) {
-          resultPandal = { ...p, ...pandalData };
-          return resultPandal;
-        }
-        return p;
-      });
+    const existingIndex = pandalData.id ? pandals.findIndex(p => p.id === pandalData.id) : -1;
+    if (existingIndex >= 0) {
+      const updatedPandal: Pandal = {
+        ...pandals[existingIndex],
+        ...pandalData,
+      };
+      const updated = [...pandals];
+      updated[existingIndex] = updatedPandal;
       setPandals(updated);
       localStorage.setItem(STORAGE_KEYS.PANDALS, JSON.stringify(updated));
-      return resultPandal!;
+      return updatedPandal;
     } else {
       const newPandal: Pandal = {
-        id: `pandal-${Date.now()}`,
+        id: pandalData.id || `pandal-${Date.now()}`,
         name: pandalData.name || 'New Registered Pandal',
         clubName: pandalData.clubName || 'Puja Committee',
         location: pandalData.location || 'Paschim Bardhaman, West Bengal',
@@ -650,7 +649,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem(STORAGE_KEYS.TICKETS, JSON.stringify(updated));
   };
 
-  const organizerPandal = pandals.find(p => p.id === user?.clubId || p.organizerEmail === user?.email) || pandals[0] || null;
+  const organizerPandal = pandals.find(p => (user?.clubId && p.id === user.clubId) || (user?.email && p.organizerEmail === user.email)) || null;
 
   const isVoter = user?.role === 'voter';
   const isOrganizer = user?.role === 'organizer';
