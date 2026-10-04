@@ -174,6 +174,7 @@ export async function registerCommittee(input: RegisterCommitteeInput): Promise<
       slug: cleanSlug,
       ward: input.ward?.trim() || 'Ward 1',
       secretary_name: input.secretaryName?.trim() || 'Secretary',
+      phone: input.contactNumber?.trim() || '',
       contact_number: input.contactNumber?.trim() || '',
       email: input.email?.trim() || '',
       theme: input.theme?.trim() || 'Traditional Sharodotsav',
