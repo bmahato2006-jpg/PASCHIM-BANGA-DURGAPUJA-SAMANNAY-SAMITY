@@ -100,12 +100,12 @@ export const Navbar: React.FC<{
             </div>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex items-center gap-2">
+            <nav className="hidden md:flex items-center gap-1.5 lg:gap-2.5">
               <motion.button
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.92 }}
                 onClick={() => handleNavClick('feed')}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-3 lg:px-3.5 py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
                   activeTab === 'feed'
                     ? 'bg-sindoor-50 text-sindoor-600 border border-sindoor-200 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/60'
@@ -119,7 +119,7 @@ export const Navbar: React.FC<{
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.92 }}
                 onClick={() => handleNavClick('leaderboard')}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-3 lg:px-3.5 py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
                   activeTab === 'leaderboard'
                     ? 'bg-sindoor-50 text-sindoor-600 border border-sindoor-200 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/60'
@@ -133,7 +133,7 @@ export const Navbar: React.FC<{
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.92 }}
                 onClick={() => handleNavClick('my-votes')}
-                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-3 lg:px-3.5 py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
                   activeTab === 'my-votes'
                     ? 'bg-sindoor-50 text-sindoor-600 border border-sindoor-200 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/60'
@@ -148,22 +148,11 @@ export const Navbar: React.FC<{
                 )}
               </motion.button>
 
-              {/* Scan QR Button */}
-              <motion.button
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.92 }}
-                onClick={openQRScanner}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold text-gray-700 hover:text-sindoor-600 hover:bg-sindoor-50/50 transition-all border border-dashed border-marigold-300"
-              >
-                <QrCode className="w-4 h-4 text-marigold-600" />
-                <span>Scan Pandal QR</span>
-              </motion.button>
-
               {/* If Organizer: Link to Organizer Dashboard */}
               {isOrganizer && (
                 <Link
                   href="/organizer"
-                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 lg:px-3.5 py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
                     activeTab === 'organizer'
                       ? 'bg-marigold-50 text-marigold-700 border border-marigold-300 shadow-sm'
                       : 'text-gray-600 hover:text-marigold-700 hover:bg-marigold-50/50'
@@ -208,7 +197,7 @@ export const Navbar: React.FC<{
                 </div>
               ) : (
                 /* Desktop Voter CTAs: Strictly hidden on mobile screens */
-                <div className="hidden md:flex items-center gap-2">
+                <div className="hidden md:flex items-center gap-2.5 lg:gap-3">
                   {/* Distinct Organizer Login / Register Button (Desktop) */}
                   <Link
                     href="/organizer/auth"
@@ -225,7 +214,7 @@ export const Navbar: React.FC<{
                   <DhakButton
                     variant="primary"
                     onClick={openQRScanner}
-                    className="px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-md flex items-center gap-1.5"
+                    className="px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-md flex items-center gap-1.5"
                   >
                     <QrCode className="w-4 h-4 text-white" />
                     <span>Scan & Vote</span>

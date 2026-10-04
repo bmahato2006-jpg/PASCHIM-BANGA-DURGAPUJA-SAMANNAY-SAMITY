@@ -276,7 +276,7 @@ export default function HomePage() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search pandal or ward..."
-                      className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-amber-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 bg-white shadow-2xs"
+                      className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-amber-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 bg-white shadow-2xs select-text"
                     />
                   </div>
                 </div>

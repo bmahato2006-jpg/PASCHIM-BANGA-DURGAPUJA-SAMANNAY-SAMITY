@@ -303,7 +303,7 @@ export default function OrganizerSetupPage() {
                 value={committeeName}
                 onChange={(e) => setCommitteeName(e.target.value)}
                 placeholder="e.g. Bidhan Nagar Sarbojanin Durgotsav"
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 focus:ring-1 focus:ring-marigold-500 bg-white font-medium"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 focus:ring-1 focus:ring-marigold-500 bg-white font-medium select-text"
               />
             </div>
             {committeeName.trim() && (
@@ -328,7 +328,7 @@ export default function OrganizerSetupPage() {
                   value={secretaryName}
                   onChange={(e) => setSecretaryName(e.target.value)}
                   placeholder="e.g. Subir Ghosh"
-                  className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 focus:ring-1 focus:ring-marigold-500 bg-white"
+                  className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 focus:ring-1 focus:ring-marigold-500 bg-white select-text"
                 />
               </div>
             </div>
@@ -345,7 +345,7 @@ export default function OrganizerSetupPage() {
                   value={ward}
                   onChange={(e) => setWard(e.target.value)}
                   placeholder="Ward 12"
-                  className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 focus:ring-1 focus:ring-marigold-500 bg-white"
+                  className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 focus:ring-1 focus:ring-marigold-500 bg-white select-text"
                 />
               </div>
             </div>
@@ -365,7 +365,7 @@ export default function OrganizerSetupPage() {
                   value={contactNumber}
                   onChange={(e) => setContactNumber(e.target.value)}
                   placeholder="+91 98000 00000"
-                  className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 focus:ring-1 focus:ring-marigold-500 bg-white"
+                  className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 focus:ring-1 focus:ring-marigold-500 bg-white select-text"
                 />
               </div>
             </div>
@@ -381,7 +381,7 @@ export default function OrganizerSetupPage() {
                   value={theme}
                   onChange={(e) => setTheme(e.target.value)}
                   placeholder="e.g. Bengal Terracotta"
-                  className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 focus:ring-1 focus:ring-marigold-500 bg-white"
+                  className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 focus:ring-1 focus:ring-marigold-500 bg-white select-text"
                 />
               </div>
             </div>
