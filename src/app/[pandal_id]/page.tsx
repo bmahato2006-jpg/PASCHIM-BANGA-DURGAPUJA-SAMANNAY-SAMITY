@@ -217,14 +217,14 @@ export default function PandalVotingPage() {
           </Link>
 
           <div className="flex items-center gap-2 text-right min-w-0">
-            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg overflow-hidden shrink-0 ring-1 ring-amber-300/80 shadow-2xs">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 shadow-sm border border-orange-200">
               <Image
-                src="/images/durga-watermark.jpg"
-                alt="Paschim Banga DurgaPuja Samannay Samity"
-                width={28}
-                height={28}
+                src="/logo.jpg"
+                alt="PBDS Logo"
+                width={32}
+                height={32}
                 priority
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-full"
               />
             </div>
             <span className="text-[11px] sm:text-xs font-black tracking-tight text-gray-900 font-serif truncate">

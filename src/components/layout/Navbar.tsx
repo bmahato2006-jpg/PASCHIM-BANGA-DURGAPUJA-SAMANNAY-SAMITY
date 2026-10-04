@@ -61,17 +61,15 @@ export const Navbar: React.FC<{
               onClick={() => handleNavClick(isOrganizer ? 'organizer' : 'feed')}
               className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink min-w-0 max-w-[75%] sm:max-w-none touch-manipulation active:scale-95 transition-transform duration-75"
             >
-              <div className="relative w-8 h-8 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-gold-400 p-0.5 shadow-md group-hover:shadow-festive transition-all duration-300 shrink-0 overflow-hidden">
-                <div className="w-full h-full bg-white rounded-[14px] overflow-hidden flex items-center justify-center">
-                  <Image
-                    src="/images/durga-watermark.jpg"
-                    alt="Paschim Banga DurgaPuja Samannay Samity Emblem"
-                    width={44}
-                    height={44}
-                    priority
-                    className="w-full h-full object-cover rounded-[14px]"
-                  />
-                </div>
+              <div className="shrink-0 relative">
+                <Image
+                  src="/logo.jpg"
+                  alt="PBDS Logo"
+                  width={48}
+                  height={48}
+                  priority
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover shadow-sm border border-orange-200 group-hover:border-marigold-400 group-hover:shadow-md transition-all duration-300"
+                />
               </div>
 
               <div className="min-w-0">

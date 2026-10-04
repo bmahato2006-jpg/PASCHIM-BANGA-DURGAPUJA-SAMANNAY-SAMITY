@@ -161,14 +161,14 @@ export default function HomePage() {
             >
               {/* Region Pill */}
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-sindoor-50 via-marigold-50 to-amber-50 border border-marigold-300/80 shadow-xs mb-6">
-                <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 ring-1 ring-amber-300">
+                <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-orange-200 shadow-2xs">
                   <Image
-                    src="/images/durga-watermark.jpg"
-                    alt="Paschim Banga DurgaPuja Samannay Samity"
+                    src="/logo.jpg"
+                    alt="PBDS Logo"
                     width={20}
                     height={20}
                     priority
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover rounded-full"
                   />
                 </div>
                 <span className="text-xs font-black text-amber-950 tracking-wide uppercase">
