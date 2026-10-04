@@ -253,7 +253,7 @@ export const AuthModal: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="committee@durgapurpuja.org"
+                placeholder="committee@samannaysamity.org"
                 className="w-full px-4 py-3 rounded-2xl bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-marigold-400 focus:bg-white pl-10"
               />
               <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />

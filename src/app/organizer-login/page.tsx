@@ -130,7 +130,7 @@ export default function OrganizerLoginPage() {
             </div>
           </div>
           <span className="inline-block text-[10px] font-black tracking-wider uppercase text-amber-900 bg-amber-100/90 border border-amber-300 px-2.5 py-0.5 rounded-full mb-1.5">
-            Durga Puja Committee Desk
+            Paschim Banga DurgaPuja Samannay Samity Desk
           </span>
           <h1 className="text-2xl sm:text-3xl font-serif font-black text-gray-900 tracking-tight">
             Organizer <span className="festive-gradient-text">Portal</span>

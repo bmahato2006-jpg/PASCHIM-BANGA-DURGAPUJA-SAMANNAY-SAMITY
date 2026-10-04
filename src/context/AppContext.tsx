@@ -1175,9 +1175,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else {
       const newPandal: Pandal = {
         id: `pandal-${Date.now()}`,
-        name: pandalData.name || 'New Durgapur Pandal',
+        name: pandalData.name || 'New Registered Pandal',
         clubName: pandalData.clubName || 'Puja Committee',
-        location: pandalData.location || 'Durgapur, West Bengal',
+        location: pandalData.location || 'Paschim Bardhaman, West Bengal',
         ward: pandalData.ward || 'Ward 01',
         nearLandmark: pandalData.nearLandmark || 'Main Road',
         budget: pandalData.budget || '₹25 Lakhs',
@@ -1194,7 +1194,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         votes: { idol: 0, theme: 0, lighting: 0, eco: 0 },
         totalVotes: 0,
         visitsToday: 1,
-        tags: ['New Entry', 'Durgapur 2026'],
+        tags: ['New Entry', '2026'],
         isEcoFriendly: !!pandalData.isEcoFriendly,
         organizerEmail: user?.email,
       };

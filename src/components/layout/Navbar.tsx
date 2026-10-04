@@ -68,7 +68,7 @@ export const Navbar: React.FC<{
 
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
-                  <h1 className="font-serif font-black text-[13px] xs:text-sm sm:text-base md:text-lg lg:text-xl tracking-tight text-gray-900 group-hover:text-sindoor-600 transition-colors leading-[1.2]">
+                  <h1 className="font-serif font-black text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl tracking-tight text-gray-900 group-hover:text-sindoor-600 transition-colors leading-tight">
                     <span className="block sm:inline font-extrabold text-gray-900">Paschim Banga </span>
                     <span className="text-sindoor-600">DurgaPuja </span>
                     <span className="text-gray-900 group-hover:text-amber-800">Samannay Samity</span>

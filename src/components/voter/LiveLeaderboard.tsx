@@ -105,7 +105,7 @@ export const LiveLeaderboard: React.FC<{ limit?: number }> = ({ limit = 5 }) => 
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl sm:text-2xl font-serif font-black text-gray-900 tracking-tight">
-                  Durgapur Live Leaderboard
+                  Paschim Banga Live Leaderboard
                 </h2>
                 <span className="flex items-center gap-1.5 text-[11px] font-bold text-sindoor-600 bg-sindoor-50 px-2.5 py-0.5 rounded-full border border-sindoor-200">
                   <span className="w-2 h-2 rounded-full bg-sindoor-500 animate-ping" />
@@ -301,7 +301,7 @@ export const LiveLeaderboard: React.FC<{ limit?: number }> = ({ limit = 5 }) => 
                         </h3>
                         {isRankOne && (
                           <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-200 to-yellow-300 text-amber-950 border border-amber-400 shadow-2xs">
-                            👑 Durgapur Champion
+                            👑 Regional Champion
                           </span>
                         )}
                       </div>
@@ -367,7 +367,7 @@ export const LiveLeaderboard: React.FC<{ limit?: number }> = ({ limit = 5 }) => 
             Cards automatically glide into new ranks upon incoming ballots
           </span>
           <span className="font-semibold text-amber-900">
-            Durgapur Puja Committee Board 2026
+            Paschim Banga DurgaPuja Samannay Samity Board 2026
           </span>
         </div>
       </div>

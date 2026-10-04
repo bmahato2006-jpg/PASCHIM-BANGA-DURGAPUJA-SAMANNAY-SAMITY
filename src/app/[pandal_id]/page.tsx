@@ -215,10 +215,10 @@ export default function PandalVotingPage() {
             <span className="text-xs sm:text-sm font-bold tracking-tight">QR Scanner</span>
           </Link>
 
-          <div className="flex items-center gap-1.5 text-right">
-            <Flame className="w-4 h-4 text-sindoor-500 animate-pulse" />
-            <span className="text-xs font-black tracking-tight text-gray-900 font-serif">
-              Paschim Bardhaman
+          <div className="flex items-center gap-1.5 text-right min-w-0">
+            <Flame className="w-4 h-4 text-sindoor-500 animate-pulse shrink-0" />
+            <span className="text-[11px] sm:text-xs font-black tracking-tight text-gray-900 font-serif truncate">
+              Paschim Banga DurgaPuja Samannay Samity
             </span>
           </div>
         </div>

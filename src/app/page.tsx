@@ -141,13 +141,13 @@ export default function HomePage() {
               <div className="text-center max-w-xl mx-auto mb-8">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-100 to-yellow-100 border border-amber-300 text-amber-950 text-xs font-black shadow-2xs mb-3">
                   <Trophy className="w-4 h-4 text-marigold-600 animate-pulse" />
-                  <span>PASCHIM BARDHAMAN RANKINGS</span>
+                  <span>PASCHIM BANGA DURGAPUJA SAMANNAY SAMITY RANKINGS</span>
                 </div>
                 <h1 className="text-3xl sm:text-5xl font-serif font-black text-gray-900 tracking-tight">
                   Live <span className="festive-gradient-text">Leaderboard</span>
                 </h1>
                 <p className="text-sm text-gray-600 mt-2">
-                  Verified real-time tallies recorded directly via on-site pandal QR codes across Paschim Bardhaman.
+                  Verified real-time tallies recorded directly via on-site pandal QR codes across the region.
                 </p>
               </div>
 
@@ -167,7 +167,7 @@ export default function HomePage() {
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-sindoor-50 via-marigold-50 to-amber-50 border border-marigold-300/80 shadow-xs mb-6">
                 <Flame className="w-4 h-4 text-sindoor-500 animate-pulse" />
                 <span className="text-xs font-black text-amber-950 tracking-wide uppercase">
-                  Paschim Bardhaman • QR-First Voting Portal
+                  Paschim Banga DurgaPuja Samannay Samity • Official Voting
                 </span>
               </div>
 

@@ -37,7 +37,7 @@ export const VoterSupportModal: React.FC = () => {
     setTicketId(generatedId);
 
     submitSupportTicket({
-      userName: name || 'Durgapur Voter',
+      userName: name || 'Verified Regional Voter',
       userEmail: email || 'voter@durgapurpuja.org',
       contactNumber: phone || '+91 98000 00000',
       issueCategory,
@@ -157,7 +157,7 @@ export const VoterSupportModal: React.FC = () => {
                   rows={3}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Provide precise details so the Durgapur Municipal Helpdesk can assist promptly..."
+                  placeholder="Provide precise details so the Samannay Samity Helpdesk can assist promptly..."
                   className="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-sindoor-400 bg-white"
                   required
                 />
@@ -188,7 +188,7 @@ export const VoterSupportModal: React.FC = () => {
               Grievance Ticket Registered!
             </h3>
             <p className="text-xs sm:text-sm text-gray-600 mt-2 max-w-sm mx-auto">
-              Your ticket <strong className="text-gray-900">{ticketId}</strong> has been forwarded to the Durgapur Puja Monitoring Control Room.
+              Your ticket <strong className="text-gray-900">{ticketId}</strong> has been forwarded to the Paschim Banga DurgaPuja Samannay Samity Monitoring Control Room.
             </p>
             <div className="mt-5 p-3 rounded-2xl bg-gray-50 border border-gray-200 text-xs text-gray-500">
               Average response time: <strong>15 - 30 minutes</strong> via SMS/Call.

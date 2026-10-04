@@ -10,9 +10,9 @@ import { Toaster } from 'react-hot-toast';
 import { GlobalClickAnimation } from '@/components/effects/GlobalClickAnimation';
 
 export const metadata: Metadata = {
-  title: 'Paschim Banga DurgaPuja Samannay Samity - The Official Voting Platform',
+  title: 'Paschim Banga DurgaPuja Samannay Samity',
   description:
-    'Official voting and discovery platform for Paschim Banga DurgaPuja Samannay Samity pandals. Vote across Best Idol, Best Theme, Best Lighting, and Best Eco-friendly categories.',
+    'The official voting and evaluation platform for Paschim Banga DurgaPuja Samannay Samity. Verified QR-first ballots across Best Idol, Best Theme, Best Lighting, and Best Eco-friendly categories for the region.',
 };
 
 export default function RootLayout({

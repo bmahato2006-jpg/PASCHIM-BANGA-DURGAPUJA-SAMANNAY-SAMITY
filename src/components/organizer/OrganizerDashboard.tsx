@@ -191,8 +191,8 @@ export const OrganizerDashboard: React.FC = () => {
 
   // Construct official voting URL for QR code
   const officialVoteUrl = typeof window !== 'undefined' 
-    ? `${window.location.origin}/#${currentPandal.id}`
-    : `https://durgapurpuja.org/#${currentPandal.id}`;
+    ? `${window.location.origin}/${currentPandal.id}`
+    : `https://samannaysamity.org/${currentPandal.id}`;
 
   return (
     <div className="py-6 sm:py-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -235,7 +235,7 @@ export const OrganizerDashboard: React.FC = () => {
           <div className="flex items-center gap-3">
             <span className="px-3.5 py-1.5 rounded-xl bg-amber-100/80 border border-amber-300 text-xs font-black text-amber-900 flex items-center gap-1.5">
               <Award className="w-4 h-4 text-marigold-600" />
-              <span>Durgapur Rank #{cityRank}</span>
+              <span>Regional Rank #{cityRank}</span>
             </span>
           </div>
 
@@ -376,7 +376,7 @@ export const OrganizerDashboard: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-bold text-gray-700 mb-1">
-                    Location in Durgapur *
+                    Location (City / Area / Ward) *
                   </label>
                   <input
                     type="text"
@@ -600,9 +600,9 @@ export const OrganizerDashboard: React.FC = () => {
             </div>
 
             <div className="glass-panel rounded-3xl p-5 border border-amber-200/60 shadow-glass">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">City Rank</span>
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block">Regional Rank</span>
               <h3 className="text-2xl sm:text-3xl font-serif font-black text-gray-900 mt-1">
-                #{cityRank} <span className="text-xs font-normal text-gray-500">in Durgapur</span>
+                #{cityRank} <span className="text-xs font-normal text-gray-500">in Region</span>
               </h3>
               <p className="text-xs text-amber-700 font-semibold mt-1">🔥 Top 5 Finalist</p>
             </div>

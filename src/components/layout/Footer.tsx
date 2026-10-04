@@ -37,7 +37,7 @@ export const Footer: React.FC<{
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 font-bold text-gray-800">
             <Phone className="w-3.5 h-3.5 text-sindoor-600 animate-pulse" />
-            <span>24/7 Durgapur Emergency Helplines:</span>
+            <span>24/7 Regional Emergency Helplines:</span>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-gray-600 font-medium">
             <span>Police: <strong className="text-gray-900 font-bold">100 / 0343-2546200</strong></span>
@@ -56,27 +56,27 @@ export const Footer: React.FC<{
           {/* Column 1: Brand & Civic Sanction */}
           <div className="space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-amber-400 text-white flex items-center justify-center shadow-md">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-amber-400 text-white flex items-center justify-center shadow-md shrink-0">
                 <Flame className="w-6 h-6 animate-pulse-subtle" />
               </div>
               <div>
-                <span className="font-serif font-black text-xl text-gray-900 block leading-tight">
-                  Durgapur<span className="text-sindoor-500">Puja</span> 2026
+                <span className="font-serif font-black text-base sm:text-lg text-gray-900 block leading-tight">
+                  Paschim Banga <span className="text-sindoor-600">DurgaPuja</span> Samannay Samity
                 </span>
-                <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">
-                  Official Durga Puja Portal
+                <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider block mt-0.5">
+                  The Official Voting Platform
                 </span>
               </div>
             </div>
 
             <p className="text-xs text-gray-600 leading-relaxed">
-              The centralized digital voting, live leaderboard, and discovery platform for Durga Puja in the Steel City. Honoring artistry, heritage, and eco-friendly craftsmanship.
+              The centralized digital voting, live leaderboard, and discovery platform for Paschim Banga DurgaPuja Samannay Samity across the region. Honoring artistry, heritage, and eco-friendly craftsmanship.
             </p>
 
             <div className="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-900 flex items-start gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <span className="text-[11px] leading-snug">
-                Civic accreditation by <strong>Durgapur Municipal Corporation (DMC)</strong> & <strong>Asansol-Durgapur Police Commissionerate</strong>.
+                Civic accreditation & safety coordination across Paschim Bardhaman & West Bengal.
               </span>
             </div>
           </div>
@@ -208,13 +208,13 @@ export const Footer: React.FC<{
         {/* Bottom Copyright & Bengali Blessing */}
         <div className="mt-12 pt-6 border-t border-amber-200/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
           <p className="text-center sm:text-left">
-            © 2026 Durgapur Durga Puja Committee. All rights reserved. 
+            © 2026 Paschim Banga DurgaPuja Samannay Samity. All rights reserved. 
             <span className="text-amber-800 font-semibold block sm:inline sm:ml-2">
               শারদোৎসবের আন্তরিক প্রীতি ও শুভেচ্ছা
             </span>
           </p>
           <div className="flex items-center gap-4 text-[11px] font-medium text-gray-400">
-            <span>DMC Ward 01 - 43</span>
+            <span>Paschim Bardhaman Region</span>
             <span>•</span>
             <span>Verified PWA Engine</span>
             <span>•</span>

@@ -127,7 +127,7 @@ export const MyVotesView: React.FC<MyVotesViewProps> = ({
           My Voting Ballot & <span className="festive-gradient-text">Honored Pandals</span>
         </h1>
         <p className="text-sm sm:text-base text-gray-600 mt-2 max-w-xl mx-auto">
-          Here is your permanent voting ledger for Durgapur Durga Puja 2026.
+          Here is your permanent voting ledger for Paschim Banga DurgaPuja Samannay Samity 2026.
         </p>
 
         {/* Live Metrics Row */}
@@ -169,7 +169,7 @@ export const MyVotesView: React.FC<MyVotesViewProps> = ({
             No Votes Recorded Yet
           </h3>
           <p className="text-xs sm:text-sm text-gray-600 mt-2 max-w-md mx-auto leading-relaxed">
-            You haven’t cast your ballot for any pandal yet. Explore Durgapur’s grandest puja pavilions and vote across Idol, Theme, Lighting, and Eco-friendly criteria!
+            You haven’t cast your ballot for any pandal yet. Scan official QR codes across the region’s grandest puja pavilions and vote across Idol, Theme, Lighting, and Eco-friendly criteria!
           </p>
           <div className="mt-8 flex justify-center">
             <DhakButton
