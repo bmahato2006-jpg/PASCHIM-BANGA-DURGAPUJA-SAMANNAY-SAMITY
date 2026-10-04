@@ -58,7 +58,7 @@ export const Navbar: React.FC<{
             {/* Logo & Brand */}
             <div 
               onClick={() => handleNavClick(isOrganizer ? 'organizer' : 'feed')}
-              className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink min-w-0"
+              className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink min-w-0"
             >
               <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-gold-400 p-0.5 shadow-md group-hover:shadow-festive transition-all duration-300 shrink-0">
                 <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
@@ -67,17 +67,22 @@ export const Navbar: React.FC<{
               </div>
 
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
-                  <h1 className="font-serif font-black text-sm xs:text-base sm:text-lg md:text-xl lg:text-2xl tracking-tight text-gray-900 group-hover:text-sindoor-600 transition-colors leading-tight">
-                    <span className="block sm:inline font-extrabold text-gray-900">Paschim Banga </span>
-                    <span className="text-sindoor-600">DurgaPuja </span>
-                    <span className="text-gray-900 group-hover:text-amber-800">Samannay Samity</span>
+                <div className="flex items-center gap-1.5">
+                  <h1 className="font-serif font-black text-lg md:text-xl lg:text-2xl tracking-tight text-gray-900 group-hover:text-sindoor-600 transition-colors leading-tight">
+                    <span className="md:hidden">
+                      PBDS <span className="text-sindoor-600">Samity</span>
+                    </span>
+                    <span className="hidden md:inline">
+                      <span className="font-extrabold text-gray-900">Paschim Banga </span>
+                      <span className="text-sindoor-600">DurgaPuja </span>
+                      <span className="text-gray-900 group-hover:text-amber-800">Samannay Samity</span>
+                    </span>
                   </h1>
                   <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-marigold-100 text-marigold-800 border border-marigold-300 shrink-0">
                     2026
                   </span>
                 </div>
-                <p className="text-[9px] sm:text-xs text-amber-800 font-medium tracking-wide truncate mt-0.5">
+                <p className="text-[10px] sm:text-xs text-amber-800 font-medium tracking-wide truncate mt-0.5">
                   {isOrganizer ? 'Organizer Portal Desk' : 'The Official Voting Platform'}
                 </p>
               </div>
@@ -178,9 +183,9 @@ export const Navbar: React.FC<{
             {/* Right Action Area */}
             <div className="flex items-center gap-2.5">
               
-              {/* If Organizer: Show Profile & Sign Out. If Voter: Show Device Verified Status & Scan & Vote CTA */}
+              {/* Desktop Only Actions: Hidden on Mobile */}
               {isOrganizer && user ? (
-                <div className="flex items-center gap-2">
+                <div className="hidden md:flex items-center gap-2">
                   <div className="hidden sm:flex flex-col text-right">
                     <span className="text-xs font-bold text-gray-900 leading-tight">
                       {user.name.split(' ')[0]}
@@ -205,13 +210,14 @@ export const Navbar: React.FC<{
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
+                /* Desktop Voter CTAs: Strictly hidden on mobile screens */
+                <div className="hidden md:flex items-center gap-2">
                   <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-bold shadow-2xs">
                     <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>One Device • One Vote</span>
                   </div>
 
-                  {/* Distinct Organizer Portal Entry Button */}
+                  {/* Distinct Organizer Portal Entry Button (Desktop) */}
                   <motion.button
                     whileHover={{ scale: 1.04 }}
                     whileTap={{ scale: 0.92 }}
@@ -220,11 +226,10 @@ export const Navbar: React.FC<{
                     title="Pandal Organizer Access & Management Portal"
                   >
                     <Building2 className="w-4 h-4 text-marigold-600 shrink-0" />
-                    <span className="hidden sm:inline">Organizer Portal</span>
-                    <span className="sm:hidden">Organizer</span>
+                    <span>Organizer Portal</span>
                   </motion.button>
 
-                  {/* Primary CTA: Scan & Vote */}
+                  {/* Primary CTA: Scan & Vote (Desktop) */}
                   <DhakButton
                     variant="primary"
                     onClick={openQRScanner}
@@ -236,10 +241,11 @@ export const Navbar: React.FC<{
                 </div>
               )}
 
-              {/* Mobile Menu Hamburger */}
+              {/* Mobile Menu Hamburger (ONLY button visible on mobile right side) */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 rounded-xl text-gray-700 hover:bg-amber-50 focus:outline-none"
+                className="md:hidden p-2 rounded-xl text-gray-700 hover:bg-amber-50 focus:outline-none shrink-0"
+                aria-label="Toggle Menu"
               >
                 {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
@@ -310,15 +316,27 @@ export const Navbar: React.FC<{
               )}
 
               {isOrganizer && (
-                <button
-                  onClick={() => handleNavClick('organizer')}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm ${
-                    activeTab === 'organizer' ? 'bg-marigold-50 text-marigold-700' : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <LayoutDashboard className="w-5 h-5 text-marigold-600" />
-                  <span>Organizer Dashboard & Profile</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => handleNavClick('organizer')}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm ${
+                      activeTab === 'organizer' ? 'bg-marigold-50 text-marigold-700' : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <LayoutDashboard className="w-5 h-5 text-marigold-600" />
+                    <span>Organizer Dashboard & Profile</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut className="w-5 h-5 text-red-500" />
+                    <span>Sign Out (Organizer Mode)</span>
+                  </button>
+                </>
               )}
 
 
