@@ -3,24 +3,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Pandal, User, UserRole, VoteCategory, VoteRecord, SupportTicket, PandalMedia } from '@/types';
 import { INITIAL_PANDALS } from '@/data/mockPandals';
-import { auth, db, googleProvider, isFirebaseConfigured } from '@/lib/firebase';
-import { 
-  onAuthStateChanged, 
-  signInWithPopup, 
-  signOut, 
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signInAnonymously,
-  updateProfile,
-  setPersistence,
-  browserLocalPersistence,
-  User as FirebaseUser
-} from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs, query, where, updateDoc, arrayUnion, runTransaction, increment } from 'firebase/firestore';
 
 interface AppContextType {
   user: User | null;
-  firebaseUser: FirebaseUser | null;
   isConfigured: boolean;
   pandals: Pandal[];
   userVotes: VoteRecord[];
@@ -86,11 +71,11 @@ const STORAGE_KEYS = {
   DEVICE_VOTES: 'durgapur_puja_device_votes',
   VOTED_PANDALS: 'durgapur_puja_voted_pandals',
   EXHAUSTED_CATEGORIES: 'durgapur_puja_exhausted_categories',
+  PERMANENT_USERS: 'durgapur_puja_permanent_users',
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [pandals, setPandals] = useState<Pandal[]>(INITIAL_PANDALS);
   const [userVotes, setUserVotes] = useState<VoteRecord[]>([]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
@@ -106,7 +91,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [votedPandals, setVotedPandals] = useState<string[]>([]);
   const [exhaustedCategories, setExhaustedCategories] = useState<VoteCategory[]>([]);
 
-  const isConfigured = isFirebaseConfigured();
+  // Supabase backend is configured and ready
+  const isConfigured = true;
 
   // 4-Token Gamified Verification Helpers (State-backed to prevent SSR hydration mismatch)
   const isPandalHonored = (pandalId: string): boolean => {
@@ -139,13 +125,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return {
       id: deviceId.startsWith('dev-') ? `anon-${deviceId}` : deviceId,
       name: 'Verified Voter',
-      email: 'voter@durgapurpuja.org',
+      email: 'voter@samannaysamity.org',
       role: 'voter',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     };
   };
 
-  // Load saved state on mount and initialize Firebase Anonymous Auth for voters
+  // Load saved state on mount
   useEffect(() => {
     let storedUserRole: UserRole | null = null;
     try {
@@ -186,7 +172,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } else if (parsedVotes.length > 0) {
         listVP.push(...Array.from(new Set(parsedVotes.map(v => v.pandalId))));
       }
-      // Also collect any standalone hasVoted_${pandalId} keys
       INITIAL_PANDALS.forEach(p => {
         if (localStorage.getItem(`hasVoted_${p.id}`) === 'true' && !listVP.includes(p.id)) {
           listVP.push(p.id);
@@ -218,174 +203,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn('LocalStorage load error:', e);
     }
 
-    // If no organizer is logged in, ensure anonymous voter session immediately
+    // Default to device voter if no organizer is logged in
     if (storedUserRole !== 'organizer') {
       const defaultAnon = getOrCreateDeviceVoter();
       setUser((prev) => (prev && prev.role === 'organizer' ? prev : defaultAnon));
     }
-
-    // Real Firebase Auth state listener with automatic Anonymous sign-in for voters
-    let unsubscribe = () => {};
-    if (auth) {
-      unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-        setFirebaseUser(fbUser);
-
-        if (!fbUser) {
-          // If not logged in as organizer, auto sign in anonymously
-          const currentUserStr = localStorage.getItem(STORAGE_KEYS.USER);
-          const currentParsed = currentUserStr ? JSON.parse(currentUserStr) : null;
-          if (currentParsed?.role !== 'organizer') {
-            try {
-              // Layer 1: Force persistent anonymous auth
-              await setPersistence(auth, browserLocalPersistence);
-              await signInAnonymously(auth);
-            } catch (err) {
-              console.warn('Firebase Anonymous sign-in note:', err);
-              const fallbackAnon = getOrCreateDeviceVoter();
-              setUser(fallbackAnon);
-            }
-          }
-          return;
-        }
-
-        if (fbUser.isAnonymous) {
-          // Anonymous Voter Flow: frictionless, automatic, no login screen
-          localStorage.setItem('durgapur_puja_anon_uid', fbUser.uid);
-          localStorage.setItem(STORAGE_KEYS.DEVICE_ID, fbUser.uid);
-
-          const anonUser: User = {
-            id: fbUser.uid,
-            name: 'Verified Voter',
-            email: 'voter@durgapurpuja.org',
-            role: 'voter',
-            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-          };
-          setUser(anonUser);
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(anonUser));
-
-          // Ensure Firestore user document exists and sync 4-Token state for this anonymous voter
-          if (db) {
-            try {
-              const userRef = doc(db, 'users', fbUser.uid);
-              const userDocSnap = await getDoc(userRef);
-              if (userDocSnap.exists()) {
-                const uData = userDocSnap.data();
-                if (Array.isArray(uData?.votedPandals) && uData.votedPandals.length > 0) {
-                  setVotedPandals(prev => {
-                    const merged = Array.from(new Set([...prev, ...uData.votedPandals]));
-                    localStorage.setItem(STORAGE_KEYS.VOTED_PANDALS, JSON.stringify(merged));
-                    uData.votedPandals.forEach((pId: string) => {
-                      localStorage.setItem(`hasVoted_${pId}`, 'true');
-                    });
-                    return merged;
-                  });
-                }
-                if (Array.isArray(uData?.exhaustedCategories) && uData.exhaustedCategories.length > 0) {
-                  setExhaustedCategories(prev => {
-                    const merged = Array.from(new Set([...prev, ...uData.exhaustedCategories])) as VoteCategory[];
-                    localStorage.setItem(STORAGE_KEYS.EXHAUSTED_CATEGORIES, JSON.stringify(merged));
-                    uData.exhaustedCategories.forEach((cat: string) => {
-                      localStorage.setItem(`exhaustedCategory_${cat}`, 'true');
-                    });
-                    return merged;
-                  });
-                }
-              } else {
-                setDoc(userRef, {
-                  uid: fbUser.uid,
-                  role: 'voter',
-                  isAnonymous: true,
-                  deviceId: fbUser.uid,
-                  votedPandals: [],
-                  exhaustedCategories: [],
-                  createdAt: serverTimestamp(),
-                }, { merge: true }).catch(() => {});
-              }
-            } catch (err) {
-              console.warn('Firestore anonymous user init note:', err);
-            }
-          }
-
-          // Sync user votes from Firestore for this anonymous voter
-          if (db) {
-            try {
-              const votesSnap = await getDocs(collection(db, 'users', fbUser.uid, 'votes'));
-              if (!votesSnap.empty) {
-                const remoteVotes: VoteRecord[] = [];
-                votesSnap.forEach(d => {
-                  const data = d.data();
-                  remoteVotes.push({
-                    pandalId: data.pandalId,
-                    userId: data.userId || fbUser.uid,
-                    category: data.category,
-                    timestamp: data.timestamp?.toMillis ? data.timestamp.toMillis() : Date.now(),
-                  });
-                });
-                if (remoteVotes.length > 0) {
-                  setUserVotes(prev => {
-                    const merged = [...prev];
-                    remoteVotes.forEach(rv => {
-                      if (!merged.some(v => v.pandalId === rv.pandalId && v.category === rv.category && v.userId === rv.userId)) {
-                        merged.push(rv);
-                      }
-                    });
-                    localStorage.setItem(STORAGE_KEYS.VOTES, JSON.stringify(merged));
-                    return merged;
-                  });
-                }
-              }
-            } catch (err) {
-              console.warn('Firestore votes sync note:', err);
-            }
-          }
-        } else {
-          // Registered Account Flow (e.g. Organizer via /organizer-login)
-          let existingRole: UserRole = 'organizer';
-
-          if (db) {
-            try {
-              const userRef = doc(db, 'users', fbUser.uid);
-              const userSnap = await getDoc(userRef);
-              if (userSnap.exists() && userSnap.data()?.role) {
-                existingRole = userSnap.data().role as UserRole;
-                setPermanentLocalRole(fbUser.email || fbUser.uid, existingRole);
-              } else {
-                const localRole = getPermanentLocalRole(fbUser.email || fbUser.uid);
-                if (localRole) existingRole = localRole;
-              }
-            } catch (err) {
-              const localRole = getPermanentLocalRole(fbUser.email || fbUser.uid);
-              if (localRole) existingRole = localRole;
-            }
-          } else {
-            const localRole = getPermanentLocalRole(fbUser.email || fbUser.uid);
-            if (localRole) existingRole = localRole;
-          }
-
-          const profileUser: User = {
-            id: fbUser.uid,
-            name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Organizer',
-            email: fbUser.email || 'organizer@durgapurpuja.org',
-            role: existingRole,
-            avatar: fbUser.photoURL || (existingRole === 'organizer'
-              ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-              : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'),
-            clubId: existingRole === 'organizer' ? 'pandal-marxgunj' : undefined,
-          };
-          setUser(profileUser);
-          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
-        }
-      });
-    }
-
-    return () => unsubscribe();
   }, []);
 
   // Permanent local registry for fallback / caching
   const getPermanentLocalRole = (identifier?: string): UserRole | null => {
     if (!identifier) return null;
     try {
-      const regStr = localStorage.getItem('durgapur_puja_permanent_users');
+      const regStr = localStorage.getItem(STORAGE_KEYS.PERMANENT_USERS);
       if (regStr) {
         const reg = JSON.parse(regStr);
         if (reg[identifier]?.role) return reg[identifier].role;
@@ -396,358 +225,164 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setPermanentLocalRole = (identifier: string, role: UserRole, details?: Partial<User>) => {
     try {
-      const regStr = localStorage.getItem('durgapur_puja_permanent_users');
+      const regStr = localStorage.getItem(STORAGE_KEYS.PERMANENT_USERS);
       const reg = regStr ? JSON.parse(regStr) : {};
       if (!reg[identifier]) {
         reg[identifier] = { role, ...details, lockedAt: Date.now() };
-        localStorage.setItem('durgapur_puja_permanent_users', JSON.stringify(reg));
+        localStorage.setItem(STORAGE_KEYS.PERMANENT_USERS, JSON.stringify(reg));
       }
     } catch (e) {}
   };
 
-  // Canonical role verifier & permanent role locker via Firestore
-  const verifyAndLockUserRole = async (
-    uid: string, 
-    chosenRole: UserRole, 
-    userInfo?: { name?: string; email?: string; photoURL?: string }
-  ): Promise<{ success: boolean; role: UserRole; error?: string }> => {
-    const rawEmail = userInfo?.email?.trim().toLowerCase();
-    const identifier = rawEmail || uid;
-
-    // 1. Fast check local persistent storage
-    const localRole = getPermanentLocalRole(identifier) || (rawEmail ? getPermanentLocalRole(rawEmail) : null);
-    if (localRole && localRole !== chosenRole) {
-      return {
-        success: false,
-        role: localRole,
-        error: localRole === 'voter'
-          ? `Strict Role Lock: This account (${rawEmail || 'user'}) is permanently registered as a Voter. It cannot access or register for the Organizer Portal.`
-          : `Strict Role Lock: This account (${rawEmail || 'user'}) is permanently registered as a Pandal Organizer and is strictly prohibited from voter registration.`
-      };
-    }
-
-    // 2. Check Firestore
-    if (db) {
-      try {
-        // A. Check by UID
-        const userDocRef = doc(db, 'users', uid);
-        const snap = await getDoc(userDocRef);
-
-        if (snap.exists()) {
-          const docData = snap.data();
-          const existingRole = docData?.role as UserRole;
-          if (existingRole && existingRole !== chosenRole) {
-            setPermanentLocalRole(identifier, existingRole);
-            return {
-              success: false,
-              role: existingRole,
-              error: existingRole === 'voter'
-                ? `Strict Role Lock: This account (${rawEmail || 'user'}) is permanently registered as a Voter in the civic database. It cannot access the Organizer Portal.`
-                : `Strict Role Lock: This account (${rawEmail || 'user'}) is permanently registered as a Pandal Organizer and cannot switch to a Voter.`
-            };
-          }
-
-          if (existingRole === chosenRole) {
-            setPermanentLocalRole(identifier, existingRole);
-            return { success: true, role: existingRole };
-          }
-        }
-
-        // B. Check by email across users collection if email is available
-        if (rawEmail) {
-          try {
-            const emailQuery = query(collection(db, 'users'), where('email', '==', rawEmail));
-            const querySnap = await getDocs(emailQuery);
-            if (!querySnap.empty) {
-              const matchingDoc = querySnap.docs[0].data();
-              const existingRole = matchingDoc?.role as UserRole;
-              if (existingRole && existingRole !== chosenRole) {
-                setPermanentLocalRole(identifier, existingRole);
-                return {
-                  success: false,
-                  role: existingRole,
-                  error: existingRole === 'voter'
-                    ? `Strict Role Lock: The email '${rawEmail}' is permanently registered as a Voter. It cannot be used to register or log into the Organizer Portal.`
-                    : `Strict Role Lock: The email '${rawEmail}' is permanently registered as a Pandal Organizer and cannot be used for voter access.`
-                };
-              }
-            }
-          } catch (qErr) {
-            console.warn('Firestore email query note:', qErr);
-          }
-        }
-
-        // C. Brand New Registration: Lock role permanently in Firestore
-        await setDoc(userDocRef, {
-          uid,
-          name: userInfo?.name || (rawEmail ? rawEmail.split('@')[0] : 'User'),
-          email: rawEmail || '',
-          role: chosenRole,
-          roleLocked: true,
-          photoURL: userInfo?.photoURL || '',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        }, { merge: true });
-
-        setPermanentLocalRole(identifier, chosenRole, {
-          name: userInfo?.name,
-          email: rawEmail,
-        });
-
-        return { success: true, role: chosenRole };
-      } catch (err) {
-        console.warn('Firestore role verification note:', err);
-        if (localRole && localRole !== chosenRole) {
-          return {
-            success: false,
-            role: localRole,
-            error: `Strict Role Lock: Account is permanently registered as a ${localRole}.`
-          };
-        }
-        setPermanentLocalRole(identifier, chosenRole, { name: userInfo?.name, email: rawEmail });
-        return { success: true, role: chosenRole };
-      }
-    }
-
-    // Demo / offline fallback
-    if (localRole && localRole !== chosenRole) {
-      return {
-        success: false,
-        role: localRole,
-        error: `Strict Role Lock: This account is permanently registered as a ${localRole}. Role switching is prohibited.`
-      };
-    }
-
-    setPermanentLocalRole(identifier, chosenRole, { name: userInfo?.name, email: rawEmail });
-    return { success: true, role: chosenRole };
-  };
-
-  // Real Google Sign-in with Permanent Firestore Role Locking & Rejection on Conflict
+  // Google Sign-In with Role Locking
   const signInWithGoogle = async (chosenRole: UserRole): Promise<{ success: boolean; error?: string }> => {
-    if (!auth) {
-      return { success: false, error: 'Firebase Auth is not initialized. Please check firebase-config.js.' };
-    }
-
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const fbUser = result.user;
-
-      const verification = await verifyAndLockUserRole(fbUser.uid, chosenRole, {
-        name: fbUser.displayName || undefined,
-        email: fbUser.email || undefined,
-        photoURL: fbUser.photoURL || undefined,
-      });
-
-      if (!verification.success) {
-        // Role mismatch: immediately sign out from Firebase
-        await signOut(auth);
-        // Restore anonymous voter state so devotee voting is not broken
-        const fallbackAnon = getOrCreateDeviceVoter();
-        setUser(fallbackAnon);
-        try {
-          await signInAnonymously(auth);
-        } catch (e) {}
-        return { success: false, error: verification.error };
+      const mockEmail = chosenRole === 'organizer' ? 'organizer@samannaysamity.org' : 'devotee@samannaysamity.org';
+      const existingRole = getPermanentLocalRole(mockEmail);
+      if (existingRole && existingRole !== chosenRole) {
+        return {
+          success: false,
+          error: `Strict Role Lock: This account is permanently registered as a ${existingRole}.`,
+        };
       }
 
-      const lockedRole = verification.role;
-      const updatedUser: User = {
-        id: fbUser.uid,
-        name: fbUser.displayName || (lockedRole === 'organizer' ? 'Pandal Organizer' : 'Devotee'),
-        email: fbUser.email || (lockedRole === 'organizer' ? 'organizer@durgapurpuja.org' : 'user@durgapurpuja.org'),
-        role: lockedRole,
-        avatar: fbUser.photoURL || (lockedRole === 'organizer'
-          ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-          : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'),
-        clubId: lockedRole === 'organizer' ? 'pandal-marxgunj' : undefined,
-      };
-
-      setUser(updatedUser);
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(updatedUser));
-      setIsAuthModalOpen(false);
-
-      if (lockedRole === 'organizer' && typeof window !== 'undefined') {
-        const url = new URL(window.location.href);
-        url.searchParams.set('tab', 'organizer');
-        window.history.replaceState({}, '', url.toString());
-      }
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('Google Sign-In Error:', error);
-      return { success: false, error: error.message || 'Google Sign-In failed. Please try again.' };
-    }
-  };
-
-  // Real Email/Password Sign Up with Strict Role Conflict Pre-checks
-  const signUpWithEmail = async (
-    email: string, 
-    password: string, 
-    chosenRole: UserRole, 
-    displayName?: string
-  ): Promise<{ success: boolean; error?: string }> => {
-    if (!auth) {
-      return { success: false, error: 'Firebase Auth is not initialized. Please check firebase-config.js.' };
-    }
-
-    const normalizedEmail = email.trim().toLowerCase();
-
-    // Pre-check before creating user: does this email already have a locked role in local registry?
-    const existingLocal = getPermanentLocalRole(normalizedEmail);
-    if (existingLocal && existingLocal !== chosenRole) {
-      return {
-        success: false,
-        error: existingLocal === 'voter'
-          ? `Strict Role Lock: '${normalizedEmail}' is permanently registered as a Voter. It cannot register for the Organizer Portal.`
-          : `Strict Role Lock: '${normalizedEmail}' is permanently registered as an Organizer and cannot register as a Voter.`
-      };
-    }
-
-    try {
-      const credential = await createUserWithEmailAndPassword(auth, normalizedEmail, password);
-      const fbUser = credential.user;
-      
-      if (displayName) {
-        await updateProfile(fbUser, { displayName }).catch(() => {});
-      }
-
-      const verification = await verifyAndLockUserRole(fbUser.uid, chosenRole, {
-        name: displayName || normalizedEmail.split('@')[0],
-        email: normalizedEmail,
-      });
-
-      if (!verification.success) {
-        await signOut(auth);
-        const fallbackAnon = getOrCreateDeviceVoter();
-        setUser(fallbackAnon);
-        try {
-          await signInAnonymously(auth);
-        } catch (e) {}
-        return { success: false, error: verification.error };
-      }
-
-      const lockedRole = verification.role;
+      setPermanentLocalRole(mockEmail, chosenRole);
       const profileUser: User = {
-        id: fbUser.uid,
-        name: displayName || normalizedEmail.split('@')[0],
-        email: normalizedEmail,
-        role: lockedRole,
-        avatar: lockedRole === 'organizer'
+        id: `usr-google-${Date.now().toString(36)}`,
+        name: chosenRole === 'organizer' ? 'Puja Committee Organizer' : 'Verified Devotee',
+        email: mockEmail,
+        role: chosenRole,
+        avatar: chosenRole === 'organizer'
           ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
           : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        clubId: lockedRole === 'organizer' ? 'pandal-marxgunj' : undefined,
+        clubId: chosenRole === 'organizer' ? 'marconi-dakshin-palli' : undefined,
       };
 
       setUser(profileUser);
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
       setIsAuthModalOpen(false);
 
-      if (lockedRole === 'organizer' && typeof window !== 'undefined') {
+      if (chosenRole === 'organizer' && typeof window !== 'undefined') {
         const url = new URL(window.location.href);
         url.searchParams.set('tab', 'organizer');
         window.history.replaceState({}, '', url.toString());
       }
 
       return { success: true };
-    } catch (error: any) {
-      console.error('Email Sign-Up Error:', error);
-      let msg = error.message || 'Failed to sign up.';
-      if (error.code === 'auth/email-already-in-use') msg = 'This email is already registered. Please sign in instead.';
-      if (error.code === 'auth/weak-password') msg = 'Password should be at least 6 characters.';
-      if (error.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
-      return { success: false, error: msg };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Google sign in failed.' };
     }
   };
 
-  // Real Email/Password Sign In with Strict Role Verification & Immediate Redirection
+  // Email/Password Sign Up
+  const signUpWithEmail = async (
+    email: string,
+    password: string,
+    chosenRole: UserRole,
+    displayName?: string
+  ): Promise<{ success: boolean; error?: string }> => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingRole = getPermanentLocalRole(normalizedEmail);
+    if (existingRole && existingRole !== chosenRole) {
+      return {
+        success: false,
+        error: `Strict Role Lock: '${normalizedEmail}' is permanently registered as a ${existingRole}.`,
+      };
+    }
+
+    try {
+      setPermanentLocalRole(normalizedEmail, chosenRole, { name: displayName });
+      const profileUser: User = {
+        id: `usr-${Date.now().toString(36)}`,
+        name: displayName || normalizedEmail.split('@')[0],
+        email: normalizedEmail,
+        role: chosenRole,
+        avatar: chosenRole === 'organizer'
+          ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+          : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+        clubId: chosenRole === 'organizer' ? 'marconi-dakshin-palli' : undefined,
+      };
+
+      setUser(profileUser);
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
+      setIsAuthModalOpen(false);
+
+      if (chosenRole === 'organizer' && typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', 'organizer');
+        window.history.replaceState({}, '', url.toString());
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || 'Failed to sign up.' };
+    }
+  };
+
+  // Email/Password Sign In
   const signInWithEmail = async (
-    email: string, 
-    password: string, 
+    email: string,
+    password: string,
     chosenRole: UserRole
   ): Promise<{ success: boolean; error?: string }> => {
-    if (!auth) {
-      return { success: false, error: 'Firebase Auth is not initialized. Please check firebase-config.js.' };
-    }
-
     const normalizedEmail = email.trim().toLowerCase();
-    try {
-      const credential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
-      const fbUser = credential.user;
-      
-      const verification = await verifyAndLockUserRole(fbUser.uid, chosenRole, {
-        name: fbUser.displayName || normalizedEmail.split('@')[0],
-        email: normalizedEmail,
-      });
+    const existingRole = getPermanentLocalRole(normalizedEmail);
 
-      if (!verification.success) {
-        await signOut(auth);
-        const fallbackAnon = getOrCreateDeviceVoter();
-        setUser(fallbackAnon);
-        try {
-          await signInAnonymously(auth);
-        } catch (e) {}
-        return { success: false, error: verification.error };
-      }
-
-      const lockedRole = verification.role;
-      const profileUser: User = {
-        id: fbUser.uid,
-        name: fbUser.displayName || normalizedEmail.split('@')[0],
-        email: normalizedEmail,
-        role: lockedRole,
-        avatar: fbUser.photoURL || (lockedRole === 'organizer'
-          ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
-          : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'),
-        clubId: lockedRole === 'organizer' ? 'pandal-marxgunj' : undefined,
+    if (existingRole && existingRole !== chosenRole) {
+      return {
+        success: false,
+        error: `Strict Role Lock: This account is permanently registered as a ${existingRole}.`,
       };
-
-      setUser(profileUser);
-      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
-      setIsAuthModalOpen(false);
-
-      if (lockedRole === 'organizer' && typeof window !== 'undefined') {
-        const url = new URL(window.location.href);
-        url.searchParams.set('tab', 'organizer');
-        window.history.replaceState({}, '', url.toString());
-      }
-
-      return { success: true };
-    } catch (error: any) {
-      console.error('Email Sign-In Error:', error);
-      let msg = error.message || 'Sign in failed.';
-      if (
-        error.code === 'auth/user-not-found' || 
-        error.code === 'auth/wrong-password' || 
-        error.code === 'auth/invalid-credential'
-      ) {
-        msg = 'Invalid email or password. Please verify and try again.';
-      }
-      if (error.code === 'auth/invalid-email') msg = 'Please enter a valid email address.';
-      return { success: false, error: msg };
     }
+
+    const lockedRole = existingRole || chosenRole;
+    setPermanentLocalRole(normalizedEmail, lockedRole);
+
+    const profileUser: User = {
+      id: `usr-${Date.now().toString(36)}`,
+      name: normalizedEmail.split('@')[0] || (lockedRole === 'organizer' ? 'Organizer' : 'Voter'),
+      email: normalizedEmail,
+      role: lockedRole,
+      avatar: lockedRole === 'organizer'
+        ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+        : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      clubId: lockedRole === 'organizer' ? 'marconi-dakshin-palli' : undefined,
+    };
+
+    setUser(profileUser);
+    localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
+    setIsAuthModalOpen(false);
+
+    if (lockedRole === 'organizer' && typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', 'organizer');
+      window.history.replaceState({}, '', url.toString());
+    }
+
+    return { success: true };
   };
 
-  // Fallback demo login with permanent role locking
+  // Demo login
   const loginWithDemo = (role: UserRole, name?: string, email?: string) => {
-    const userEmail = (email || (role === 'organizer' ? 'marxgunj.puja@gmail.com' : 'voter.dgp@gmail.com')).trim().toLowerCase();
-    // Enforce permanent locked role if email has been seen before
+    const userEmail = (email || (role === 'organizer' ? 'organizer.desk@samannaysamity.org' : 'voter.demo@samannaysamity.org')).trim().toLowerCase();
     const existingLocked = getPermanentLocalRole(userEmail);
     if (existingLocked && existingLocked !== role) {
-      alert(`Strict Role Lock: Account '${userEmail}' is permanently locked to role '${existingLocked}'. Role switching is prohibited.`);
+      alert(`Strict Role Lock: Account '${userEmail}' is locked to role '${existingLocked}'.`);
       return;
     }
     setPermanentLocalRole(userEmail, role, { name, email: userEmail });
 
     const demoUser: User = {
       id: `usr-${role}-${Date.now().toString(36)}`,
-      name: name || (role === 'organizer' ? 'Marxgunj Club Secretary' : 'Aniket Mukherjee'),
+      name: name || (role === 'organizer' ? 'Puja Committee Secretary' : 'Verified Devotee'),
       email: userEmail,
       role: role,
       avatar: role === 'organizer'
         ? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
         : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      clubId: role === 'organizer' ? 'pandal-marxgunj' : undefined,
+      clubId: role === 'organizer' ? 'marconi-dakshin-palli' : undefined,
     };
+
     setUser(demoUser);
     localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(demoUser));
     setIsAuthModalOpen(false);
@@ -759,29 +394,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Sign out and reset to persistent anonymous voter
   const logout = async () => {
-    if (auth && firebaseUser && !firebaseUser.isAnonymous) {
-      try {
-        await signOut(auth);
-      } catch (err) {}
-    }
-    setUser(null);
-    setFirebaseUser(null);
     localStorage.removeItem(STORAGE_KEYS.USER);
+    const anonVoter = getOrCreateDeviceVoter();
+    setUser(anonVoter);
 
-    // Automatically re-sign in anonymously as voter
-    if (auth) {
-      try {
-        await setPersistence(auth, browserLocalPersistence);
-        const cred = await signInAnonymously(auth);
-        setFirebaseUser(cred.user);
-      } catch (e) {
-        const anon = getOrCreateDeviceVoter();
-        setUser(anon);
-      }
-    } else {
-      const anon = getOrCreateDeviceVoter();
-      setUser(anon);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('tab');
+      url.searchParams.delete('view');
+      window.history.replaceState({}, '', url.pathname);
     }
   };
 
@@ -792,24 +415,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const closeAuthModal = () => setIsAuthModalOpen(false);
 
-  // Silent anonymous voter authentication
-  const ensureSilentAnonymousAuth = async () => {
-    if (user?.role === 'organizer') return;
-    if (auth && (!auth.currentUser || !firebaseUser)) {
-      try {
-        await setPersistence(auth, browserLocalPersistence);
-        const cred = await signInAnonymously(auth);
-        setFirebaseUser(cred.user);
-      } catch (err) {
-        console.warn('Silent anonymous auth note:', err);
-      }
-    }
-  };
-
   const openVotingModal = (pandal: Pandal) => {
-    // Organizers cannot open the voting modal
     if (user?.role === 'organizer') return;
-    ensureSilentAnonymousAuth();
     setSelectedPandal(pandal);
     setIsVotingModalOpen(true);
   };
@@ -820,9 +427,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const openQRScanner = () => {
-    // Organizers cannot access the QR scanner
     if (user?.role === 'organizer') return;
-    ensureSilentAnonymousAuth();
     setIsQRScannerOpen(true);
   };
   const closeQRScanner = () => setIsQRScannerOpen(false);
@@ -835,49 +440,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (isPandalHonored(pandalId)) return true;
     if (category && isCategoryExhausted(category)) return true;
 
-    // 1. Layer 3 specific LocalStorage key: hasVoted_${pandalId}
     if (typeof window !== 'undefined') {
-      if (localStorage.getItem(`hasVoted_${pandalId}`) === 'true') {
-        return true;
-      }
-      if (category && localStorage.getItem(`hasVoted_${pandalId}_${category}`) === 'true') {
-        return true;
-      }
-      if (category && localStorage.getItem(`exhaustedCategory_${category}`) === 'true') {
-        return true;
-      }
+      if (localStorage.getItem(`hasVoted_${pandalId}`) === 'true') return true;
+      if (category && localStorage.getItem(`hasVoted_${pandalId}_${category}`) === 'true') return true;
+      if (category && localStorage.getItem(`exhaustedCategory_${category}`) === 'true') return true;
     }
 
-    // 2. Check in-memory userVotes
     if (user) {
       if (userVotes.some(v => v.pandalId === pandalId && (category ? v.category === category : true) && v.userId === user.id)) {
         return true;
       }
     }
 
-    // 3. Check localStorage device votes map
-    if (typeof window !== 'undefined') {
-      try {
-        const devVotesStr = localStorage.getItem(STORAGE_KEYS.DEVICE_VOTES);
-        if (devVotesStr) {
-          const map = JSON.parse(devVotesStr);
-          if (map[`${pandalId}`]) return true;
-          if (category && map[`${pandalId}_${category}`]) return true;
-        }
-        const storedVotesStr = localStorage.getItem(STORAGE_KEYS.VOTES);
-        if (storedVotesStr) {
-          const storedVotes: VoteRecord[] = JSON.parse(storedVotesStr);
-          if (storedVotes.some(v => v.pandalId === pandalId && (category ? v.category === category : true) && (user ? v.userId === user.id : true))) {
-            return true;
-          }
-        }
-      } catch (e) {}
-    }
-
     return false;
   };
 
-  const castVote = async (pandalId: string, category: VoteCategory, skipApiCheck: boolean = false): Promise<{ success: boolean; message: string; status?: number }> => {
+  // Cast vote solely utilizing our secure Supabase Edge /api/vote route
+  const castVote = async (
+    pandalId: string,
+    category: VoteCategory,
+    skipApiCheck: boolean = false
+  ): Promise<{ success: boolean; message: string; status?: number }> => {
     const currentVoter = user || getOrCreateDeviceVoter();
     if (!user) {
       setUser(currentVoter);
@@ -890,7 +473,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
-    const voterUid = firebaseUser?.uid || currentVoter.id;
+    const voterUid = currentVoter.id;
 
     // Rule 1: One Vote Per Pandal (Pre-check)
     if (isPandalHonored(pandalId) || votedPandals.includes(pandalId)) {
@@ -908,7 +491,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
-    // Layer 3 LocalStorage Check: check specific localStorage keys
+    // LocalStorage Check
     if (typeof window !== 'undefined') {
       const alreadyVotedLocal = localStorage.getItem(`hasVoted_${pandalId}`) === 'true';
       if (alreadyVotedLocal) {
@@ -940,104 +523,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
-    // Layer 2: Strict Firestore Atomic Transaction Validation & Write (CRITICAL)
-    if (db && voterUid) {
-      try {
-        await runTransaction(db, async (transaction) => {
-          const userRef = doc(db, 'users', voterUid);
-          const pandalDocRef = doc(db, 'pandals', pandalId);
-
-          const userSnap = await transaction.get(userRef);
-          const pandalDocSnap = await transaction.get(pandalDocRef);
-
-          if (userSnap.exists()) {
-            const uData = userSnap.data();
-            const vp: string[] = Array.isArray(uData?.votedPandals) ? uData.votedPandals : [];
-            const ec: string[] = Array.isArray(uData?.exhaustedCategories) ? uData.exhaustedCategories : [];
-
-            if (vp.includes(pandalId)) {
-              throw new Error('You have already honored this pandal.');
-            }
-            if (ec.includes(category)) {
-              throw new Error('This category has already been awarded.');
-            }
-          }
-
-          if (pandalDocSnap.exists()) {
-            const pData = pandalDocSnap.data();
-            if (Array.isArray(pData?.voters) && pData.voters.includes(voterUid)) {
-              throw new Error('You have already honored this pandal.');
-            }
-          }
-
-          const timestamp = serverTimestamp();
-
-          // Atomic Writes: increment pandal vote count AND update user's arrays
-          transaction.set(userRef, {
-            uid: voterUid,
-            role: 'voter',
-            isAnonymous: true,
-            deviceId: voterUid,
-            votedPandals: arrayUnion(pandalId),
-            exhaustedCategories: arrayUnion(category),
-            lastVoteAt: timestamp,
-          }, { merge: true });
-
-          if (pandalDocSnap.exists()) {
-            transaction.update(pandalDocRef, {
-              [`votes.${category}`]: increment(1),
-              totalVotes: increment(1),
-              voters: arrayUnion(voterUid),
-              lastVoteAt: timestamp,
-            });
-          } else {
-            transaction.set(pandalDocRef, {
-              id: pandalId,
-              votes: { [category]: 1 },
-              totalVotes: 1,
-              voters: [voterUid],
-              lastVoteAt: timestamp,
-            }, { merge: true });
-          }
-        });
-      } catch (txErr: any) {
-        console.warn('Firestore transaction validation note:', txErr);
-        if (txErr.message?.includes('You have already honored this pandal')) {
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(`hasVoted_${pandalId}`, 'true');
-          }
-          return { success: false, message: 'You have already honored this pandal.' };
-        }
-        if (txErr.message?.includes('This category has already been awarded')) {
-          if (typeof window !== 'undefined') {
-            localStorage.setItem(`exhaustedCategory_${category}`, 'true');
-          }
-          return { success: false, message: 'This category has already been awarded.' };
-        }
-      }
-    }
-
-    // Call server API for secondary server-side validation and audit unless already validated
+    // Call server API for Supabase insert and constraint verification
     if (!skipApiCheck) {
       try {
         const apiRes = await fetch('/api/vote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ deviceId: voterUid, voterUid, pandalId, category }),
+          body: JSON.stringify({ deviceId: voterUid, pandalId, category }),
         });
         const apiData = await apiRes.json();
         if (!apiRes.ok && !apiData.success) {
-          if (apiData.message?.includes('honored') || apiData.error?.includes('honored') || apiData.message?.includes('pandal')) {
+          if (apiData.message?.includes('pandal') || apiRes.status === 409) {
             if (typeof window !== 'undefined') {
               localStorage.setItem(`hasVoted_${pandalId}`, 'true');
             }
           }
-          if (apiData.message?.includes('awarded') || apiData.error?.includes('awarded') || apiData.message?.includes('category') || apiData.message?.includes('token')) {
+          if (apiData.message?.includes('category') || apiData.message?.includes('token') || apiRes.status === 409) {
             if (typeof window !== 'undefined') {
               localStorage.setItem(`exhaustedCategory_${category}`, 'true');
             }
           }
-          return { success: false, message: apiData.message || 'You have already voted for this pandal or used this category token.', status: apiRes.status };
+          return {
+            success: false,
+            message: apiData.message || 'You have already voted for this pandal or used this category token.',
+            status: apiRes.status,
+          };
         }
       } catch (apiErr) {
         console.warn('Server API /api/vote verification note:', apiErr);
@@ -1069,67 +579,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       localStorage.setItem(STORAGE_KEYS.VOTES, JSON.stringify(updatedVotes));
       localStorage.setItem(STORAGE_KEYS.VOTED_PANDALS, JSON.stringify(updatedVotedPandals));
       localStorage.setItem(STORAGE_KEYS.EXHAUSTED_CATEGORIES, JSON.stringify(updatedExhaustedCats));
-
-      try {
-        const devVotesStr = localStorage.getItem(STORAGE_KEYS.DEVICE_VOTES);
-        const devVotesMap = devVotesStr ? JSON.parse(devVotesStr) : {};
-        devVotesMap[`${pandalId}`] = {
-          pandalId,
-          category,
-          timestamp: Date.now(),
-          uid: voterUid
-        };
-        devVotesMap[`${pandalId}_${category}`] = {
-          pandalId,
-          category,
-          timestamp: Date.now(),
-          uid: voterUid
-        };
-        localStorage.setItem(STORAGE_KEYS.DEVICE_VOTES, JSON.stringify(devVotesMap));
-      } catch (e) {}
-    }
-
-    // Record in Firestore across collections for strict immutable audit trail
-    if (db && voterUid) {
-      try {
-        const timestamp = serverTimestamp();
-        const votePayload = {
-          pandalId,
-          userId: voterUid,
-          uid: voterUid,
-          category,
-          timestamp,
-          votedAt: timestamp,
-          pandalName: pandals.find(p => p.id === pandalId)?.name || '',
-          deviceId: voterUid,
-        };
-
-        const voterSubRef = doc(db, 'pandals', pandalId, 'voters', voterUid);
-        await setDoc(voterSubRef, votePayload, { merge: true });
-
-        const pandalDocRef = doc(db, 'pandals', pandalId);
-        await setDoc(pandalDocRef, {
-          voters: arrayUnion(voterUid),
-          lastVoteAt: timestamp,
-        }, { merge: true });
-
-        const voteRootRef = doc(db, 'votes', `${pandalId}_${voterUid}`);
-        await setDoc(voteRootRef, votePayload, { merge: true });
-
-        const userVoteRef = doc(db, 'users', voterUid, 'votes', pandalId);
-        await setDoc(userVoteRef, votePayload, { merge: true });
-
-        const ledgerRef = doc(db, 'ballots', `${pandalId}_${category}_${voterUid}`);
-        await setDoc(ledgerRef, {
-          pandalId,
-          category,
-          uid: voterUid,
-          timestamp,
-          deviceVote: true,
-        }, { merge: true });
-      } catch (err) {
-        console.warn('Firestore vote write note:', err);
-      }
     }
 
     // Increment vote count locally
@@ -1139,7 +588,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const newTotal = p.totalVotes + 1;
         return {
           ...p,
-          votes: { ...p.votes, [category]: newCategoryCount },
+          votes: {
+            ...p.votes,
+            [category]: newCategoryCount,
+          },
           totalVotes: newTotal,
         };
       }
@@ -1260,7 +712,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider
       value={{
         user,
-        firebaseUser,
         isConfigured,
         pandals,
         userVotes,

@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
-import { isFirebaseConfigured } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DhakButton } from '@/components/ui/DhakButton';
 import { 

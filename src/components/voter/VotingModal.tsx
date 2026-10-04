@@ -5,8 +5,6 @@ import { useApp } from '@/context/AppContext';
 import { VOTE_CATEGORIES } from '@/data/mockPandals';
 import { VoteCategory } from '@/types';
 import { DhakButton } from '@/components/ui/DhakButton';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import toast from 'react-hot-toast';
@@ -72,7 +70,7 @@ export const VotingModal: React.FC = () => {
     }
   }, [selectedCategory, exhaustedCategories, isCategoryExhausted]);
 
-  // Layer 3: React 'useEffect' LocalStorage Lock & Firestore Voter Query (SSR-Safe)
+  // Layer 3: React 'useEffect' LocalStorage Lock & Voter State Sync (SSR-Safe)
   useEffect(() => {
     if (!selectedPandal) return;
 
@@ -99,75 +97,6 @@ export const VotingModal: React.FC = () => {
 
     setIsPandalVoted(localHasVoted);
     setVotedCategories(catMap);
-
-    // 2. Fetch database records from Firestore for this pandal & user's UID
-    const checkDatabaseRecords = async () => {
-      const voterUid = auth?.currentUser?.uid || user?.id || (typeof window !== 'undefined' ? localStorage.getItem('durgapur_puja_anon_uid') : null);
-      if (!voterUid || !db) return;
-
-      try {
-        setIsCheckingVoterStatus(true);
-
-        // Check user document in Firestore for 4-token state arrays
-        const userDocRef = doc(db, 'users', voterUid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          const uData = userDocSnap.data();
-          const vp: string[] = Array.isArray(uData?.votedPandals) ? uData.votedPandals : [];
-          const ec: string[] = Array.isArray(uData?.exhaustedCategories) ? uData.exhaustedCategories : [];
-
-          if (vp.includes(pandalId)) {
-            if (isSubscribed) {
-              setIsPandalVoted(true);
-              localStorage.setItem(localPandalKey, 'true');
-            }
-          }
-          ec.forEach(c => {
-            catMap[c] = true;
-            if (typeof window !== 'undefined') {
-              localStorage.setItem(`exhaustedCategory_${c}`, 'true');
-            }
-          });
-          if (isSubscribed) {
-            setVotedCategories({ ...catMap });
-          }
-        }
-
-        // Check 1: pandals/{pandalId}/voters/{voterUid}
-        const voterDocRef = doc(db, 'pandals', pandalId, 'voters', voterUid);
-        const voterSnap = await getDoc(voterDocRef);
-
-        // Check 2: pandals/{pandalId} document voters array
-        const pandalDocRef = doc(db, 'pandals', pandalId);
-        const pandalDocSnap = await getDoc(pandalDocRef);
-        const pandalHasUid = pandalDocSnap.exists() && Array.isArray(pandalDocSnap.data()?.voters) && pandalDocSnap.data()?.voters.includes(voterUid);
-
-        // Check 3: votes/{pandalId}_{voterUid}
-        const voteRootRef = doc(db, 'votes', `${pandalId}_${voterUid}`);
-        const voteRootSnap = await getDoc(voteRootRef);
-
-        if (voterSnap.exists() || pandalHasUid || voteRootSnap.exists()) {
-          if (isSubscribed) {
-            setIsPandalVoted(true);
-            localStorage.setItem(localPandalKey, 'true');
-            const data = voterSnap.data() || voteRootSnap.data();
-            if (data?.category) {
-              catMap[data.category] = true;
-              localStorage.setItem(`exhaustedCategory_${data.category}`, 'true');
-            }
-            setVotedCategories({ ...catMap });
-          }
-        }
-      } catch (err) {
-        console.warn('Firestore database voter record check note:', err);
-      } finally {
-        if (isSubscribed) {
-          setIsCheckingVoterStatus(false);
-        }
-      }
-    };
-
-    checkDatabaseRecords();
 
     return () => {
       isSubscribed = false;
