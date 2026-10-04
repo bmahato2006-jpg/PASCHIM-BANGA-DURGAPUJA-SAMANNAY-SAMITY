@@ -58,25 +58,27 @@ export const Navbar: React.FC<{
             {/* Logo & Brand */}
             <div 
               onClick={() => handleNavClick(isOrganizer ? 'organizer' : 'feed')}
-              className="flex items-center gap-3 cursor-pointer group"
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink min-w-0"
             >
-              <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-gold-400 p-0.5 shadow-md group-hover:shadow-festive transition-all duration-300">
+              <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-gold-400 p-0.5 shadow-md group-hover:shadow-festive transition-all duration-300 shrink-0">
                 <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
-                  <Flame className="w-6 h-6 text-sindoor-500 animate-pulse-subtle" />
+                  <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-sindoor-500 animate-pulse-subtle" />
                 </div>
               </div>
 
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-serif font-black text-xl sm:text-2xl tracking-tight text-gray-900 group-hover:text-sindoor-600 transition-colors">
-                    Durgapur<span className="text-sindoor-500">Puja</span>
-                  </span>
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-marigold-100 text-marigold-800 border border-marigold-300">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
+                  <h1 className="font-serif font-black text-[13px] xs:text-sm sm:text-base md:text-lg lg:text-xl tracking-tight text-gray-900 group-hover:text-sindoor-600 transition-colors leading-[1.2]">
+                    <span className="block sm:inline font-extrabold text-gray-900">Paschim Banga </span>
+                    <span className="text-sindoor-600">DurgaPuja </span>
+                    <span className="text-gray-900 group-hover:text-amber-800">Samannay Samity</span>
+                  </h1>
+                  <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-marigold-100 text-marigold-800 border border-marigold-300 shrink-0">
                     2026
                   </span>
                 </div>
-                <p className="text-[10px] sm:text-xs text-amber-800 font-medium tracking-wide">
-                  {isOrganizer ? 'Organizer Portal Desk' : 'Durga Puja Pandal Voting Platform'}
+                <p className="text-[9px] sm:text-xs text-amber-800 font-medium tracking-wide truncate mt-0.5">
+                  {isOrganizer ? 'Organizer Portal Desk' : 'The Official Voting Platform'}
                 </p>
               </div>
             </div>
