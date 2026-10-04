@@ -168,7 +168,7 @@ export async function registerCommittee(input: RegisterCommitteeInput): Promise<
   }
 
   try {
-    const payload = {
+    const payload: Record<string, any> = {
       user_id: input.userId,
       committee_name: cleanName,
       slug: cleanSlug,
@@ -181,11 +181,38 @@ export async function registerCommittee(input: RegisterCommitteeInput): Promise<
       budget: '₹35 Lakhs',
     };
 
-    const { data, error } = await supabase
-      .from('committees')
-      .insert(payload)
-      .select()
-      .single();
+    let currentPayload = { ...payload };
+    let data: any = null;
+    let error: any = null;
+
+    // Retry loop: If a column does not exist in the database table, remove it and retry
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const res = await supabase
+        .from('committees')
+        .insert(currentPayload)
+        .select()
+        .single();
+
+      data = res.data;
+      error = res.error;
+
+      if (!error) break;
+
+      // Extract missing column name from PostgREST error
+      const match =
+        error.message?.match(/Could not find the '([^']+)' column/i) ||
+        error.message?.match(/column "([^"]+)" of relation "committees" does not exist/i);
+
+      if (match && match[1] && match[1] in currentPayload) {
+        console.warn(
+          `[committeeService] Column '${match[1]}' does not exist in Supabase 'committees' table. Retrying insert without it...`
+        );
+        delete currentPayload[match[1]];
+        continue;
+      }
+
+      break;
+    }
 
     if (error) {
       // Postgres error 23505 = unique_violation

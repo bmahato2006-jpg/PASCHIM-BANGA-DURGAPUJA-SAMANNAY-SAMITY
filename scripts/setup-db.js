@@ -75,18 +75,24 @@ async function setupDatabase() {
     // SQL execution logic to create public.committees table
     const createTableQuery = `
       CREATE TABLE IF NOT EXISTS public.committees (
-         id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-         user_id UUID REFERENCES auth.users(id) NOT NULL UNIQUE,
-         committee_name TEXT NOT NULL,
+         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+         user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+         committee_name TEXT NOT NULL UNIQUE,
          slug TEXT NOT NULL UNIQUE,
          secretary_name TEXT NOT NULL,
          ward TEXT NOT NULL,
          phone TEXT NOT NULL,
+         contact_number TEXT,
+         email TEXT,
          theme TEXT,
-         created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+         budget TEXT DEFAULT '₹35 Lakhs',
+         logo_url TEXT,
+         created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+         updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
       );
 
-      -- Supplementary columns to support full application profile features
+      -- In case the table already existed with missing columns, add them safely:
+      ALTER TABLE public.committees ADD COLUMN IF NOT EXISTS phone TEXT;
       ALTER TABLE public.committees ADD COLUMN IF NOT EXISTS contact_number TEXT;
       ALTER TABLE public.committees ADD COLUMN IF NOT EXISTS email TEXT;
       ALTER TABLE public.committees ADD COLUMN IF NOT EXISTS budget TEXT DEFAULT '₹35 Lakhs';

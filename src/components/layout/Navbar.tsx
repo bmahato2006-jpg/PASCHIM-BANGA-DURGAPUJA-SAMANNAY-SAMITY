@@ -231,14 +231,16 @@ export const Navbar: React.FC<{
                     <span>One Device • One Vote</span>
                   </div>
 
-                  {/* Distinct Organizer Portal Entry Button (Desktop) */}
+                  {/* Distinct Organizer Login / Register Button (Desktop) */}
                   <Link
                     href="/organizer/auth"
-                    className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-amber-950 bg-white/85 hover:bg-amber-50/95 border border-amber-300/80 hover:border-marigold-500 shadow-xs backdrop-blur-md transition-all duration-200 diya-glow-hover touch-manipulation active:scale-95"
-                    title="Pandal Organizer Access & Management Portal"
+                    className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-amber-950 bg-gradient-to-r from-amber-50 via-white to-amber-50 hover:from-amber-100 hover:to-amber-50 border border-amber-300/90 hover:border-marigold-500 shadow-xs hover:shadow-md backdrop-blur-md transition-all duration-200 touch-manipulation active:scale-95 group"
+                    title="Puja Committee Organizer Portal: Login or Register"
                   >
-                    <Building2 className="w-4 h-4 text-marigold-600 shrink-0" />
-                    <span>Organizer Portal</span>
+                    <div className="w-5 h-5 rounded-lg bg-amber-100/90 flex items-center justify-center text-marigold-700 group-hover:bg-amber-200 transition-colors">
+                      <Building2 className="w-3.5 h-3.5" />
+                    </div>
+                    <span>Organizer Login / Register</span>
                   </Link>
 
                   {/* Primary CTA: Scan & Vote (Desktop) */}
@@ -253,14 +255,27 @@ export const Navbar: React.FC<{
                 </div>
               )}
 
-              {/* Mobile Menu Hamburger (ONLY button visible on mobile right side) */}
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 rounded-xl text-gray-700 hover:bg-amber-50 focus:outline-none shrink-0 touch-manipulation active:scale-90 transition-transform duration-75"
-                aria-label="Toggle Menu"
-              >
-                {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
+              {/* Mobile Right Controls: Quick Organizer Button & Menu Hamburger */}
+              <div className="flex md:hidden items-center gap-1.5">
+                {!isOrganizer && (
+                  <Link
+                    href="/organizer/auth"
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold text-amber-950 bg-amber-50 hover:bg-amber-100 border border-amber-300/90 shadow-2xs touch-manipulation active:scale-95"
+                    title="Organizer Login / Register"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-marigold-600" />
+                    <span>Organizer</span>
+                  </Link>
+                )}
+
+                <button
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="p-2 rounded-xl text-gray-700 hover:bg-amber-50 focus:outline-none shrink-0 touch-manipulation active:scale-90 transition-transform duration-75"
+                  aria-label="Toggle Menu"
+                >
+                  {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                </button>
+              </div>
 
             </div>
           </div>
@@ -285,7 +300,7 @@ export const Navbar: React.FC<{
                   >
                     <div className="flex items-center gap-2.5">
                       <Building2 className="w-5 h-5 text-marigold-600" />
-                      <span>Organizer Portal (Login / Register)</span>
+                      <span>Organizer Login / Register</span>
                     </div>
                     <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-amber-200/70 text-amber-900 border border-amber-300">
                       Club Desk
