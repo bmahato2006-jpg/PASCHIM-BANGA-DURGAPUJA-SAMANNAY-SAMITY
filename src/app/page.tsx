@@ -222,11 +222,22 @@ export default function HomePage() {
                   </button>
                 </div>
 
+                {/* Prominent One Device • One Vote Security Badge */}
+                <div className="mt-7 flex justify-center">
+                  <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-300/90 text-emerald-950 text-xs sm:text-sm font-black tracking-wide shadow-sm shadow-emerald-900/5 hover:border-emerald-400 transition-all duration-200">
+                    <div className="w-5 h-5 rounded-full bg-emerald-100/90 flex items-center justify-center shrink-0 border border-emerald-300 shadow-2xs">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    </div>
+                    <span>One Device • One Vote</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
+                  </div>
+                </div>
+
                 {/* Trust Badges */}
                 <div className="mt-8 pt-6 border-t border-amber-200/60 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-gray-600">
                   <div className="flex items-center gap-1.5 font-bold text-gray-800">
                     <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>One Device • One Vote</span>
+                    <span>Hardware-Bound Ballot</span>
                   </div>
                   <div className="flex items-center gap-1.5 font-bold text-gray-800">
                     <Sparkles className="w-4 h-4 text-marigold-600" />

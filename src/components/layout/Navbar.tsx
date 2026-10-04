@@ -14,7 +14,6 @@ import {
   LogOut, 
   Compass, 
   LayoutDashboard, 
-  ShieldCheck, 
   Menu, 
   X,
   HeartHandshake,
@@ -67,7 +66,7 @@ export const Navbar: React.FC<{
             {/* Logo & Brand (Always routes to Voter Portal Feed) */}
             <div 
               onClick={() => handleNavClick('feed')}
-              className="flex items-center gap-2 sm:gap-3 cursor-pointer group flex-shrink-0 min-w-0 max-w-[68%] xs:max-w-[72%] md:max-w-[280px] lg:max-w-[340px] xl:max-w-none touch-manipulation active:scale-95 transition-transform duration-75"
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer group flex-shrink-0 min-w-0 max-w-[70%] sm:max-w-none touch-manipulation active:scale-95 transition-transform duration-75"
             >
               <div className="shrink-0 relative">
                 <Image
@@ -82,12 +81,12 @@ export const Navbar: React.FC<{
 
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <h1 className="font-serif font-black text-xs xs:text-sm sm:text-base md:text-sm lg:text-base xl:text-lg tracking-tight text-gray-900 group-hover:text-sindoor-600 transition-colors leading-tight truncate md:whitespace-normal md:overflow-visible">
-                    <span className="block xl:inline font-extrabold text-gray-900">
-                      Paschim Banga <span className="text-sindoor-600">DurgaPuja </span>
+                  <h1 className="font-serif font-black text-xs xs:text-sm sm:text-base md:text-sm lg:text-[15px] xl:text-lg tracking-tight text-gray-900 group-hover:text-sindoor-600 transition-colors leading-tight whitespace-normal">
+                    <span className="block xl:inline font-black text-gray-900">
+                      PASCHIM BANGA <span className="text-sindoor-600">DURGAPUJA </span>
                     </span>
-                    <span className="hidden xs:inline text-gray-900 group-hover:text-amber-800">
-                      Samannay Samity
+                    <span className="font-black text-gray-900 group-hover:text-amber-800">
+                      SAMANNAY SAMITY
                     </span>
                   </h1>
                   <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-marigold-100 text-marigold-800 border border-marigold-300 shrink-0">
@@ -210,11 +209,6 @@ export const Navbar: React.FC<{
               ) : (
                 /* Desktop Voter CTAs: Strictly hidden on mobile screens */
                 <div className="hidden md:flex items-center gap-2">
-                  <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-bold shadow-2xs">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span>One Device • One Vote</span>
-                  </div>
-
                   {/* Distinct Organizer Login / Register Button (Desktop) */}
                   <Link
                     href="/organizer/auth"
