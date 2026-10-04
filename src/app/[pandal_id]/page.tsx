@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { 
@@ -207,7 +208,7 @@ export default function PandalVotingPage() {
         <div className="max-w-2xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link
             href="/"
-            className="flex items-center gap-2 text-gray-700 hover:text-sindoor-600 transition-colors group"
+            className="flex items-center gap-2 text-gray-700 hover:text-sindoor-600 transition-colors group touch-manipulation active:scale-95 duration-75"
           >
             <div className="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-amber-800 group-hover:bg-sindoor-100 group-hover:text-sindoor-600 transition-all">
               <ArrowLeft className="w-4 h-4" />
@@ -215,8 +216,17 @@ export default function PandalVotingPage() {
             <span className="text-xs sm:text-sm font-bold tracking-tight">QR Scanner</span>
           </Link>
 
-          <div className="flex items-center gap-1.5 text-right min-w-0">
-            <Flame className="w-4 h-4 text-sindoor-500 animate-pulse shrink-0" />
+          <div className="flex items-center gap-2 text-right min-w-0">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg overflow-hidden shrink-0 ring-1 ring-amber-300/80 shadow-2xs">
+              <Image
+                src="/images/durga-watermark.jpg"
+                alt="Paschim Banga DurgaPuja Samannay Samity"
+                width={28}
+                height={28}
+                priority
+                className="w-full h-full object-cover"
+              />
+            </div>
             <span className="text-[11px] sm:text-xs font-black tracking-tight text-gray-900 font-serif truncate">
               Paschim Banga DurgaPuja Samannay Samity
             </span>
@@ -265,10 +275,10 @@ export default function PandalVotingPage() {
                   whileTap={!isDisabled ? { scale: 0.95 } : {}}
                   onClick={() => handleVote(cat)}
                   disabled={isDisabled}
-                  className={`w-full min-h-[72px] sm:min-h-[82px] px-5 py-4 rounded-2xl border transition-all text-left flex items-center justify-between group relative overflow-hidden ${
+                  className={`w-full min-h-[72px] sm:min-h-[82px] px-5 py-4 rounded-2xl border transition-all text-left flex items-center justify-between group relative overflow-hidden touch-manipulation ${
                     isDisabled
                       ? 'bg-gray-100/70 border-gray-200 opacity-60 cursor-not-allowed'
-                      : `bg-white/85 backdrop-blur-xl border-amber-200/90 shadow-sm hover:shadow-xl ${cat.borderHover}`
+                      : `bg-white/85 backdrop-blur-xl border-amber-200/90 shadow-sm hover:shadow-xl active:scale-95 duration-75 ${cat.borderHover}`
                   }`}
                 >
                   {/* Subtle Gradient Accent */}
@@ -346,7 +356,7 @@ export default function PandalVotingPage() {
       <footer className="w-full border-t border-amber-100 bg-white/70 backdrop-blur-md py-4 text-center">
         <Link
           href="/"
-          className="text-xs font-bold text-gray-600 hover:text-sindoor-600 transition-colors inline-flex items-center gap-1.5"
+          className="text-xs font-bold text-gray-600 hover:text-sindoor-600 transition-colors inline-flex items-center gap-1.5 touch-manipulation active:scale-95 duration-75"
         >
           <QrCode className="w-3.5 h-3.5" />
           <span>Need to scan another pandal? Return to QR Scanner</span>

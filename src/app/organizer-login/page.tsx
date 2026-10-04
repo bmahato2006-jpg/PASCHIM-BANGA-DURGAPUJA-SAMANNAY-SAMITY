@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
 import { supabase } from '@/lib/supabaseClient';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -136,9 +137,16 @@ export default function OrganizerLoginPage() {
       >
         {/* Header Branding */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-amber-500 via-marigold-500 to-sindoor-500 p-0.5 shadow-md flex items-center justify-center">
-            <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
-              <Building2 className="w-7 h-7 text-marigold-600" />
+          <div className="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-amber-500 via-marigold-500 to-sindoor-500 p-0.5 shadow-md flex items-center justify-center overflow-hidden">
+            <div className="w-full h-full bg-white rounded-[14px] overflow-hidden flex items-center justify-center">
+              <Image
+                src="/images/durga-watermark.jpg"
+                alt="Paschim Banga DurgaPuja Samannay Samity"
+                width={64}
+                height={64}
+                priority
+                className="w-full h-full object-cover rounded-[14px]"
+              />
             </div>
           </div>
           <span className="inline-block text-[10px] font-black tracking-wider uppercase text-amber-900 bg-amber-100/90 border border-amber-300 px-2.5 py-0.5 rounded-full mb-1.5">

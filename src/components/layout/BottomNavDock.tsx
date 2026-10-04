@@ -63,7 +63,7 @@ export const BottomNavDock: React.FC<BottomNavDockProps> = ({
                 whileTap={{ scale: 0.88 }}
                 onClick={() => handleTabClick('feed')}
                 aria-label="Explore Pandals"
-                className={`relative min-h-[48px] min-w-[50px] flex-1 flex flex-col items-center justify-center py-1 rounded-full transition-colors ${
+                className={`relative min-h-[48px] min-w-[50px] flex-1 flex flex-col items-center justify-center py-1 rounded-full transition-colors touch-manipulation active:scale-90 duration-75 ${
                   activeTab === 'feed' ? 'text-sindoor-600 font-bold' : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
@@ -84,7 +84,7 @@ export const BottomNavDock: React.FC<BottomNavDockProps> = ({
                 whileTap={{ scale: 0.88 }}
                 onClick={() => handleTabClick('leaderboard')}
                 aria-label="Live Leaderboard"
-                className={`relative min-h-[48px] min-w-[50px] flex-1 flex flex-col items-center justify-center py-1 rounded-full transition-colors ${
+                className={`relative min-h-[48px] min-w-[50px] flex-1 flex flex-col items-center justify-center py-1 rounded-full transition-colors touch-manipulation active:scale-90 duration-75 ${
                   activeTab === 'leaderboard' ? 'text-marigold-600 font-bold' : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
@@ -106,7 +106,7 @@ export const BottomNavDock: React.FC<BottomNavDockProps> = ({
                   whileTap={{ scale: 0.88 }}
                   onClick={openQRScanner}
                   aria-label="Scan Pandal QR Code to Vote"
-                  className="w-14 h-14 rounded-full bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-amber-400 text-white flex items-center justify-center shadow-[0_8px_25px_rgba(217,34,42,0.45)] border-2 border-white ring-4 ring-amber-300/60 relative group"
+                  className="w-14 h-14 rounded-full bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-amber-400 text-white flex items-center justify-center shadow-[0_8px_25px_rgba(217,34,42,0.45)] border-2 border-white ring-4 ring-amber-300/60 relative group touch-manipulation active:scale-90 duration-75"
                 >
                   <QrCode className="w-7 h-7 text-white animate-pulse-subtle" />
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full flex items-center justify-center">
@@ -121,7 +121,7 @@ export const BottomNavDock: React.FC<BottomNavDockProps> = ({
                 whileTap={{ scale: 0.88 }}
                 onClick={() => handleTabClick('my-votes')}
                 aria-label="My Cast Votes"
-                className={`relative min-h-[48px] min-w-[50px] flex-1 flex flex-col items-center justify-center py-1 rounded-full transition-colors ${
+                className={`relative min-h-[48px] min-w-[50px] flex-1 flex flex-col items-center justify-center py-1 rounded-full transition-colors touch-manipulation active:scale-90 duration-75 ${
                   activeTab === 'my-votes' ? 'text-sindoor-600 font-bold' : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
@@ -149,7 +149,7 @@ export const BottomNavDock: React.FC<BottomNavDockProps> = ({
                 whileTap={{ scale: 0.88 }}
                 onClick={openSupportModal}
                 aria-label="Helpdesk & Support"
-                className="relative min-h-[48px] min-w-[50px] flex-1 flex flex-col items-center justify-center py-1 rounded-full text-gray-500 hover:text-gray-900"
+                className="relative min-h-[48px] min-w-[50px] flex-1 flex flex-col items-center justify-center py-1 rounded-full text-gray-500 hover:text-gray-900 touch-manipulation active:scale-90 duration-75"
               >
                 <HeartHandshake className="w-5 h-5 mb-0.5 text-rose-500" />
                 <span className="text-[10px] tracking-tight">Helpdesk</span>
@@ -164,7 +164,7 @@ export const BottomNavDock: React.FC<BottomNavDockProps> = ({
                 whileTap={{ scale: 0.88 }}
                 onClick={() => handleTabClick('organizer')}
                 aria-label="Organizer Dashboard"
-                className={`relative min-h-[48px] min-w-[65px] flex-1 flex flex-col items-center justify-center py-1 rounded-full transition-colors ${
+                className={`relative min-h-[48px] min-w-[65px] flex-1 flex flex-col items-center justify-center py-1 rounded-full transition-colors touch-manipulation active:scale-90 duration-75 ${
                   activeTab === 'organizer' ? 'text-marigold-700 font-bold' : 'text-gray-500'
                 }`}
               >
@@ -185,7 +185,7 @@ export const BottomNavDock: React.FC<BottomNavDockProps> = ({
                 whileTap={{ scale: 0.88 }}
                 onClick={() => handleTabClick('organizer')}
                 aria-label="Club Profile & QR Standee"
-                className="relative min-h-[48px] min-w-[65px] flex-1 flex flex-col items-center justify-center py-1 rounded-full text-gray-500 hover:text-marigold-700"
+                className="relative min-h-[48px] min-w-[65px] flex-1 flex flex-col items-center justify-center py-1 rounded-full text-gray-500 hover:text-marigold-700 touch-manipulation active:scale-90 duration-75"
               >
                 <Building2 className="w-5 h-5 mb-0.5" />
                 <span className="text-[10px] tracking-tight">Profile & QR</span>
@@ -197,7 +197,7 @@ export const BottomNavDock: React.FC<BottomNavDockProps> = ({
                 whileTap={{ scale: 0.88 }}
                 onClick={openSupportModal}
                 aria-label="Helpdesk & Support"
-                className="relative min-h-[48px] min-w-[65px] flex-1 flex flex-col items-center justify-center py-1 rounded-full text-gray-500 hover:text-sindoor-600"
+                className="relative min-h-[48px] min-w-[65px] flex-1 flex flex-col items-center justify-center py-1 rounded-full text-gray-500 hover:text-sindoor-600 touch-manipulation active:scale-90 duration-75"
               >
                 <HeartHandshake className="w-5 h-5 mb-0.5" />
                 <span className="text-[10px] tracking-tight">Helpdesk</span>
@@ -209,7 +209,7 @@ export const BottomNavDock: React.FC<BottomNavDockProps> = ({
                 whileTap={{ scale: 0.88 }}
                 onClick={logout}
                 aria-label="Sign Out"
-                className="relative min-h-[48px] min-w-[65px] flex-1 flex flex-col items-center justify-center py-1 rounded-full text-rose-500"
+                className="relative min-h-[48px] min-w-[65px] flex-1 flex flex-col items-center justify-center py-1 rounded-full text-rose-500 touch-manipulation active:scale-90 duration-75"
               >
                 <LogOut className="w-5 h-5 mb-0.5" />
                 <span className="text-[10px] tracking-tight">Log Out</span>

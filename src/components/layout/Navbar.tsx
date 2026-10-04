@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
 import { DhakButton } from '@/components/ui/DhakButton';
 import { 
@@ -58,11 +59,18 @@ export const Navbar: React.FC<{
             {/* Logo & Brand */}
             <div 
               onClick={() => handleNavClick(isOrganizer ? 'organizer' : 'feed')}
-              className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink min-w-0 max-w-[75%] sm:max-w-none"
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink min-w-0 max-w-[75%] sm:max-w-none touch-manipulation active:scale-95 transition-transform duration-75"
             >
-              <div className="relative w-8 h-8 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-gold-400 p-0.5 shadow-md group-hover:shadow-festive transition-all duration-300 shrink-0">
-                <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
-                  <Flame className="w-4 h-4 sm:w-6 sm:h-6 text-sindoor-500 animate-pulse-subtle" />
+              <div className="relative w-8 h-8 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-gold-400 p-0.5 shadow-md group-hover:shadow-festive transition-all duration-300 shrink-0 overflow-hidden">
+                <div className="w-full h-full bg-white rounded-[14px] overflow-hidden flex items-center justify-center">
+                  <Image
+                    src="/images/durga-watermark.jpg"
+                    alt="Paschim Banga DurgaPuja Samannay Samity Emblem"
+                    width={44}
+                    height={44}
+                    priority
+                    className="w-full h-full object-cover rounded-[14px]"
+                  />
                 </div>
               </div>
 
@@ -193,9 +201,11 @@ export const Navbar: React.FC<{
                     </span>
                   </div>
 
-                  <img
+                  <Image
                     src={user.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80'}
                     alt={user.name}
+                    width={36}
+                    height={36}
                     className="w-9 h-9 rounded-full ring-2 ring-marigold-400 object-cover"
                   />
 
@@ -242,7 +252,7 @@ export const Navbar: React.FC<{
               {/* Mobile Menu Hamburger (ONLY button visible on mobile right side) */}
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 rounded-xl text-gray-700 hover:bg-amber-50 focus:outline-none shrink-0"
+                className="md:hidden p-2 rounded-xl text-gray-700 hover:bg-amber-50 focus:outline-none shrink-0 touch-manipulation active:scale-90 transition-transform duration-75"
                 aria-label="Toggle Menu"
               >
                 {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -269,7 +279,7 @@ export const Navbar: React.FC<{
                       setIsMobileMenuOpen(false);
                       openAuthModal('organizer');
                     }}
-                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm text-amber-950 bg-gradient-to-r from-amber-50/90 via-marigold-50/70 to-amber-50/90 border border-amber-300/80 hover:bg-amber-100/80 transition-all shadow-xs"
+                    className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-sm text-amber-950 bg-gradient-to-r from-amber-50/90 via-marigold-50/70 to-amber-50/90 border border-amber-300/80 hover:bg-amber-100/80 transition-all shadow-xs touch-manipulation active:scale-[0.98]"
                   >
                     <div className="flex items-center gap-2.5">
                       <Building2 className="w-5 h-5 text-marigold-600" />
@@ -282,7 +292,7 @@ export const Navbar: React.FC<{
 
                   <button
                     onClick={() => handleNavClick('feed')}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm touch-manipulation active:scale-[0.98] ${
                       activeTab === 'feed' ? 'bg-sindoor-50 text-sindoor-600' : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
@@ -292,7 +302,7 @@ export const Navbar: React.FC<{
 
                   <button
                     onClick={() => handleNavClick('leaderboard')}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm touch-manipulation active:scale-[0.98] ${
                       activeTab === 'leaderboard' ? 'bg-sindoor-50 text-sindoor-600' : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
@@ -305,7 +315,7 @@ export const Navbar: React.FC<{
                       setIsMobileMenuOpen(false);
                       openQRScanner();
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm text-gray-700 hover:bg-gray-50"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm text-gray-700 hover:bg-gray-50 touch-manipulation active:scale-[0.98]"
                   >
                     <QrCode className="w-5 h-5 text-marigold-600" />
                     <span>Scan Pandal QR to Vote</span>
@@ -317,7 +327,7 @@ export const Navbar: React.FC<{
                 <>
                   <button
                     onClick={() => handleNavClick('organizer')}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm ${
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm touch-manipulation active:scale-[0.98] ${
                       activeTab === 'organizer' ? 'bg-marigold-50 text-marigold-700' : 'text-gray-700 hover:bg-gray-50'
                     }`}
                   >
@@ -329,7 +339,7 @@ export const Navbar: React.FC<{
                       setIsMobileMenuOpen(false);
                       logout();
                     }}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm text-red-600 hover:bg-red-50"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm text-red-600 hover:bg-red-50 touch-manipulation active:scale-[0.98]"
                   >
                     <LogOut className="w-5 h-5 text-red-500" />
                     <span>Sign Out (Organizer Mode)</span>

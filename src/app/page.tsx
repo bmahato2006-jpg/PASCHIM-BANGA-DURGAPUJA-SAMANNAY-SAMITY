@@ -13,6 +13,7 @@ import { OrganizerDashboard } from '@/components/organizer/OrganizerDashboard';
 import { DhakButton } from '@/components/ui/DhakButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Flame, 
   QrCode, 
@@ -160,7 +161,16 @@ export default function HomePage() {
             >
               {/* Region Pill */}
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-sindoor-50 via-marigold-50 to-amber-50 border border-marigold-300/80 shadow-xs mb-6">
-                <Flame className="w-4 h-4 text-sindoor-500 animate-pulse" />
+                <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 ring-1 ring-amber-300">
+                  <Image
+                    src="/images/durga-watermark.jpg"
+                    alt="Paschim Banga DurgaPuja Samannay Samity"
+                    width={20}
+                    height={20}
+                    priority
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <span className="text-xs font-black text-amber-950 tracking-wide uppercase">
                   Paschim Banga DurgaPuja Samannay Samity • Official Voting
                 </span>
@@ -184,7 +194,7 @@ export default function HomePage() {
                 <DhakButton
                   variant="primary"
                   onClick={openQRScanner}
-                  className="w-full sm:w-auto min-h-[56px] px-8 py-4 rounded-2xl text-base font-bold shadow-festive flex items-center justify-center gap-3"
+                  className="w-full sm:w-auto min-h-[56px] px-8 py-4 rounded-2xl text-base font-bold shadow-festive flex items-center justify-center gap-3 touch-manipulation"
                 >
                   <Camera className="w-6 h-6 text-white" />
                   <span>Open Camera QR Scanner</span>
@@ -194,7 +204,7 @@ export default function HomePage() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleTabChange('leaderboard')}
-                  className="w-full sm:w-auto min-h-[56px] px-6 py-4 rounded-2xl text-sm font-bold border border-amber-300/90 bg-white/90 hover:bg-white text-gray-800 flex items-center justify-center gap-2 transition shadow-xs"
+                  className="w-full sm:w-auto min-h-[56px] px-6 py-4 rounded-2xl text-sm font-bold border border-amber-300/90 bg-white/90 hover:bg-white text-gray-800 flex items-center justify-center gap-2 transition shadow-xs touch-manipulation active:scale-95 duration-75"
                 >
                   <Trophy className="w-5 h-5 text-marigold-500" />
                   <span>View Leaderboard</span>
@@ -236,7 +246,7 @@ export default function HomePage() {
                     <Link
                       key={p.id}
                       href={`/${p.id}`}
-                      className="p-3.5 rounded-xl bg-white/90 hover:bg-amber-50 border border-amber-200 text-left flex items-center justify-between group transition-all shadow-xs"
+                      className="p-3.5 rounded-xl bg-white/90 hover:bg-amber-50 border border-amber-200 text-left flex items-center justify-between group transition-all shadow-xs touch-manipulation active:scale-[0.98] duration-75"
                     >
                       <div>
                         <div className="font-bold text-xs sm:text-sm text-gray-900 group-hover:text-sindoor-600 transition-colors">

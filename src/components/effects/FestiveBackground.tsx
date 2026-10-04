@@ -114,28 +114,17 @@ export const FestiveBackground: React.FC = () => {
       {mounted && (
         <div className="fixed inset-0 overflow-hidden pointer-events-none z-20 select-none">
           {marigoldPetals.map((petal) => (
-            <motion.div
+            <div
               key={petal.id}
-              className="absolute pointer-events-none will-change-transform transform-gpu"
+              className={`absolute pointer-events-none falling-petal ${petal.id >= 6 ? 'hidden sm:block' : ''}`}
               style={{
                 left: petal.left,
                 top: -40,
                 width: petal.size,
                 height: petal.size * 1.35,
-              }}
-              animate={{
-                y: ['0vh', '110vh'],
-                x: [0, petal.driftX, -petal.driftX * 0.5, petal.driftX * 0.8, 0],
-                rotateX: [0, 180, 360, 540],
-                rotateY: [0, 240, 480, 720],
-                rotateZ: [0, 45, -30, 60, 0],
-                opacity: [0, 0.85, 0.9, 0.75, 0],
-              }}
-              transition={{
-                duration: petal.duration,
-                repeat: Infinity,
-                delay: petal.delay,
-                ease: 'linear',
+                animationDuration: `${petal.duration}s`,
+                animationDelay: `${petal.delay}s`,
+                ['--drift-x' as any]: `${petal.driftX}px`,
               }}
             >
               {/* Petal SVG with realistic curving leaf shape and gradient */}
@@ -172,7 +161,7 @@ export const FestiveBackground: React.FC = () => {
                   </linearGradient>
                 </defs>
               </svg>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}

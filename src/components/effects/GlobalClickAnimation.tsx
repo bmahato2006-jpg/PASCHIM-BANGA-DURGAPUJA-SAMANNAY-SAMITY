@@ -33,6 +33,10 @@ export const GlobalClickAnimation: React.FC<{ children?: React.ReactNode }> = ({
   const [bursts, setBursts] = useState<ClickBurst[]>([]);
 
   const handlePointerDown = useCallback((e: MouseEvent | TouchEvent | PointerEvent) => {
+    // Unblock mobile UI thread: Skip heavy particle bursts on touch devices to ensure 60fps instant tapping
+    if ('pointerType' in e && (e as PointerEvent).pointerType === 'touch') return;
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return;
+
     let clientX: number;
     let clientY: number;
 

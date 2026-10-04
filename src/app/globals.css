@@ -170,3 +170,40 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #F58220;
 }
+
+/* GPU-Composited Falling Marigold Petals (Zero JS Main Thread Cost) */
+@keyframes fallingPetal {
+  0% {
+    transform: translate3d(0, -50px, 0) rotate(0deg);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(var(--drift-x, 24px), 55vh, 0) rotate(180deg);
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate3d(calc(var(--drift-x, 24px) * -0.5), 110vh, 0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+.falling-petal {
+  animation-name: fallingPetal;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .falling-petal {
+    animation: none !important;
+    display: none !important;
+  }
+}
+

@@ -181,7 +181,7 @@ export const QRScannerModal: React.FC = () => {
           </div>
           <button
             onClick={closeQRScanner}
-            className="p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+            className="p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition touch-manipulation active:scale-90 duration-75"
           >
             <X className="w-5 h-5" />
           </button>
@@ -263,7 +263,7 @@ export const QRScannerModal: React.FC = () => {
           <div className="absolute bottom-3 right-3 z-10">
             <button
               onClick={toggleCameraFacing}
-              className="p-2 rounded-full bg-black/60 text-white hover:bg-black/80 backdrop-blur-md transition"
+              className="p-2 rounded-full bg-black/60 text-white hover:bg-black/80 backdrop-blur-md transition touch-manipulation active:scale-90 duration-75"
               title="Flip Camera (Front/Back)"
             >
               <RefreshCw className="w-4 h-4" />
@@ -283,7 +283,7 @@ export const QRScannerModal: React.FC = () => {
               <button
                 key={pandal.id}
                 onClick={() => handleDecodedText(pandal.id)}
-                className="flex items-center gap-2 p-2 rounded-xl border border-gray-200 bg-white hover:bg-amber-50 hover:border-marigold-300 text-left transition text-xs font-semibold text-gray-800"
+                className="flex items-center gap-2 p-2 rounded-xl border border-gray-200 bg-white hover:bg-amber-50 hover:border-marigold-300 text-left transition text-xs font-semibold text-gray-800 touch-manipulation active:scale-95 duration-75"
               >
                 <div className="w-6 h-6 rounded-lg bg-marigold-100 text-marigold-700 flex items-center justify-center shrink-0">
                   <QrCode className="w-3.5 h-3.5" />

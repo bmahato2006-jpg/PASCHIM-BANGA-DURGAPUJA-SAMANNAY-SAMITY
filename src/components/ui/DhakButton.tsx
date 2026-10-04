@@ -27,22 +27,6 @@ export const DhakButton: React.FC<DhakButtonProps> = ({
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (disabled) return;
-
-    // Trigger Dhak rhythm beat scale
-    setIsDhakBeating(true);
-    setTimeout(() => setIsDhakBeating(false), 500);
-
-    // Create ripple effect from click point
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const newRipple = { id: Date.now(), x, y };
-
-    setRipples((prev) => [...prev.slice(-3), newRipple]);
-    setTimeout(() => {
-      setRipples((prev) => prev.filter((r) => r.id !== newRipple.id));
-    }, 650);
-
     if (onClick) onClick(e);
   };
 
@@ -60,21 +44,11 @@ export const DhakButton: React.FC<DhakButtonProps> = ({
       disabled={disabled}
       onClick={handleClick}
       title={title}
-      whileHover={!disabled ? { scale: 1.03 } : {}}
-      whileTap={!disabled ? { scale: 0.92 } : {}}
-      animate={
-        isDhakBeating
-          ? {
-              scale: [1, 1.09, 0.95, 1.05, 1], // Dhak drum rhythmic double beat
-              rotate: [0, -1, 1, -0.5, 0],
-            }
-          : {}
-      }
-      transition={{
-        duration: 0.45,
-        ease: 'easeInOut',
-      }}
-      className={`relative overflow-hidden font-bold transition-shadow duration-300 diya-glow-hover select-none ${variantStyles[variant]} ${className} ${
+      whileHover={!disabled ? { scale: 1.02 } : {}}
+      whileTap={!disabled ? { scale: 0.95 } : {}}
+      className={`relative overflow-hidden font-bold transition-all duration-75 diya-glow-hover select-none touch-manipulation ${
+        !disabled ? 'active:scale-95' : ''
+      } ${variantStyles[variant]} ${className} ${
         disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
       }`}
     >

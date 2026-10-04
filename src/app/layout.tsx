@@ -2,10 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { AppProvider } from '@/context/AppContext';
 import { FestiveBackground } from '@/components/effects/FestiveBackground';
-import { AuthModal } from '@/components/auth/AuthModal';
-import { VotingModal } from '@/components/voter/VotingModal';
-import { QRScannerModal } from '@/components/voter/QRScannerModal';
-import { VoterSupportModal } from '@/components/support/VoterSupportModal';
+import { UniversalModals } from '@/components/layout/UniversalModals';
 import { Toaster } from 'react-hot-toast';
 import { GlobalClickAnimation } from '@/components/effects/GlobalClickAnimation';
 
@@ -57,11 +54,8 @@ export default function RootLayout({
           <AppProvider>
             <FestiveBackground />
             {children}
-            {/* Universal Modals */}
-            <AuthModal />
-            <VotingModal />
-            <QRScannerModal />
-            <VoterSupportModal />
+            {/* Universal Modals (Lazy Loaded on Demand) */}
+            <UniversalModals />
           </AppProvider>
         </GlobalClickAnimation>
       </body>
