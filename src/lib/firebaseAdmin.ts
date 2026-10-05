@@ -1,53 +1,41 @@
-import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { getAuth } from 'firebase-admin/auth';
-import type { Firestore } from 'firebase-admin/firestore';
-import type { Auth } from 'firebase-admin/auth';
 
-let app: App | undefined = getApps()[0];
+let rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY || '';
 
-if (!app) {
-  const projectId = 
-    process.env.FIREBASE_PROJECT_ID || 
-    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 
-    'durgapur-puja-voting';
-
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
-
-  if (privateKey) {
-    // 1. Trim leading/trailing whitespace
-    privateKey = privateKey.trim();
-    // 2. Strip surrounding double or single quotes if accidentally included
-    if (
-      (privateKey.startsWith('"') && privateKey.endsWith('"')) ||
-      (privateKey.startsWith("'") && privateKey.endsWith("'"))
-    ) {
-      privateKey = privateKey.slice(1, -1).trim();
-    }
-    // 3. Replace escaped literal '\n' with actual newlines
-    privateKey = privateKey.replace(/\\n/g, '\n');
-  }
-
-  try {
-    if (clientEmail && privateKey) {
-      app = initializeApp({
-        credential: cert({
-          projectId,
-          clientEmail,
-          privateKey,
-        }),
-      });
-    } else {
-      app = initializeApp({
-        projectId,
-      });
-    }
-  } catch (err: any) {
-    console.warn('Firebase Admin initializeApp note:', err?.message || err);
-  }
+// Remove surrounding quotes if accidentally pasted in Vercel
+if (
+  (rawPrivateKey.startsWith('"') && rawPrivateKey.endsWith('"')) ||
+  (rawPrivateKey.startsWith("'") && rawPrivateKey.endsWith("'"))
+) {
+  rawPrivateKey = rawPrivateKey.slice(1, -1);
 }
 
-export const adminDb: Firestore = getFirestore();
-export const adminAuth: Auth = getAuth();
+// Convert literal \n to actual newlines and trim spaces
+const formattedPrivateKey = rawPrivateKey.replace(/\\n/g, '\n').trim();
+
+const projectId =
+  process.env.FIREBASE_PROJECT_ID ||
+  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
+  'durgapur-puja-voting';
+
+const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+
+const serviceAccount = {
+  projectId,
+  clientEmail,
+  privateKey: formattedPrivateKey,
+};
+
+export const adminDb =
+  getApps().length === 0
+    ? getFirestore(
+        initializeApp(
+          clientEmail && formattedPrivateKey
+            ? { credential: cert(serviceAccount) }
+            : { projectId }
+        )
+      )
+    : getFirestore();
+
 export { FieldValue };
