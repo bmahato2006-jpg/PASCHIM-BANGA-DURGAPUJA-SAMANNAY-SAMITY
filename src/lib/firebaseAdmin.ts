@@ -13,20 +13,9 @@ if (!app) {
     'durgapur-puja-voting';
 
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
-
-  if (privateKey) {
-    privateKey = privateKey.trim();
-    // Strip surrounding quotes if developers copied them into Vercel env
-    if (
-      (privateKey.startsWith('"') && privateKey.endsWith('"')) ||
-      (privateKey.startsWith("'") && privateKey.endsWith("'"))
-    ) {
-      privateKey = privateKey.slice(1, -1);
-    }
-    // Replace escaped newlines with actual newline characters
-    privateKey = privateKey.replace(/\\n/g, '\n');
-  }
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY
+    ? process.env.FIREBASE_PRIVATE_KEY.replace(/^["']|["']$/g, '').replace(/\\n/g, '\n')
+    : undefined;
 
   try {
     if (clientEmail && privateKey) {
