@@ -101,6 +101,20 @@ export async function POST(request: NextRequest) {
         }, { merge: true });
       }
 
+      // 6. Also atomically sync total_votes on matching committees document if present
+      const committeeDocRef = adminDb.collection('committees').doc(pandal_id);
+      const committeeDoc = await transaction.get(committeeDocRef);
+      if (committeeDoc.exists) {
+        const commPayload: Record<string, any> = {
+          total_votes: FieldValue.increment(1),
+          updated_at: serverTime,
+        };
+        if (category && category !== 'overall') {
+          commPayload[`votes.${category}`] = FieldValue.increment(1);
+        }
+        transaction.update(committeeDocRef, commPayload);
+      }
+
       return { voteId: voteDocId };
     });
 
