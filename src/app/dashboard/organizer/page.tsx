@@ -332,7 +332,7 @@ export default function OrganizerDashboardPage() {
           </div>
           <div>
             <h2 className="text-base font-bold text-gray-900">
-              আয়োজক লাইভ ডেস্ক লোড হচ্ছে...
+              আয়োজক লাইভ ডেস্ক লোড হচ্ছে (Loading Organizer Live Desk)...
             </h2>
             <p className="text-xs text-gray-600 mt-1">
               {authLoading 
@@ -356,10 +356,13 @@ export default function OrganizerDashboardPage() {
             <Building2 className="w-7 h-7" />
           </div>
           <h2 className="text-xl font-black text-gray-900 tracking-tight">
-            আয়োজক লগইন প্রয়োজন
+            আয়োজক লগইন প্রয়োজন (Organizer Sign In Required)
           </h2>
           <p className="text-xs text-gray-600 mt-2 mb-6 leading-relaxed">
             আপনার দুর্গাপূজা কমিটির লাইভ ভোটিং ডেস্ক ও অফিশিয়াল মণ্ডপ কিউআর কোড পরিচালনা করতে অনুগ্রহ করে আপনার অ্যাকাউন্টে লগইন করুন।
+            <span className="block text-[11px] text-gray-500 mt-1">
+              (Please sign in to manage your Durga Puja Live Voting Desk and official QR code).
+            </span>
           </p>
 
           <Link
@@ -405,7 +408,7 @@ export default function OrganizerDashboardPage() {
               className="px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-100 flex items-center gap-1.5 transition-colors"
             >
               <LogOut className="w-3.5 h-3.5 text-gray-500" />
-              লগআউট
+              লগআউট (Logout)
             </button>
           </div>
         </header>
@@ -417,13 +420,16 @@ export default function OrganizerDashboardPage() {
               <AlertCircle className="w-7 h-7" />
             </div>
             <h2 className="text-lg font-black text-gray-900 tracking-tight">
-              কোনো নিবন্ধিত দুর্গাপূজা কমিটি পাওয়া যায়নি
+              কোনো নিবন্ধিত দুর্গাপূজা কমিটি পাওয়া যায়নি (No Registered Committee Found)
             </h2>
             <p className="text-xs text-gray-600 mt-2 mb-1">
-              লগইন করা অ্যাকাউন্ট: <strong className="text-gray-900">{user.email}</strong>
+              লগইন করা অ্যাকাউন্ট (Logged in as): <strong className="text-gray-900">{user.email}</strong>
             </p>
             <p className="text-xs text-gray-500 mb-6 leading-relaxed">
               আপনার অ্যাকাউন্টের অধীনে এখনও কোনো দুর্গাপূজা কমিটি নিবন্ধিত হয়নি। অনুগ্রহ করে আপনার মণ্ডপ ও কমিটি নিবন্ধন সম্পন্ন করুন।
+              <span className="block text-[11px] text-gray-400 mt-1">
+                (No registered committee found for your account. Please complete committee registration).
+              </span>
             </p>
 
             <div className="space-y-3">
@@ -440,7 +446,7 @@ export default function OrganizerDashboardPage() {
                 className="w-full py-2.5 px-4 rounded-xl border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
               >
                 <LogOut className="w-3.5 h-3.5 text-gray-500" />
-                অন্য অ্যাকাউন্ট দিয়ে লগইন করুন
+                অন্য অ্যাকাউন্ট দিয়ে লগইন করুন (Switch Account)
               </button>
             </div>
           </div>
@@ -499,9 +505,9 @@ export default function OrganizerDashboardPage() {
           </div>
 
           <div className="pt-4 border-t border-gray-300 flex justify-between items-center text-[11px] text-gray-500">
-            <span>আইডি: {committeeId}</span>
-            <span>সম্পাদনা: {secretaryName}</span>
-            <span>যাচাইকৃত দুর্গাপূজা মণ্ডপ</span>
+            <span>আইডি (ID): {committeeId}</span>
+            <span>সম্পাদনা (Secretary): {secretaryName}</span>
+            <span>যাচাইকৃত দুর্গাপূজা মণ্ডপ (Verified Puja Pandal)</span>
           </div>
         </div>
       </div>
@@ -523,11 +529,11 @@ export default function OrganizerDashboardPage() {
                 </h1>
                 <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
-                  লাইভ সিঙ্ক সক্রিয়
+                  লাইভ সিঙ্ক সক্রিয় (Live Sync Active)
                 </span>
               </div>
               <span className="text-[11px] text-gray-600 font-medium">
-                পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি (Durga Puja 2026)
+                পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি (Paschim Banga DurgaPuja Samannay Samity)
               </span>
             </div>
           </div>
@@ -538,7 +544,7 @@ export default function OrganizerDashboardPage() {
                 {secretaryName}
               </span>
               <span className="text-[10px] text-emerald-600 font-semibold flex items-center justify-end gap-1">
-                <ShieldCheck className="w-3 h-3" /> যাচাইকৃত আয়োজক
+                <ShieldCheck className="w-3 h-3" /> যাচাইকৃত আয়োজক (Verified Organizer)
               </span>
             </div>
 
@@ -547,7 +553,7 @@ export default function OrganizerDashboardPage() {
               className="hidden sm:flex px-3 py-1.5 rounded-lg border border-amber-300 text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 items-center gap-1.5 transition-colors"
             >
               <Printer className="w-3.5 h-3.5 text-amber-700" />
-              গেট পোস্টার প্রিন্ট
+              গেট পোস্টার প্রিন্ট (Print Gate Poster)
             </button>
 
             <button
@@ -555,7 +561,7 @@ export default function OrganizerDashboardPage() {
               className="px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-100 flex items-center gap-1.5 transition-colors"
             >
               <LogOut className="w-3.5 h-3.5 text-gray-500" />
-              লগআউট
+              লগআউট (Sign Out)
             </button>
           </div>
 
@@ -572,7 +578,7 @@ export default function OrganizerDashboardPage() {
           <div className="space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-amber-200/80 text-amber-900">
-                <ShieldCheck className="w-3.5 h-3.5 text-sindoor-600" /> দুর্গাপূজা ২০২৬ নিবন্ধিত মণ্ডপ
+                <ShieldCheck className="w-3.5 h-3.5 text-sindoor-600" /> দুর্গাপূজা ২০২৬ নিবন্ধিত মণ্ডপ (Registered Durga Puja 2026)
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white text-gray-700 border border-amber-200">
                 {ward}
@@ -584,7 +590,7 @@ export default function OrganizerDashboardPage() {
             </h2>
 
             <p className="text-xs sm:text-sm text-gray-600 font-medium">
-              ভাবনা: <strong className="text-gray-800">{theme}</strong> • কমিটি কোড:{' '}
+              ভাবনা (Theme): <strong className="text-gray-800">{theme}</strong> • কমিটি কোড (Code):{' '}
               <code className="bg-white/90 px-2 py-0.5 rounded text-amber-950 font-mono font-bold text-xs border border-amber-200">
                 {committeeId}
               </code>
@@ -598,7 +604,7 @@ export default function OrganizerDashboardPage() {
               className="px-4 py-2.5 rounded-xl bg-white border border-amber-300 text-xs font-bold text-gray-800 hover:bg-amber-50 shadow-xs flex items-center gap-2 transition-all"
             >
               <ExternalLink className="w-3.5 h-3.5 text-amber-700" />
-              ভোটিং পেজ খুলুন
+              ভোটিং পেজ খুলুন (View Voting Page)
             </Link>
 
             <button
@@ -606,7 +612,7 @@ export default function OrganizerDashboardPage() {
               className="px-4 py-2.5 rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 text-xs font-bold text-amber-950 shadow-xs flex items-center gap-2 transition-all"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-amber-800" />}
-              {copied ? 'কপি হয়েছে!' : 'লিঙ্ক কপি করুন'}
+              {copied ? 'কপি সম্পন্ন (Copied)!' : 'লিঙ্ক কপি করুন (Copy Link)'}
             </button>
           </div>
         </div>
@@ -627,10 +633,10 @@ export default function OrganizerDashboardPage() {
                   </div>
                   <div>
                     <h3 className="text-base font-bold text-gray-900">
-                      মণ্ডপ কিউআর কোড
+                      মণ্ডপ কিউআর কোড (Pandal Gate QR Code)
                     </h3>
                     <span className="text-[11px] text-gray-500 font-medium">
-                      Pandal Gate Voting QR
+                      অফিশিয়াল মণ্ডপ ভোটিং কিউআর (Official Gate Voting QR)
                     </span>
                   </div>
                 </div>
@@ -643,6 +649,9 @@ export default function OrganizerDashboardPage() {
 
               <p className="text-xs text-gray-600 mb-6 leading-relaxed">
                 দর্শনার্থীরা মণ্ডপে প্রবেশ করে এই কিউআর স্ক্যান করলেই সরাসরি ভোট প্রদান করতে পারবেন।
+                <span className="block text-[11px] text-gray-500 mt-0.5">
+                  (Devotees can scan this QR code directly at the pandal gate to cast their vote).
+                </span>
               </p>
 
               {/* Dynamic QR Code Card with Devotional Frame */}
@@ -678,7 +687,7 @@ export default function OrganizerDashboardPage() {
                   className="py-2.5 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-xs font-bold text-amber-950 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                 >
                   <Download className="w-4 h-4 text-amber-800" />
-                  {isDownloading ? 'ডাউনলোড হচ্ছে...' : 'QR কোড ডাউনলোড করুন'}
+                  {isDownloading ? 'ডাউনলোড হচ্ছে... (Downloading...)' : 'QR কোড ডাউনলোড করুন (Download QR Code)'}
                 </button>
 
                 <button
@@ -686,7 +695,7 @@ export default function OrganizerDashboardPage() {
                   className="py-2.5 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-xs font-bold text-amber-950 flex items-center justify-center gap-2 transition-all"
                 >
                   <Printer className="w-4 h-4 text-amber-800" />
-                  পোস্টার প্রিন্ট
+                  পোস্টার প্রিন্ট (Print Poster)
                 </button>
               </div>
 
@@ -695,15 +704,18 @@ export default function OrganizerDashboardPage() {
                 className="w-full py-2.5 px-4 rounded-xl bg-sindoor-600 hover:bg-sindoor-700 text-white font-bold text-xs shadow-xs flex items-center justify-center gap-2 transition-all"
               >
                 {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4 text-white" />}
-                {copied ? 'ভোটের লিংক কপি সম্পন্ন (Copied)!' : 'ভোটের লিঙ্ক কপি করুন (Copy Link)'}
+                {copied ? 'ভোটের লিংক কপি সম্পন্ন (Copied)!' : 'ভোটের লিঙ্ক কপি করুন (Copy Voting Link)'}
               </button>
 
               <div className="p-3 bg-amber-50/70 rounded-xl border border-amber-200/80 text-[11px] text-gray-600 space-y-1">
                 <p className="font-semibold text-amber-900 flex items-center gap-1">
-                  <Radio className="w-3.5 h-3.5 text-sindoor-600" /> আয়োজকদের জন্য টিপস:
+                  <Radio className="w-3.5 h-3.5 text-sindoor-600" /> আয়োজকদের জন্য নির্দেশিকা (Organizer Tips):
                 </p>
                 <p>
                   পোস্টারটি প্রিন্ট করে মণ্ডপের প্রধান তোরণ বা প্রবেশদ্বারে বড় করে প্রদর্শন করুন যাতে দর্শনার্থীরা সহজে ভোট দিতে পারেন।
+                  <span className="block text-[10px] text-gray-500 mt-0.5">
+                    (Print and display this poster prominently at the main entrance gate for visitors).
+                  </span>
                 </p>
               </div>
             </div>
@@ -739,7 +751,7 @@ export default function OrganizerDashboardPage() {
 
                 <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-xs font-bold text-amber-900">
                   <Clock className="w-3.5 h-3.5 text-amber-700" />
-                  তাৎক্ষণিক আপডেট
+                  তাৎক্ষণিক আপডেট (Instant Update)
                 </div>
               </div>
 
@@ -761,9 +773,14 @@ export default function OrganizerDashboardPage() {
               {/* Security Guarantee Note */}
               <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/60 flex items-center gap-3 text-xs text-amber-900">
                 <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>
-                  প্রতিটি ভোট ডিভাইসের নির্ভরযোগ্য ফায়ারস্টোর ট্রানজ্যাকশন দ্বারা সুরক্ষিত এবং দ্বৈত ভোট প্রতিরোধ ব্যবস্থার সাথে যুক্ত।
-                </span>
+                <div>
+                  <span>
+                    প্রতিটি ভোট ডিভাইসের নির্ভরযোগ্য ফায়ারস্টোর ট্রানজ্যাকশন দ্বারা সুরক্ষিত এবং দ্বৈত ভোট প্রতিরোধ ব্যবস্থার সাথে যুক্ত।
+                  </span>
+                  <span className="block text-[10px] text-amber-800/80 mt-0.5">
+                    (Each vote is secured via Firestore transactions with anti-duplicate device locks).
+                  </span>
+                </div>
               </div>
 
             </div>
@@ -780,7 +797,7 @@ export default function OrganizerDashboardPage() {
                   </h3>
                 </div>
                 <span className="text-[11px] text-gray-500 font-medium">
-                  ৪টি অফিশিয়াল বিভাগ
+                  ৪টি অফিশিয়াল বিভাগ (4 Official Categories)
                 </span>
               </div>
 
@@ -801,7 +818,7 @@ export default function OrganizerDashboardPage() {
                     <span className="text-xl font-black text-rose-600 font-mono">
                       {idolVotes}
                     </span>
-                    <span className="text-[10px] text-gray-500 block">ভোট</span>
+                    <span className="text-[10px] text-gray-500 block">ভোট (Votes)</span>
                   </div>
                 </div>
 
@@ -820,7 +837,7 @@ export default function OrganizerDashboardPage() {
                     <span className="text-xl font-black text-amber-700 font-mono">
                       {themeVotes}
                     </span>
-                    <span className="text-[10px] text-gray-500 block">ভোট</span>
+                    <span className="text-[10px] text-gray-500 block">ভোট (Votes)</span>
                   </div>
                 </div>
 
@@ -839,7 +856,7 @@ export default function OrganizerDashboardPage() {
                     <span className="text-xl font-black text-yellow-800 font-mono">
                       {lightingVotes}
                     </span>
-                    <span className="text-[10px] text-gray-500 block">ভোট</span>
+                    <span className="text-[10px] text-gray-500 block">ভোট (Votes)</span>
                   </div>
                 </div>
 
@@ -858,7 +875,7 @@ export default function OrganizerDashboardPage() {
                     <span className="text-xl font-black text-emerald-600 font-mono">
                       {ecoVotes}
                     </span>
-                    <span className="text-[10px] text-gray-500 block">ভোট</span>
+                    <span className="text-[10px] text-gray-500 block">ভোট (Votes)</span>
                   </div>
                 </div>
 
@@ -875,21 +892,21 @@ export default function OrganizerDashboardPage() {
                   </h4>
                 </div>
                 <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  নিরাপদ ট্রানজ্যাকশন
+                  নিরাপদ ট্রানজ্যাকশন (Secure Transactions)
                 </span>
               </div>
 
               <div className="space-y-2 text-xs text-gray-600">
                 <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
-                  <span>ভোটার পরিচয় যাচাই:</span>
-                  <span className="font-semibold text-gray-800">ফায়ারবেস অ্যানোনিমাস অ্যাথ ও ডিভাইস আইডি</span>
+                  <span>ভোটার পরিচয় যাচাই (Voter Verification):</span>
+                  <span className="font-semibold text-gray-800">ফায়ারবেস অ্যাথ ও ডিভাইস আইডি (Firebase Auth & Device ID)</span>
                 </div>
                 <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
                   <span>দ্বৈত ভোট প্রতিরোধ (Anti-Duplicate):</span>
-                  <span className="font-semibold text-emerald-600">১০০% সক্রিয় (One Vote per Pandal)</span>
+                  <span className="font-semibold text-emerald-600">১০০% সক্রিয় (100% Active - One Vote per Pandal)</span>
                 </div>
                 <div className="flex items-center justify-between py-1.5">
-                  <span>মণ্ডপ ভোটিং পেজ লিঙ্ক:</span>
+                  <span>মণ্ডপ ভোটিং পেজ লিঙ্ক (Pandal Voting URL):</span>
                   <span className="font-mono text-[11px] text-amber-900">/vote/{committeeId}</span>
                 </div>
               </div>
