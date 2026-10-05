@@ -397,7 +397,7 @@ export default function OrganizerDashboardPage() {
                 <Vote className="w-5 h-5" />
               </div>
               <span className="font-bold text-sm sm:text-base text-gray-900">
-                আয়োজক লাইভ ভোটিং ডেস্ক
+                লাইভ ভোটিং ডেস্ক (Live Voting Desk)
               </span>
             </div>
             <button
@@ -489,7 +489,7 @@ export default function OrganizerDashboardPage() {
 
           <div className="bg-amber-50 border border-amber-300 p-4 rounded-xl text-left space-y-2">
             <h3 className="text-sm font-bold text-amber-950 text-center mb-2">
-              ভোটারদের জন্য নির্দেশিকা (Scan to Vote)
+              ভোট দিতে QR কোড স্ক্যান করুন (Scan QR to Vote)
             </h3>
             <ol className="text-xs text-gray-800 list-decimal list-inside space-y-1 font-medium">
               <li>আপনার স্মার্টফোনের ক্যামেরা বা গুগল লেন্স খুলুন।</li>
@@ -519,7 +519,7 @@ export default function OrganizerDashboardPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base sm:text-lg font-black tracking-tight text-gray-900 leading-none">
-                  আয়োজক লাইভ ভোটিং ডেস্ক
+                  লাইভ ভোটিং ডেস্ক (Live Voting Desk)
                 </h1>
                 <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
@@ -648,8 +648,8 @@ export default function OrganizerDashboardPage() {
               {/* Dynamic QR Code Card with Devotional Frame */}
               <div className="p-6 bg-gradient-to-b from-amber-50/80 via-white to-amber-50/40 rounded-2xl border-2 border-amber-300/80 shadow-xs flex flex-col items-center justify-center mb-6 text-center">
                 
-                <span className="text-[11px] font-bold text-amber-900 mb-3 uppercase tracking-wide">
-                  স্ক্যান করে ভোট দিন (Scan to Vote)
+                <span className="text-[11px] font-bold text-amber-900 mb-3 tracking-wide">
+                  ভোট দিতে QR কোড স্ক্যান করুন (Scan QR to Vote)
                 </span>
 
                 <div className="p-4 bg-white rounded-2xl shadow-md border border-gray-100">
@@ -678,7 +678,7 @@ export default function OrganizerDashboardPage() {
                   className="py-2.5 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-xs font-bold text-amber-950 flex items-center justify-center gap-2 transition-all disabled:opacity-50"
                 >
                   <Download className="w-4 h-4 text-amber-800" />
-                  {isDownloading ? 'ডাউনলোড হচ্ছে...' : 'QR ডাউনলোড (PNG)'}
+                  {isDownloading ? 'ডাউনলোড হচ্ছে...' : 'QR কোড ডাউনলোড করুন'}
                 </button>
 
                 <button
@@ -733,7 +733,7 @@ export default function OrganizerDashboardPage() {
                     </span>
                   </div>
                   <h3 className="text-lg font-bold text-gray-900 mt-1">
-                    মোট সংগৃহীত ভোট (Total Live Votes)
+                    মোট ভোট (Total Votes)
                   </h3>
                 </div>
 
@@ -750,10 +750,10 @@ export default function OrganizerDashboardPage() {
                 </span>
                 <div className="space-y-1">
                   <span className="text-xl font-bold text-gray-700 block">
-                    যাচাইকৃত ভোট (Verified Ballots)
+                    মোট ভোট (Total Votes)
                   </span>
                   <span className="text-xs text-gray-500">
-                    ইংরেজি সংখ্যা: <strong className="font-mono text-gray-800">{liveTotalVotes}</strong>
+                    ইংরেজি সংখ্যা (English digits): <strong className="font-mono text-gray-800">{liveTotalVotes}</strong>
                   </span>
                 </div>
               </div>

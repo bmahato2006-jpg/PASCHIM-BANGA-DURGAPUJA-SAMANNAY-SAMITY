@@ -77,7 +77,7 @@ function OrganizerAuthContent() {
           className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-600 hover:text-sindoor-600 transition"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to Devotee Feed</span>
+          <span>মূল পাতায় ফিরে যান (Back to Feed)</span>
         </Link>
         <button
           type="button"
@@ -85,7 +85,7 @@ function OrganizerAuthContent() {
           className="flex items-center gap-1.5 text-[11px] font-bold text-amber-900 bg-amber-50 hover:bg-amber-100/80 px-2.5 py-1 rounded-full border border-amber-200/80 transition-all shadow-xs"
         >
           <RotateCw className="w-3 h-3 text-amber-700 transition-transform duration-500 hover:rotate-180" />
-          <span>{isFlipped ? 'Switch to Register' : 'Switch to Login'}</span>
+          <span>{isFlipped ? 'কমিটি নিবন্ধন (Register)' : 'অর্গানাইজার লগইন (Login)'}</span>
         </button>
       </div>
 
@@ -124,10 +124,11 @@ function OrganizerAuthContent() {
                 Official PBDS Registry
               </span>
               <h1 className="text-2xl sm:text-3xl font-serif font-black text-gray-900 tracking-tight">
-                Register <span className="festive-gradient-text">Puja Committee</span>
+                <span className="block text-xl sm:text-2xl font-sans font-bold text-gray-900 mb-0.5">কমিটি নিবন্ধন</span>
+                <span className="text-sm sm:text-base font-serif font-black text-amber-900">(Register Committee)</span>
               </h1>
               <p className="text-xs sm:text-sm text-gray-600 mt-1.5 max-w-xs mx-auto leading-relaxed">
-                Connect your official Google account to register your committee and generate your printable QR standee.
+                আপনার পূজা কমিটির কিউআর কোড তৈরি করতে Google দিয়ে নিবন্ধন করুন। (Connect Google account to register your committee).
               </p>
             </div>
 
@@ -135,15 +136,15 @@ function OrganizerAuthContent() {
             <div className="space-y-2 mb-5 bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/70">
               <div className="flex items-center gap-2 text-xs text-amber-950 font-medium">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>Instant Universal Gate Voting QR Code</span>
+                <span>তাত্ক্ষণিক গেট ভোটিং কিউআর কোড (Gate Voting QR)</span>
               </div>
               <div className="flex items-center gap-2 text-xs text-amber-950 font-medium">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>Live Devotee Voting & Analytics Desk</span>
+                <span>লাইভ ভোটিং ও অ্যানালিটিক্স ডেস্ক (Live Voting Desk)</span>
               </div>
               <div className="flex items-center gap-2 text-xs text-amber-950 font-medium">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>Nomination for Durgapur Puja Awards 2026</span>
+                <span>দুর্গাপুর পূজা সম্মাননা ২০২৬ এর মনোনয়ন (Awards 2026)</span>
               </div>
             </div>
 
@@ -178,22 +179,19 @@ function OrganizerAuthContent() {
                     />
                   </svg>
                 )}
-                <span>{isLoading ? 'Connecting to Google...' : 'Register with Google'}</span>
+                <span>{isLoading ? 'Google এর সাথে যুক্ত হচ্ছে...' : 'Google দিয়ে লগইন করুন'}</span>
               </DhakButton>
             </div>
 
             {/* Flip Link to Login Face */}
             <div className="mt-5 pt-4 border-t border-amber-200/70 text-center">
-              <p className="text-xs text-gray-600 mb-1">
-                Already registered?
-              </p>
               <button
                 type="button"
                 onClick={() => setIsFlipped(true)}
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-sindoor-600 hover:text-sindoor-700 transition group cursor-pointer"
               >
-                <span>Login here</span>
-                <RotateCw className="w-3 h-3 group-hover:rotate-180 transition-transform duration-500" />
+                <span>ইতোমধ্যে নিবন্ধিত? এখানে লগইন করুন</span>
+                <RotateCw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500" />
               </button>
             </div>
           </div>
@@ -228,17 +226,18 @@ function OrganizerAuthContent() {
                   Paschim Banga DurgaPuja Samannay Samity
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-serif font-black text-gray-900 tracking-tight">
-                  Organizer <span className="festive-gradient-text">Sign In</span>
+                  <span className="block text-xl sm:text-2xl font-sans font-bold text-gray-900 mb-0.5">অর্গানাইজার লগইন</span>
+                  <span className="text-sm sm:text-base font-serif font-black text-amber-900">(Organizer Sign In)</span>
                 </h2>
                 <p className="text-xs sm:text-sm text-gray-600 mt-1.5 max-w-xs mx-auto leading-relaxed">
-                  Authorized portal for registered puja committees. Sign in to access your Gate QR Code & Live Voting Desk.
+                  নিবন্ধিত পূজা কমিটির অনুমোদিত পোর্টাল। আপনার গেট কিউআর কোড ও লাইভ ভোটিং ডেস্ক পেতে লগইন করুন। (Sign in for Gate QR & Live Voting Desk).
                 </p>
               </div>
 
               {/* Security Notice */}
               <div className="mb-5 p-3 rounded-2xl bg-amber-50/70 border border-amber-200/60 text-center">
                 <p className="text-[11px] text-amber-900 leading-relaxed font-medium">
-                  🔒 Only accounts with a verified committee registration can sign in. Unregistered accounts will be redirected to registration.
+                  🔒 শুধুমাত্র অনুমোদিত পূজা কমিটি সাইন ইন করতে পারবেন। নতুন কমিটি হলে অনুগ্রহ করে নিবন্ধন সম্পন্ন করুন।
                 </p>
               </div>
 
@@ -273,23 +272,20 @@ function OrganizerAuthContent() {
                       />
                     </svg>
                   )}
-                  <span>{isLoading ? 'Connecting to Google...' : 'Login with Google'}</span>
+                  <span>{isLoading ? 'Google এর সাথে যুক্ত হচ্ছে...' : 'Google দিয়ে লগইন করুন'}</span>
                 </DhakButton>
               </div>
             </div>
 
             {/* Flip Link to Register Face */}
             <div className="mt-5 pt-4 border-t border-amber-200/70 text-center">
-              <p className="text-xs text-gray-600 mb-1">
-                New committee?
-              </p>
               <button
                 type="button"
                 onClick={() => setIsFlipped(false)}
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-sindoor-600 hover:text-sindoor-700 transition group cursor-pointer"
               >
-                <span>Register here</span>
-                <RotateCw className="w-3 h-3 group-hover:rotate-180 transition-transform duration-500" />
+                <span>নতুন কমিটি? এখানে নিবন্ধন করুন</span>
+                <RotateCw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500" />
               </button>
             </div>
           </div>
