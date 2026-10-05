@@ -1,41 +1,32 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
-let rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY || '';
+const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY || '';
+console.log("DEBUG: Private key length:", rawPrivateKey.length);
+console.log("DEBUG: Project ID exists:", !!process.env.FIREBASE_PROJECT_ID);
+console.log("DEBUG: Client Email exists:", !!process.env.FIREBASE_CLIENT_EMAIL);
 
-// Remove surrounding quotes if accidentally pasted in Vercel
-if (
-  (rawPrivateKey.startsWith('"') && rawPrivateKey.endsWith('"')) ||
-  (rawPrivateKey.startsWith("'") && rawPrivateKey.endsWith("'"))
-) {
-  rawPrivateKey = rawPrivateKey.slice(1, -1);
+let formattedPrivateKey = rawPrivateKey;
+if ((formattedPrivateKey.startsWith('"') && formattedPrivateKey.endsWith('"')) || 
+    (formattedPrivateKey.startsWith("'") && formattedPrivateKey.endsWith("'"))) {
+  formattedPrivateKey = formattedPrivateKey.slice(1, -1);
 }
-
-// Convert literal \n to actual newlines and trim spaces
-const formattedPrivateKey = rawPrivateKey.replace(/\\n/g, '\n').trim();
-
-const projectId =
-  process.env.FIREBASE_PROJECT_ID ||
-  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
-  'durgapur-puja-voting';
-
-const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+formattedPrivateKey = formattedPrivateKey.replace(/\\n/g, '\n').trim();
 
 const serviceAccount = {
-  projectId,
-  clientEmail,
+  projectId: process.env.FIREBASE_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'durgapur-puja-voting',
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
   privateKey: formattedPrivateKey,
 };
 
-export const adminDb =
-  getApps().length === 0
-    ? getFirestore(
-        initializeApp(
-          clientEmail && formattedPrivateKey
-            ? { credential: cert(serviceAccount) }
-            : { projectId }
-        )
+export const adminDb = getApps().length === 0
+  ? getFirestore(
+      initializeApp(
+        serviceAccount.clientEmail && serviceAccount.privateKey
+          ? { credential: cert(serviceAccount) }
+          : { projectId: serviceAccount.projectId }
       )
-    : getFirestore();
+    )
+  : getFirestore();
 
 export { FieldValue };
