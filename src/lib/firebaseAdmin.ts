@@ -13,9 +13,21 @@ if (!app) {
     'durgapur-puja-voting';
 
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY
-    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
-    : undefined;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  if (privateKey) {
+    // 1. Trim leading/trailing whitespace
+    privateKey = privateKey.trim();
+    // 2. Strip surrounding double or single quotes if accidentally included
+    if (
+      (privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+      (privateKey.startsWith("'") && privateKey.endsWith("'"))
+    ) {
+      privateKey = privateKey.slice(1, -1).trim();
+    }
+    // 3. Replace escaped literal '\n' with actual newlines
+    privateKey = privateKey.replace(/\\n/g, '\n');
+  }
 
   try {
     if (clientEmail && privateKey) {
