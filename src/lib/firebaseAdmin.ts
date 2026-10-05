@@ -1,24 +1,36 @@
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import type { Firestore } from 'firebase-admin/firestore';
 import type { Auth } from 'firebase-admin/auth';
 
-const apps = getApps();
-if (!apps.length) {
+let app: App | undefined = getApps()[0];
+
+if (!app) {
   const projectId = 
     process.env.FIREBASE_PROJECT_ID || 
     process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 
     'durgapur-puja-voting';
 
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY
-    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
-    : undefined;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+  if (privateKey) {
+    privateKey = privateKey.trim();
+    // Strip surrounding quotes if developers copied them into Vercel env
+    if (
+      (privateKey.startsWith('"') && privateKey.endsWith('"')) ||
+      (privateKey.startsWith("'") && privateKey.endsWith("'"))
+    ) {
+      privateKey = privateKey.slice(1, -1);
+    }
+    // Replace escaped newlines with actual newline characters
+    privateKey = privateKey.replace(/\\n/g, '\n');
+  }
 
   try {
     if (clientEmail && privateKey) {
-      initializeApp({
+      app = initializeApp({
         credential: cert({
           projectId,
           clientEmail,
@@ -26,7 +38,7 @@ if (!apps.length) {
         }),
       });
     } else {
-      initializeApp({
+      app = initializeApp({
         projectId,
       });
     }
