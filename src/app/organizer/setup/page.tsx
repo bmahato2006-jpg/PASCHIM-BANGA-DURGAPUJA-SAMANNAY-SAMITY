@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { supabase } from '@/lib/supabaseClient';
+import { auth, onAuthStateChanged, signOut, FirebaseUser } from '@/lib/firebase';
 import { 
   checkCommitteeExists, 
   registerCommittee, 
@@ -32,7 +32,7 @@ export default function OrganizerSetupPage() {
   const router = useRouter();
   const { registerOrUpdatePandal } = useApp();
 
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
   const [isVerifying, setIsVerifying] = useState(true);
 
   // Form Fields
@@ -51,52 +51,42 @@ export default function OrganizerSetupPage() {
   useEffect(() => {
     let isSubscribed = true;
 
-    const verifySetupAccess = async () => {
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-        if (userError || !user) {
-          if (isSubscribed) {
-            router.replace('/organizer/auth');
-          }
-          return;
-        }
-
-        if (isSubscribed) {
-          setCurrentUser(user);
-          if (user.user_metadata?.full_name || user.user_metadata?.name) {
-            setSecretaryName(user.user_metadata?.full_name || user.user_metadata?.name);
-          }
-        }
-
-        // Check if committee is already registered
-        const { committee } = await getCommitteeByUser(user.id, user.email);
-        if (committee) {
-          if (isSubscribed) {
-            toast('Account already registered. Redirecting to your dashboard...', {
-              id: 'already-registered',
-              icon: 'ℹ️',
-            });
-            router.replace('/organizer');
-          }
-          return;
-        }
-
-        if (isSubscribed) {
-          setIsVerifying(false);
-        }
-      } catch (err) {
-        console.error('Setup auth verification error:', err);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
         if (isSubscribed) {
           router.replace('/organizer/auth');
         }
+        return;
       }
-    };
 
-    verifySetupAccess();
+      if (isSubscribed) {
+        setCurrentUser(user);
+        if (user.displayName) {
+          setSecretaryName(user.displayName);
+        }
+      }
+
+      // Check if committee is already registered in Firestore
+      const { committee } = await getCommitteeByUser(user.uid, user.email);
+      if (committee) {
+        if (isSubscribed) {
+          toast('Account already registered. Redirecting to your dashboard...', {
+            id: 'already-registered',
+            icon: 'ℹ️',
+          });
+          router.replace('/organizer');
+        }
+        return;
+      }
+
+      if (isSubscribed) {
+        setIsVerifying(false);
+      }
+    });
 
     return () => {
       isSubscribed = false;
+      unsubscribe();
     };
   }, [router]);
 
@@ -142,16 +132,16 @@ export default function OrganizerSetupPage() {
         return;
       }
 
-      // 2. Insert into Supabase committees table
+      // 2. Insert into Firestore committees collection
       const regRes = await registerCommittee({
-        userId: currentUser.id,
+        userId: currentUser.uid,
         committeeName: committeeName.trim(),
         slug: currentSlug,
         ward: ward.trim() || 'Ward 12',
         secretaryName: secretaryName.trim(),
         contactNumber: contactNumber.trim(),
         email: currentUser.email || '',
-        theme: theme.trim() || 'Traditional Sharodotsav',
+        theme: theme.trim() || 'Traditional Durga Puja',
       });
 
       if (!regRes.success) {
@@ -164,17 +154,7 @@ export default function OrganizerSetupPage() {
         return;
       }
 
-      // 3. Update User Metadata
-      await supabase.auth.updateUser({
-        data: {
-          pandal_slug: currentSlug,
-          pandal_name: committeeName.trim(),
-          club_name: committeeName.trim(),
-          ward: ward.trim() || 'Ward 12',
-        },
-      });
-
-      // 4. Update AppContext
+      // 3. Update AppContext
       registerOrUpdatePandal({
         id: currentSlug,
         name: committeeName.trim(),
@@ -183,7 +163,7 @@ export default function OrganizerSetupPage() {
         location: `Durgapur, ${ward.trim() || 'Ward 12'}`,
         secretaryName: secretaryName.trim(),
         contactNumber: contactNumber.trim(),
-        theme: theme.trim() || 'Traditional Sharodotsav',
+        theme: theme.trim() || 'Traditional Durga Puja',
         themeDescription: 'Official puja entry registered with Paschim Banga DurgaPuja Samannay Samity.',
         totalVotes: 0,
         votes: { idol: 0, theme: 0, lighting: 0, eco: 0 },
@@ -203,7 +183,7 @@ export default function OrganizerSetupPage() {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut(auth);
     router.replace('/organizer/auth');
   };
 

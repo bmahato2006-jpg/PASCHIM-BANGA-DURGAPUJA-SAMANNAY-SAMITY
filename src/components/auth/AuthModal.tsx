@@ -38,7 +38,7 @@ export const AuthModal: React.FC = () => {
 
   if (!isAuthModalOpen) return null;
 
-  // Organizer Google Sign-In via Real Supabase OAuth
+  // Organizer Google Sign-In via Firebase Auth
   const handleGoogleSignIn = async () => {
     setError('');
     setIsLoading(true);

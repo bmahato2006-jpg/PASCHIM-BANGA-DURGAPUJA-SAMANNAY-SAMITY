@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { VoteCategory } from '@/types';
+import { Pandal, VoteCategory } from '@/types';
+import { db, collection, query, orderBy, limit as fbLimit, onSnapshot } from '@/lib/firebase';
 import { DhakButton } from '@/components/ui/DhakButton';
 import { 
   Trophy, 
@@ -25,6 +26,68 @@ export const LiveLeaderboard: React.FC<{ limit?: number }> = ({ limit = 5 }) => 
   const { pandals, openVotingModal, castVote, isOrganizer } = useApp();
   const [selectedFilter, setSelectedFilter] = useState<'overall' | VoteCategory>('overall');
   const [isSimulatingLiveVotes, setIsSimulatingLiveVotes] = useState(true);
+  const [firestorePandals, setFirestorePandals] = useState<Pandal[]>([]);
+
+  // Direct Firestore Leaderboard Query (Top 50 ordered by total_votes desc)
+  useEffect(() => {
+    try {
+      const q = query(
+        collection(db, 'pandals'),
+        orderBy('total_votes', 'desc'),
+        fbLimit(50)
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          const list: Pandal[] = [];
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const basePandal = pandals.find((p) => p.id === docSnap.id);
+            const totalVotes = typeof data.total_votes === 'number' ? data.total_votes : (data.totalVotes || 0);
+
+            const defaultPandal: Pandal = {
+              id: docSnap.id,
+              name: data.name || docSnap.id,
+              clubName: data.clubName || data.name || 'Puja Committee',
+              location: typeof data.location === 'string' ? data.location : 'Paschim Bardhaman, West Bengal',
+              ward: data.ward || 'Ward 01',
+              nearLandmark: data.nearLandmark || 'City Centre',
+              budget: data.budget || '₹25 Lakhs',
+              budgetNumber: data.budgetNumber || 25,
+              theme: data.theme || 'Traditional Durga Puja',
+              themeDescription: data.themeDescription || 'A grand artistic showcase for Durga Puja.',
+              presidentName: data.presidentName || 'Club President',
+              secretaryName: data.secretaryName || 'Club Secretary',
+              contactNumber: data.contactNumber || '+91 98000 00000',
+              establishedYear: data.establishedYear || 1985,
+              coverImage: data.coverImage || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
+              gallery: data.gallery || [],
+              votes: { idol: 0, theme: 0, lighting: 0, eco: 0 },
+              totalVotes: 0,
+              tags: data.tags || ['2026'],
+              isEcoFriendly: !!data.isEcoFriendly,
+              visitsToday: data.visitsToday || 1,
+            };
+
+            list.push({
+              ...(basePandal || defaultPandal),
+              totalVotes,
+              votes: data.votes ? { ...(basePandal?.votes || { idol: 0, theme: 0, lighting: 0, eco: 0 }), ...data.votes } : (basePandal?.votes || { idol: 0, theme: 0, lighting: 0, eco: 0 }),
+            });
+          });
+          setFirestorePandals(list);
+        }
+      }, (err) => {
+        console.warn('Firestore live leaderboard listener notice:', err);
+      });
+
+      return () => unsubscribe();
+    } catch (err) {
+      console.warn('Firestore live leaderboard error:', err);
+    }
+  }, [pandals]);
+
+  const activeSourcePandals = firestorePandals.length > 0 ? firestorePandals : pandals;
 
   // AUTOMATED LIVE CROWD VOTE SIMULATOR (Demonstrating fluid layout gliding)
   useEffect(() => {
@@ -32,9 +95,9 @@ export const LiveLeaderboard: React.FC<{ limit?: number }> = ({ limit = 5 }) => 
 
     const interval = setInterval(() => {
       // Pick a random pandal and category to simulate an incoming vote
-      if (pandals.length > 0) {
-        const randomIndex = Math.floor(Math.random() * Math.min(pandals.length, 5));
-        const targetPandal = pandals[randomIndex];
+      if (activeSourcePandals.length > 0) {
+        const randomIndex = Math.floor(Math.random() * Math.min(activeSourcePandals.length, 5));
+        const targetPandal = activeSourcePandals[randomIndex];
         const categories: VoteCategory[] = ['idol', 'theme', 'lighting', 'eco'];
         const randomCat = categories[Math.floor(Math.random() * categories.length)];
 
@@ -45,10 +108,10 @@ export const LiveLeaderboard: React.FC<{ limit?: number }> = ({ limit = 5 }) => 
     }, 4500);
 
     return () => clearInterval(interval);
-  }, [isSimulatingLiveVotes, pandals]);
+  }, [isSimulatingLiveVotes, activeSourcePandals]);
 
   // Sort pandals based on active filter
-  const sortedPandals = [...pandals].sort((a, b) => {
+  const sortedPandals = [...activeSourcePandals].sort((a, b) => {
     if (selectedFilter === 'overall') {
       return b.totalVotes - a.totalVotes;
     }

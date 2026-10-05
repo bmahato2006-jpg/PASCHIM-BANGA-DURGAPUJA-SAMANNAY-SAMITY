@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
-import { supabase } from '@/lib/supabaseClient';
+import { auth, onAuthStateChanged, signOut } from '@/lib/firebase';
 import { getCommitteeByUser } from '@/lib/committeeService';
 import toast from 'react-hot-toast';
 import { Pandal, PandalMedia } from '@/types';
@@ -104,27 +104,25 @@ export const OrganizerDashboard: React.FC = () => {
   const [setupWard, setSetupWard] = useState<string>('Ward 12');
   const [setupTheme, setSetupTheme] = useState<string>('');
 
-  // Strict Route Protection: Check valid Supabase session & fetch Pandal Slug
+  // Strict Route Protection: Check valid Firebase session & fetch Pandal Slug
   useEffect(() => {
     let isSubscribed = true;
     if (typeof window !== 'undefined') {
       setOrigin(window.location.origin);
     }
 
-    const verifySession = async () => {
-      try {
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          if (isSubscribed) {
-            setIsAuthenticated(false);
-            await supabase.auth.signOut();
-            router.replace('/organizer/auth');
-          }
-          return;
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        if (isSubscribed) {
+          setIsAuthenticated(false);
+          router.replace('/organizer/auth');
         }
+        return;
+      }
 
+      try {
         // Strict Check: Must have a verified committee record in database
-        const { committee } = await getCommitteeByUser(user.id, user.email);
+        const { committee } = await getCommitteeByUser(user.uid, user.email);
         if (!committee) {
           if (isSubscribed) {
             setIsAuthenticated(false);
@@ -142,35 +140,15 @@ export const OrganizerDashboard: React.FC = () => {
       } catch (err) {
         if (isSubscribed) {
           setIsAuthenticated(false);
-          await supabase.auth.signOut();
+          await signOut(auth);
           router.replace('/organizer/auth');
-        }
-      }
-    };
-
-    verifySession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!session && isSubscribed) {
-        setIsAuthenticated(false);
-        router.replace('/organizer/auth');
-      } else if (session?.user && isSubscribed) {
-        const { committee } = await getCommitteeByUser(session.user.id, session.user.email);
-        if (!committee) {
-          setIsAuthenticated(false);
-          router.replace('/organizer/setup');
-        } else {
-          setIsAuthenticated(true);
-          setPandalSlug(committee.slug);
-          setPandalName(committee.committee_name);
-          setIsFirstTimeSetup(false);
         }
       }
     });
 
     return () => {
       isSubscribed = false;
-      subscription.unsubscribe();
+      unsubscribe();
     };
   }, [router]);
 
@@ -252,19 +230,6 @@ export const OrganizerDashboard: React.FC = () => {
         id: targetSlug,
       });
 
-      try {
-        await supabase.auth.updateUser({
-          data: {
-            pandal_slug: targetSlug,
-            pandal_name: formData.name || currentPandal.name,
-            club_name: formData.clubName || currentPandal.clubName,
-            ward: formData.ward || currentPandal.ward,
-          },
-        });
-      } catch (err) {
-        console.warn('Profile Supabase sync error:', err);
-      }
-
       if (formData.name) {
         setPandalName(formData.name);
       }
@@ -334,26 +299,13 @@ export const OrganizerDashboard: React.FC = () => {
     const wardNumber = setupWard.trim() || 'Ward 12';
 
     try {
-      const { error: sbError } = await supabase.auth.updateUser({
-        data: {
-          pandal_slug: generatedSlug,
-          pandal_name: setupPandalName.trim(),
-          club_name: committeeName,
-          ward: wardNumber,
-        },
-      });
-
-      if (sbError) {
-        console.warn('Supabase updateUser error:', sbError);
-      }
-
       registerOrUpdatePandal({
         id: generatedSlug,
         name: setupPandalName.trim(),
         clubName: committeeName,
         ward: wardNumber,
         location: `Durgapur, ${wardNumber}`,
-        theme: setupTheme.trim() || 'Cultural Durgotsav',
+        theme: setupTheme.trim() || 'Traditional Durga Puja',
         themeDescription: 'Official puja entry registered with Paschim Banga DurgaPuja Samannay Samity.',
         presidentName: user?.name || 'Club President',
         secretaryName: user?.name || 'Club Secretary',
@@ -376,7 +328,7 @@ export const OrganizerDashboard: React.FC = () => {
         name: setupPandalName.trim(),
         clubName: committeeName,
         ward: wardNumber,
-        theme: setupTheme.trim() || 'Cultural Durgotsav',
+        theme: setupTheme.trim() || 'Traditional Durga Puja',
       }));
       setIsFirstTimeSetup(false);
     } catch (err) {

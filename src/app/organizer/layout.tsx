@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { supabase } from '@/lib/supabaseClient';
+import { auth, onAuthStateChanged } from '@/lib/firebase';
 import { getCommitteeByUser } from '@/lib/committeeService';
 
 export default function OrganizerLayout({
@@ -34,25 +34,18 @@ export default function OrganizerLayout({
 
     let isSubscribed = true;
 
-    const verifyOrganizerAccess = async () => {
-      try {
-        // 2. Strict Check: supabase.auth.getUser()
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
-
-        if (userError || !user) {
-          if (isSubscribed) {
-            router.replace('/organizer/auth');
-          }
-          return;
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        if (isSubscribed) {
+          router.replace('/organizer/auth');
         }
+        return;
+      }
 
-        // 3. Query the database (committees table) for record matching user.id or user.email
-        const { committee } = await getCommitteeByUser(user.id, user.email);
+      try {
+        // Query Firestore for committee record matching user.uid or user.email
+        const { committee } = await getCommitteeByUser(user.uid, user.email);
 
-        // 4. Branching based on route:
         if (isSetupRoute) {
           // If on /organizer/setup:
           // If committee already exists, they don't need setup -> redirect to dashboard
@@ -62,20 +55,18 @@ export default function OrganizerLayout({
             }
             return;
           }
-          // If no committee, allow access to setup
           if (isSubscribed) {
             setIsVerifying(false);
           }
         } else {
           // If on /organizer (dashboard) or any other organizer route:
-          // If no committee, PERMANENTLY redirect to /organizer/setup
+          // If no committee, redirect to /organizer/setup
           if (!committee) {
             if (isSubscribed) {
               router.replace('/organizer/setup');
             }
             return;
           }
-          // If committee exists, allow access to dashboard
           if (isSubscribed) {
             setIsVerifying(false);
           }
@@ -86,26 +77,11 @@ export default function OrganizerLayout({
           router.replace('/organizer/auth');
         }
       }
-    };
-
-    verifyOrganizerAccess();
-
-    // Listen for auth state change
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (isAuthRoute) return;
-
-      if (!session || event === 'SIGNED_OUT') {
-        if (isSubscribed) {
-          router.replace('/organizer/auth');
-        }
-      }
     });
 
     return () => {
       isSubscribed = false;
-      subscription.unsubscribe();
+      unsubscribe();
     };
   }, [pathname, isAuthRoute, isSetupRoute, router]);
 

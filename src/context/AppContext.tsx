@@ -3,7 +3,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Pandal, User, UserRole, VoteCategory, VoteRecord, SupportTicket, PandalMedia } from '@/types';
 import { INITIAL_PANDALS } from '@/data/mockPandals';
-import { supabase } from '@/lib/supabaseClient';
+import { 
+  auth, 
+  db, 
+  getOrSignInAnonymousUser, 
+  onAuthStateChanged, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut,
+  collection,
+  query,
+  orderBy,
+  limit as fbLimit,
+  onSnapshot
+} from '@/lib/firebase';
 
 interface AppContextType {
   user: User | null;
@@ -91,7 +106,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [votedPandals, setVotedPandals] = useState<string[]>([]);
   const [exhaustedCategories, setExhaustedCategories] = useState<VoteCategory[]>([]);
 
-  // Supabase backend is configured and ready
+  // Firebase backend is configured and ready
   const isConfigured = true;
 
   // 4-Token Gamified Verification Helpers (State-backed to prevent SSR hydration mismatch)
@@ -131,7 +146,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   };
 
-  // Load saved state and synchronize Supabase session on mount
+  // Load saved state and synchronize Firebase session on mount
   useEffect(() => {
     try {
       const storedPandals = localStorage.getItem(STORAGE_KEYS.PANDALS);
@@ -195,62 +210,99 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn('LocalStorage load error:', e);
     }
 
-    // Strict Supabase Session Synchronization
-    const syncSession = (session: any) => {
-      if (session?.user) {
-        const sbUser = session.user;
-        const organizerUser: User = {
-          id: sbUser.id,
-          name: sbUser.user_metadata?.full_name || sbUser.user_metadata?.name || sbUser.email?.split('@')[0] || 'Puja Committee Organizer',
-          email: sbUser.email || 'organizer@samannaysamity.org',
-          role: 'organizer',
-          avatar: sbUser.user_metadata?.avatar_url || sbUser.user_metadata?.picture || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-          clubId: sbUser.user_metadata?.pandal_slug || sbUser.user_metadata?.club_id || '',
-        };
-        setUser(organizerUser);
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(organizerUser));
+    // Firebase Session Synchronization & Silent Anonymous Voter Authentication
+    getOrSignInAnonymousUser();
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        if (fbUser.isAnonymous) {
+          const anonUser: User = {
+            id: fbUser.uid,
+            name: 'Verified Voter',
+            email: 'voter@samannaysamity.org',
+            role: 'voter',
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+          };
+          setUser(anonUser);
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(anonUser));
+        } else {
+          const organizerUser: User = {
+            id: fbUser.uid,
+            name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Puja Committee Organizer',
+            email: fbUser.email || 'organizer@samannaysamity.org',
+            role: 'organizer',
+            avatar: fbUser.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+          };
+          setUser(organizerUser);
+          localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(organizerUser));
+        }
       } else {
         localStorage.removeItem(STORAGE_KEYS.USER);
-        const defaultAnon = getOrCreateDeviceVoter();
-        setUser(defaultAnon);
+        getOrSignInAnonymousUser().then((anonUid) => {
+          const defaultAnon = {
+            id: anonUid || `anon-${Date.now().toString(36)}`,
+            name: 'Verified Voter',
+            email: 'voter@samannaysamity.org',
+            role: 'voter' as UserRole,
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+          };
+          setUser(defaultAnon);
+        });
       }
-    };
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      syncSession(session);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      syncSession(session);
-    });
+    // Realtime Firestore synchronization for Pandals collection
+    let unsubscribeFirestore = () => {};
+    try {
+      const q = query(collection(db, 'pandals'), orderBy('total_votes', 'desc'), fbLimit(50));
+      unsubscribeFirestore = onSnapshot(q, (snapshot) => {
+        if (!snapshot.empty) {
+          setPandals((prev) => {
+            const updated = [...prev];
+            snapshot.forEach((d) => {
+              const data = d.data();
+              const idx = updated.findIndex((p) => p.id === d.id);
+              const tv = typeof data.total_votes === 'number' ? data.total_votes : (data.totalVotes || 0);
+              if (idx >= 0) {
+                updated[idx] = {
+                  ...updated[idx],
+                  totalVotes: tv,
+                  votes: data.votes ? { ...updated[idx].votes, ...data.votes } : updated[idx].votes,
+                };
+              }
+            });
+            return updated;
+          });
+        }
+      }, (err) => {
+        console.warn('Firestore pandals realtime sync notice:', err);
+      });
+    } catch (e) {
+      console.warn('Firestore subscription error:', e);
+    }
 
     return () => {
-      subscription.unsubscribe();
+      unsubscribeAuth();
+      unsubscribeFirestore();
     };
   }, []);
 
-  // Google Sign-In via Real Supabase OAuth
+  // Google Sign-In via Firebase Auth
   const signInWithGoogle = async (chosenRole: UserRole): Promise<{ success: boolean; error?: string }> => {
     try {
-      const redirectUrl = typeof window !== 'undefined'
-        ? `${window.location.origin}/organizer/callback?action=login`
-        : undefined;
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const fbUser = result.user;
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      });
-
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
+      const profileUser: User = {
+        id: fbUser.uid,
+        name: fbUser.displayName || 'Organizer',
+        email: fbUser.email || 'organizer@samannaysamity.org',
+        role: chosenRole,
+        avatar: fbUser.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      };
+      setUser(profileUser);
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
       setIsAuthModalOpen(false);
       return { success: true };
     } catch (err: any) {
@@ -258,7 +310,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Real Supabase Email/Password Sign Up
+  // Firebase Email/Password Sign Up
   const signUpWithEmail = async (
     email: string,
     password: string,
@@ -266,34 +318,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     displayName?: string
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim().toLowerCase(),
-        password,
-        options: {
-          data: {
-            full_name: displayName || email.split('@')[0],
-            role: chosenRole,
-          },
-        },
-      });
+      const cred = await createUserWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+      const fbUser = cred.user;
 
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      if (data.user) {
-        const profileUser: User = {
-          id: data.user.id,
-          name: displayName || data.user.user_metadata?.full_name || email.split('@')[0],
-          email: data.user.email || email,
-          role: chosenRole,
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-          clubId: chosenRole === 'organizer' ? (data.user.user_metadata?.pandal_slug || data.user.user_metadata?.club_id || '') : undefined,
-        };
-        setUser(profileUser);
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
-      }
-
+      const profileUser: User = {
+        id: fbUser.uid,
+        name: displayName || email.split('@')[0],
+        email: fbUser.email || email,
+        role: chosenRole,
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      };
+      setUser(profileUser);
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
       setIsAuthModalOpen(false);
       return { success: true };
     } catch (err: any) {
@@ -301,35 +337,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Real Supabase Email/Password Sign In
+  // Firebase Email/Password Sign In
   const signInWithEmail = async (
     email: string,
     password: string,
     chosenRole: UserRole
   ): Promise<{ success: boolean; error?: string }> => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
+      const cred = await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+      const fbUser = cred.user;
 
-      if (error) {
-        return { success: false, error: error.message };
-      }
-
-      if (data.user) {
-        const profileUser: User = {
-          id: data.user.id,
-          name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Organizer',
-          email: data.user.email || email,
-          role: chosenRole,
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-          clubId: chosenRole === 'organizer' ? (data.user.user_metadata?.pandal_slug || data.user.user_metadata?.club_id || '') : undefined,
-        };
-        setUser(profileUser);
-        localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
-      }
-
+      const profileUser: User = {
+        id: fbUser.uid,
+        name: fbUser.displayName || email.split('@')[0] || 'Organizer',
+        email: fbUser.email || email,
+        role: chosenRole,
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+      };
+      setUser(profileUser);
+      localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(profileUser));
       setIsAuthModalOpen(false);
       return { success: true };
     } catch (err: any) {
@@ -337,15 +363,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Sign out from Supabase and reset to persistent anonymous voter
+  // Sign out from Firebase Auth and reset to persistent anonymous voter
   const logout = async () => {
     try {
-      await supabase.auth.signOut();
+      await signOut(auth);
     } catch (e) {
-      console.warn('Supabase sign out notice:', e);
+      console.warn('Sign out notice:', e);
     }
     localStorage.removeItem(STORAGE_KEYS.USER);
-    const anonVoter = getOrCreateDeviceVoter();
+    const anonUid = await getOrSignInAnonymousUser();
+    const anonVoter: User = {
+      id: anonUid,
+      name: 'Verified Voter',
+      email: 'voter@samannaysamity.org',
+      role: 'voter',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    };
     setUser(anonVoter);
 
     if (typeof window !== 'undefined') {
@@ -471,13 +504,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
 
-    // Call server API for Supabase insert and constraint verification
+    // Call server API for Firestore atomic transaction and constraint verification
+    let activeVoterUid = voterUid;
+    if (typeof window !== 'undefined') {
+      try {
+        const anonUid = await getOrSignInAnonymousUser();
+        if (anonUid) {
+          activeVoterUid = anonUid;
+        }
+      } catch (e) {
+        console.warn('Anonymous UID resolution notice:', e);
+      }
+    }
+
     if (!skipApiCheck) {
       try {
         const apiRes = await fetch('/api/vote', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ deviceId: voterUid, pandalId, category }),
+          body: JSON.stringify({ 
+            user_uid: activeVoterUid, 
+            deviceId: activeVoterUid, 
+            pandal_id: pandalId, 
+            pandalId, 
+            category 
+          }),
         });
         const apiData = await apiRes.json();
         if (!apiRes.ok && !apiData.success) {
@@ -505,7 +556,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     // Validation passed! Proceed to record vote and update states.
     const newVote: VoteRecord = {
       pandalId,
-      userId: voterUid,
+      userId: activeVoterUid,
       category,
       timestamp: Date.now(),
     };

@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { supabase } from '@/lib/supabaseClient';
+import { auth, GoogleAuthProvider, signInWithPopup } from '@/lib/firebase';
+import { getCommitteeByUser } from '@/lib/committeeService';
 import { DhakButton } from '@/components/ui/DhakButton';
 import toast from 'react-hot-toast';
 import {
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 
 function OrganizerAuthContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialMode = searchParams.get('mode');
 
@@ -39,25 +41,17 @@ function OrganizerAuthContent() {
     setIsLoading(true);
 
     try {
-      const redirectUrl =
-        typeof window !== 'undefined'
-          ? `${window.location.origin}/organizer/callback?action=${action}`
-          : undefined;
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
 
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
-      });
-
-      if (error) {
-        setIsLoading(false);
-        toast.error(error.message);
+      const { committee } = await getCommitteeByUser(user.uid, user.email);
+      if (committee) {
+        toast.success(`Welcome back, ${committee.committee_name}!`);
+        router.replace('/organizer');
+      } else {
+        toast.success('Account authenticated. Complete your committee setup.');
+        router.replace('/organizer/setup');
       }
     } catch (err: any) {
       setIsLoading(false);
