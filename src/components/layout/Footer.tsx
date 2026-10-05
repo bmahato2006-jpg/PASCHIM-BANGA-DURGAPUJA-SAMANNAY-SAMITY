@@ -7,13 +7,10 @@ import {
   LifeBuoy, 
   Phone, 
   ShieldCheck, 
-  MessageCircle,
+  MessageCircle, 
   ExternalLink,
   Compass,
-  Trophy,
-  QrCode,
   FileText,
-  AlertTriangle,
   HeartHandshake,
   Lock
 } from 'lucide-react';
@@ -37,13 +34,28 @@ export const Footer: React.FC<{
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2 font-bold text-gray-800">
             <Phone className="w-3.5 h-3.5 text-sindoor-600 animate-pulse" />
-            <span>24/7 Regional Emergency Helplines:</span>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 leading-tight">
+              <span>২৪/৭ আঞ্চলিক জরুরি হেল্পলাইন:</span>
+              <span className="text-[10px] sm:text-xs opacity-75 font-normal text-gray-600">(24/7 Regional Emergency Helplines:)</span>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-4 text-gray-600 font-medium">
-            <span>Police: <strong className="text-gray-900 font-bold">100 / 0343-2546200</strong></span>
-            <span>Fire Station: <strong className="text-gray-900 font-bold">101</strong></span>
-            <span>Ambulance: <strong className="text-gray-900 font-bold">102</strong></span>
-            <span>Women Helpline: <strong className="text-gray-900 font-bold">1091</strong></span>
+          <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-gray-600 font-medium text-xs">
+            <div className="flex items-center gap-1">
+              <span className="font-bold text-gray-800">পুলিশ <span className="text-[10px] font-normal opacity-75">(Police)</span>:</span>
+              <strong className="text-gray-900 font-bold">100 / 0343-2546200</strong>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-bold text-gray-800">ফায়ার স্টেশন <span className="text-[10px] font-normal opacity-75">(Fire Station)</span>:</span>
+              <strong className="text-gray-900 font-bold">101</strong>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-bold text-gray-800">অ্যাম্বুলেন্স <span className="text-[10px] font-normal opacity-75">(Ambulance)</span>:</span>
+              <strong className="text-gray-900 font-bold">102</strong>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="font-bold text-gray-800">মহিলা হেল্পলাইন <span className="text-[10px] font-normal opacity-75">(Women Helpline)</span>:</span>
+              <strong className="text-gray-900 font-bold">1091</strong>
+            </div>
           </div>
         </div>
       </div>
@@ -59,25 +71,29 @@ export const Footer: React.FC<{
               <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sindoor-500 via-marigold-500 to-amber-400 text-white flex items-center justify-center shadow-md shrink-0">
                 <Flame className="w-6 h-6 animate-pulse-subtle" />
               </div>
-              <div>
+              <div className="flex flex-col">
                 <span className="font-serif font-black text-base sm:text-lg text-gray-900 block leading-tight">
-                  Paschim Banga <span className="text-sindoor-600">DurgaPuja</span> Samannay Samity
+                  পশ্চিমবঙ্গ <span className="text-sindoor-600">দুর্গাপূজা</span> সমন্বয় সমিতি
                 </span>
                 <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider block mt-0.5">
-                  The Official Voting Platform
+                  Paschim Banga DurgaPuja Samannay Samity
                 </span>
               </div>
             </div>
 
             <p className="text-xs text-gray-600 leading-relaxed">
-              The centralized digital voting, live leaderboard, and discovery platform for Paschim Banga DurgaPuja Samannay Samity across the region. Honoring artistry, heritage, and eco-friendly craftsmanship.
+              পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতির কেন্দ্রীয় ডিজিটাল ভোটিং, লাইভ লিডারবোর্ড ও অন্বেষণ প্ল্যাটফর্ম। শিল্পকলা, ঐতিহ্য এবং পরিবেশ-বান্ধব কারুশিল্পের সম্মাননা।
+              <span className="block text-[11px] opacity-75 mt-1 text-gray-500">
+                The centralized digital voting, live leaderboard, and discovery platform for Paschim Banga DurgaPuja Samannay Samity. Honoring artistry, heritage, and eco-friendly craftsmanship.
+              </span>
             </p>
 
             <div className="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-900 flex items-start gap-2">
               <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <span className="text-[11px] leading-snug">
-                Civic accreditation & safety coordination across Paschim Bardhaman & West Bengal.
-              </span>
+              <div className="text-[11px] leading-snug">
+                <span className="font-bold">নাগরিক স্বীকৃতি ও নিরাপত্তা সমন্বয়</span>
+                <span className="block opacity-75">Civic accreditation & safety coordination across Paschim Bardhaman & West Bengal.</span>
+              </div>
             </div>
           </div>
 
@@ -85,23 +101,32 @@ export const Footer: React.FC<{
           <div className="space-y-3">
             <h4 className="text-xs font-black uppercase tracking-wider text-gray-900 flex items-center gap-1.5 pb-1 border-b border-gray-100">
               <Compass className="w-3.5 h-3.5 text-sindoor-500" />
-              <span>Quick Navigation</span>
+              <div className="flex flex-col leading-tight">
+                <span>দ্রুত নেভিগেশন</span>
+                <span className="text-[9px] opacity-75 normal-case font-normal text-gray-500">Quick Navigation</span>
+              </div>
             </h4>
             <ul className="space-y-2 text-xs">
               <li>
                 <button
                   onClick={() => handleLinkClick('feed')}
-                  className="text-gray-600 hover:text-sindoor-600 font-medium transition flex items-center gap-1.5 min-h-[32px]"
+                  className="text-gray-600 hover:text-sindoor-600 font-medium transition flex items-center gap-1.5 min-h-[32px] text-left"
                 >
-                  <span>Explore All Pandals</span>
+                  <div className="flex flex-col leading-tight">
+                    <span className="font-bold text-gray-800">মণ্ডপ দেখুন</span>
+                    <span className="text-[10px] opacity-75 text-gray-500">Explore All Pandals</span>
+                  </div>
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => handleLinkClick('leaderboard')}
-                  className="text-gray-600 hover:text-marigold-600 font-medium transition flex items-center gap-1.5 min-h-[32px]"
+                  className="text-gray-600 hover:text-marigold-600 font-medium transition flex items-center gap-1.5 min-h-[32px] text-left"
                 >
-                  <span>Live City Leaderboard</span>
+                  <div className="flex flex-col leading-tight">
+                    <span className="font-bold text-gray-800">লাইভ লিডারবোর্ড</span>
+                    <span className="text-[10px] opacity-75 text-gray-500">Live City Leaderboard</span>
+                  </div>
                 </button>
               </li>
               {!isOrganizer && (
@@ -109,26 +134,35 @@ export const Footer: React.FC<{
                   <li>
                     <button
                       onClick={() => handleLinkClick('my-votes')}
-                      className="text-gray-600 hover:text-sindoor-600 font-medium transition flex items-center gap-1.5 min-h-[32px]"
+                      className="text-gray-600 hover:text-sindoor-600 font-medium transition flex items-center gap-1.5 min-h-[32px] text-left"
                     >
-                      <span>My Voting History & Ballot</span>
+                      <div className="flex flex-col leading-tight">
+                        <span className="font-bold text-gray-800">আমার ভোট তালিকা</span>
+                        <span className="text-[10px] opacity-75 text-gray-500">My Voting History & Ballot</span>
+                      </div>
                     </button>
                   </li>
                   <li>
                     <button
                       onClick={openQRScanner}
-                      className="text-gray-600 hover:text-marigold-600 font-medium transition flex items-center gap-1.5 min-h-[32px]"
+                      className="text-gray-600 hover:text-marigold-600 font-medium transition flex items-center gap-1.5 min-h-[32px] text-left"
                     >
-                      <span>Scan Pandal QR Code</span>
+                      <div className="flex flex-col leading-tight">
+                        <span className="font-bold text-gray-800">প্যান্ডেল কিউআর কোড স্ক্যান</span>
+                        <span className="text-[10px] opacity-75 text-gray-500">Scan Pandal QR Code</span>
+                      </div>
                     </button>
                   </li>
                   <li>
                     <a
                       href="/organizer/auth"
-                      className="text-gray-500 hover:text-marigold-600 font-medium transition flex items-center gap-1.5 min-h-[32px]"
+                      className="text-gray-600 hover:text-marigold-600 font-medium transition flex items-center gap-1.5 min-h-[32px] text-left"
                     >
-                      <Lock className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Organizer Portal</span>
+                      <Lock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <div className="flex flex-col leading-tight">
+                        <span className="font-bold text-gray-800">আয়োজক পোর্টাল</span>
+                        <span className="text-[10px] opacity-75 text-gray-500">Organizer Portal</span>
+                      </div>
                     </a>
                   </li>
                 </>
@@ -137,9 +171,12 @@ export const Footer: React.FC<{
                 <li>
                   <button
                     onClick={() => handleLinkClick('organizer')}
-                    className="text-gray-600 hover:text-marigold-600 font-medium transition flex items-center gap-1.5 min-h-[32px]"
+                    className="text-gray-600 hover:text-marigold-600 font-medium transition flex items-center gap-1.5 min-h-[32px] text-left"
                   >
-                    <span>Organizer Dashboard & QR Standee</span>
+                    <div className="flex flex-col leading-tight">
+                      <span className="font-bold text-gray-800">আয়োজক ড্যাশবোর্ড ও কিউআর</span>
+                      <span className="text-[10px] opacity-75 text-gray-500">Organizer Dashboard & QR Standee</span>
+                    </div>
                   </button>
                 </li>
               )}
@@ -150,11 +187,17 @@ export const Footer: React.FC<{
           <div className="space-y-3">
             <h4 className="text-xs font-black uppercase tracking-wider text-gray-900 flex items-center gap-1.5 pb-1 border-b border-gray-100">
               <HeartHandshake className="w-3.5 h-3.5 text-marigold-600" />
-              <span>Official Helpdesk</span>
+              <div className="flex flex-col leading-tight">
+                <span>অফিসিয়াল হেল্পডেস্ক</span>
+                <span className="text-[9px] opacity-75 normal-case font-normal text-gray-500">Official Helpdesk</span>
+              </div>
             </h4>
             
             <p className="text-xs text-gray-600 leading-relaxed">
-              Facing voting issues or need urgent assistance for your pandal? Contact our dedicated control desk.
+              ভোট সংক্রান্ত সমস্যা বা প্যান্ডেলের জন্য জরুরি সহায়তার প্রয়োজন? আমাদের কন্ট্রোল ডেস্কে যোগাযোগ করুন।
+              <span className="block text-[11px] opacity-75 mt-1 text-gray-500">
+                Facing voting issues or need urgent assistance for your pandal? Contact our dedicated control desk.
+              </span>
             </p>
 
             <div className="space-y-2.5 pt-1">
@@ -163,8 +206,11 @@ export const Footer: React.FC<{
                 onClick={openSupportModal}
                 className="w-full min-h-[44px] py-2 px-3.5 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold flex items-center justify-center gap-2 transition shadow-2xs"
               >
-                <LifeBuoy className="w-4 h-4 text-amber-600" />
-                <span>Submit Grievance Ticket</span>
+                <LifeBuoy className="w-4 h-4 text-amber-600 shrink-0" />
+                <div className="flex flex-col items-center leading-tight">
+                  <span>অভিযোগ টিকিট জমা দিন</span>
+                  <span className="text-[10px] opacity-75 font-normal">Submit Grievance Ticket</span>
+                </div>
               </button>
 
               {/* Option 2: Direct WhatsApp Support Button */}
@@ -174,9 +220,12 @@ export const Footer: React.FC<{
                 rel="noopener noreferrer"
                 className="w-full min-h-[44px] py-2.5 px-3.5 rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] text-gray-900 text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition"
               >
-                <MessageCircle className="w-4 h-4 fill-current text-gray-900" />
-                <span>Organizer WhatsApp Desk</span>
-                <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                <MessageCircle className="w-4 h-4 fill-current text-gray-900 shrink-0" />
+                <div className="flex flex-col items-center leading-tight">
+                  <span>আয়োজক হোয়াটসঅ্যাপ ডেস্ক</span>
+                  <span className="text-[10px] opacity-75 font-normal">Organizer WhatsApp Desk</span>
+                </div>
+                <ExternalLink className="w-3.5 h-3.5 opacity-80 shrink-0 ml-0.5" />
               </a>
             </div>
           </div>
@@ -185,40 +234,56 @@ export const Footer: React.FC<{
           <div className="space-y-3">
             <h4 className="text-xs font-black uppercase tracking-wider text-gray-900 flex items-center gap-1.5 pb-1 border-b border-gray-100">
               <FileText className="w-3.5 h-3.5 text-gray-600" />
-              <span>Legal & Civic Rules</span>
+              <div className="flex flex-col leading-tight">
+                <span>আইনি ও নাগরিক নিয়মাবলী</span>
+                <span className="text-[9px] opacity-75 normal-case font-normal text-gray-500">Legal & Civic Rules</span>
+              </div>
             </h4>
-            <ul className="space-y-2 text-xs text-gray-600 leading-relaxed">
+            <ul className="space-y-2.5 text-xs text-gray-600 leading-relaxed">
               <li className="flex items-start gap-1.5">
                 <span className="text-sindoor-500 font-bold">•</span>
-                <span><strong>Single Vote Per Category:</strong> Each verified voter can cast at most 1 vote per pandal category.</span>
+                <div>
+                  <span className="font-bold text-gray-800">প্রতি বিভাগে একটি ভোট (Single Vote Per Category):</span>
+                  <span className="block text-[11px] text-gray-600">প্রত্যেক যাচাইকৃত ভোটার প্রতি ক্যাটাগরিতে ১টি করে ভোট দিতে পারেন।</span>
+                </div>
               </li>
               <li className="flex items-start gap-1.5">
                 <span className="text-sindoor-500 font-bold">•</span>
-                <span><strong>Zero-Plastic Mandate:</strong> Pandals strictly comply with DMC single-use plastic prohibition.</span>
+                <div>
+                  <span className="font-bold text-gray-800">প্লাস্টিকমুক্ত নির্দেশিকা (Zero-Plastic Mandate):</span>
+                  <span className="block text-[11px] text-gray-600">মণ্ডপ প্রাঙ্গণে একক ব্যবহারের প্লাস্টিক কঠোরভাবে নিষিদ্ধ।</span>
+                </div>
               </li>
               <li className="flex items-start gap-1.5">
                 <span className="text-sindoor-500 font-bold">•</span>
-                <span><strong>Fire Safety Clearance:</strong> Mandated separate ingress/egress corridors for crowd safety.</span>
+                <div>
+                  <span className="font-bold text-gray-800">অগ্নি নিরাপত্তা ছাড়পত্র (Fire Safety Clearance):</span>
+                  <span className="block text-[11px] text-gray-600">জননিরাপত্তার স্বার্থে পৃথক প্রবেশ ও প্রস্থান পথ বাধ্যতামূলক।</span>
+                </div>
               </li>
             </ul>
           </div>
 
         </div>
 
-        {/* Bottom Copyright & Bengali Blessing */}
+        {/* Bottom Copyright & Greeting */}
         <div className="mt-12 pt-6 border-t border-amber-200/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
-          <p className="text-center sm:text-left">
-            © 2026 Paschim Banga DurgaPuja Samannay Samity. All rights reserved. 
-            <span className="text-amber-800 font-semibold block sm:inline sm:ml-2">
-              দুর্গাপূজার আন্তরিক প্রীতি ও শুভেচ্ছা
-            </span>
-          </p>
+          <div className="text-center sm:text-left leading-relaxed">
+            <div className="flex flex-col">
+              <span className="font-semibold text-gray-800">© ২০২৬ পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি। সর্বস্বত্ব সংরক্ষিত।</span>
+              <span className="block text-xs opacity-70 mt-1">© 2026 Paschim Banga DurgaPuja Samannay Samity. All rights reserved.</span>
+            </div>
+            <div className="text-amber-800 font-bold mt-2 flex flex-col sm:flex-row sm:items-center sm:gap-1.5">
+              <span>দুর্গাপূজার আন্তরিক প্রীতি ও শুভেচ্ছা</span>
+              <span className="text-[11px] opacity-75 font-normal text-amber-900/80">(Heartfelt greetings for Durga Puja)</span>
+            </div>
+          </div>
           <div className="flex items-center gap-4 text-[11px] font-medium text-gray-600">
-            <span>Paschim Bardhaman Region</span>
+            <span>পশ্চিম বর্ধমান অঞ্চল <span className="opacity-70">(Paschim Bardhaman)</span></span>
             <span>•</span>
-            <span>Verified PWA Engine</span>
+            <span>যাচাইকৃত PWA ইঞ্জিন <span className="opacity-70">(Verified PWA)</span></span>
             <span>•</span>
-            <span className="text-emerald-700 font-bold">100% Secure RBAC</span>
+            <span className="text-emerald-700 font-bold">১০০% সুরক্ষিত RBAC</span>
           </div>
         </div>
 

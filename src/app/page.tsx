@@ -9,7 +9,7 @@ import { Footer } from '@/components/layout/Footer';
 import { LiveLeaderboard } from '@/components/voter/LiveLeaderboard';
 import { MyVotesView } from '@/components/voter/MyVotesView';
 import { DhakButton } from '@/components/ui/DhakButton';
-import { ScrollReveal } from '@/components/ui/ScrollReveal';
+import ScrollReveal from '@/components/ui/ScrollReveal';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -243,7 +243,7 @@ export default function HomePage() {
                 </ScrollReveal>
 
                 {/* Feature Badges Section */}
-                <ScrollReveal delay={0.15}>
+                <ScrollReveal>
                   {/* Prominent One Device • One Vote Security Badge */}
                   <div className="mt-7 flex justify-center">
                     <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-300/90 text-emerald-950 text-xs sm:text-sm font-black tracking-wide shadow-sm shadow-emerald-900/5 hover:border-emerald-400 transition-all duration-200">
