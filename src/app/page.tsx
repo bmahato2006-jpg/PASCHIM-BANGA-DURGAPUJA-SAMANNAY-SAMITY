@@ -241,28 +241,40 @@ export default function HomePage() {
 
                 {/* Prominent One Device • One Vote Security Badge */}
                 <div className="mt-7 flex justify-center">
-                  <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-300/90 text-emerald-950 text-xs sm:text-sm font-black tracking-wide shadow-sm shadow-emerald-900/5 hover:border-emerald-400 transition-all duration-200">
+                  <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-300/90 text-emerald-950 text-xs sm:text-sm font-black tracking-wide shadow-sm shadow-emerald-900/5 hover:border-emerald-400 transition-all duration-200">
                     <div className="w-5 h-5 rounded-full bg-emerald-100/90 flex items-center justify-center shrink-0 border border-emerald-300 shadow-2xs">
                       <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                     </div>
-                    <span>One Device • One Vote</span>
+                    <div className="flex flex-col sm:flex-row items-center sm:gap-1.5 leading-tight">
+                      <span className="font-bold">এক ডিভাইস • এক ভোট</span>
+                      <span className="text-[10px] opacity-75 font-normal">(One Device • One Vote)</span>
+                    </div>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
                   </div>
                 </div>
 
                 {/* Trust Badges */}
                 <div className="mt-8 pt-6 border-t border-amber-200/60 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-gray-600">
-                  <div className="flex items-center gap-1.5 font-bold text-gray-800">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                    <span>Hardware-Bound Ballot</span>
+                  <div className="flex items-center gap-2 font-bold text-gray-800">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div className="flex flex-col items-start leading-tight">
+                      <span>হার্ডওয়্যার-বাউন্ড ব্যালট</span>
+                      <span className="text-[10px] opacity-75 font-normal text-gray-500">Hardware-Bound Ballot</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 font-bold text-gray-800">
-                    <Sparkles className="w-4 h-4 text-marigold-600" />
-                    <span>4 Award Tokens</span>
+                  <div className="flex items-center gap-2 font-bold text-gray-800">
+                    <Sparkles className="w-4 h-4 text-marigold-600 shrink-0" />
+                    <div className="flex flex-col items-start leading-tight">
+                      <span>৪টি অ্যাওয়ার্ড টোকেন</span>
+                      <span className="text-[10px] opacity-75 font-normal text-gray-500">4 Award Tokens</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 font-bold text-gray-800">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span>Real-Time Tamper-Proof Tally</span>
+                  <div className="flex items-center gap-2 font-bold text-gray-800">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div className="flex flex-col items-start leading-tight">
+                      <span>রিয়েল-টাইম সুরক্ষিত ট্যালি</span>
+                      <span className="text-[10px] opacity-75 font-normal text-gray-500">Real-Time Secure Tally</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -275,24 +287,30 @@ export default function HomePage() {
                   <div>
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
                       <Vote className="w-3.5 h-3.5 text-sindoor-600" />
-                      <span>Official Voting List</span>
+                      <span>অফিসিয়াল ভোটিং তালিকা <span className="text-[10px] opacity-75 normal-case font-normal">(Official Voting List)</span></span>
                     </div>
                     <h2 className="text-2xl sm:text-3xl font-serif font-black text-gray-900 tracking-tight">
-                      Participating <span className="festive-gradient-text">Puja Pandals</span>
+                      অংশগ্রহণকারী <span className="festive-gradient-text">পূজা প্যান্ডেল</span>
+                      <span className="block text-sm sm:text-base text-gray-500 font-sans font-medium mt-0.5">
+                        Participating Puja Pandals
+                      </span>
                     </h2>
-                    <p className="text-xs sm:text-sm text-gray-600 mt-1 max-w-xl">
-                      Browse registered puja committees. Tap any pandal to view its concept or scan on-site to award your category tokens.
+                    <p className="text-xs sm:text-sm text-gray-600 mt-2 max-w-xl leading-relaxed">
+                      নিবন্ধিত পূজা কমিটিগুলি ব্রাউজ করুন। অন-সাইটে ভোট দিতে বা তাদের থিম দেখতে যেকোনো প্যান্ডেলে ট্যাপ করুন।
+                      <span className="block text-xs text-gray-500 opacity-75 mt-0.5">
+                        Browse registered puja committees. Tap any pandal to view its theme or scan on-site to vote.
+                      </span>
                     </p>
                   </div>
 
                   {/* Search Bar */}
-                  <div className="w-full md:w-72 relative">
+                  <div className="w-full md:w-80 relative">
                     <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search pandal or ward..."
+                      placeholder="প্যান্ডেল বা ওয়ার্ড অনুসন্ধান করুন... (Search pandal or ward...)"
                       className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-amber-200 text-xs sm:text-sm focus:outline-none focus:border-marigold-500 bg-white shadow-2xs select-text"
                     />
                   </div>
@@ -310,7 +328,7 @@ export default function HomePage() {
                           : 'bg-white text-gray-700 border border-gray-200 hover:bg-amber-50'
                       }`}
                     >
-                      All Wards ({pandals.length})
+                      সব ওয়ার্ড / All Wards ({pandals.length})
                     </button>
                     {availableWards.map((w) => (
                       <button
@@ -323,7 +341,7 @@ export default function HomePage() {
                             : 'bg-white text-gray-700 border border-gray-200 hover:bg-amber-50'
                         }`}
                       >
-                        {w}
+                        ওয়ার্ড (Ward) {w}
                       </button>
                     ))}
                   </div>
@@ -355,8 +373,8 @@ export default function HomePage() {
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           
                           <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-bold text-amber-950 border border-amber-200 flex items-center gap-1 shadow-2xs">
-                            <MapPin className="w-3 h-3 text-sindoor-600" />
-                            <span>{pandal.ward || 'Durgapur'}</span>
+                            <MapPin className="w-3 h-3 text-sindoor-600 shrink-0" />
+                            <span>ওয়ার্ড (Ward) {pandal.ward || 'Durgapur'}</span>
                           </div>
 
                           <div className="absolute bottom-3 left-3 right-3 text-white">
@@ -376,13 +394,13 @@ export default function HomePage() {
                             <div className="flex items-start gap-1.5 text-xs text-gray-700 font-medium mb-3">
                               <Palette className="w-3.5 h-3.5 text-marigold-600 shrink-0 mt-0.5" />
                               <span className="line-clamp-2">
-                                <strong className="text-gray-900">Theme:</strong> {pandal.theme || 'Traditional Durga Puja'}
+                                <strong className="text-gray-900">থিম (Theme):</strong> {pandal.theme || 'Traditional Durga Puja'}
                               </span>
                             </div>
 
                             {/* Votes Count */}
                             <div className="flex items-center justify-between text-xs py-2 px-3 rounded-xl bg-amber-50/70 border border-amber-200/60 mb-3 text-amber-950">
-                              <span className="font-semibold text-gray-600">Total Devotee Votes:</span>
+                              <span className="font-semibold text-gray-600">মোট ভক্তদের ভোট (Total Votes):</span>
                               <span className="font-black text-sindoor-600 font-mono">
                                 {pandal.totalVotes.toLocaleString()}
                               </span>
@@ -393,19 +411,25 @@ export default function HomePage() {
                           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-amber-100">
                             <Link
                               href={`/${pandal.id}`}
-                              className="py-2.5 px-3 rounded-xl text-xs font-bold text-center border border-amber-300 bg-white hover:bg-amber-50 text-gray-800 transition shadow-2xs flex items-center justify-center gap-1"
+                              className="py-2 px-2.5 rounded-xl text-xs font-bold text-center border border-amber-300 bg-white hover:bg-amber-50 text-gray-800 transition shadow-2xs flex items-center justify-center gap-1.5"
                             >
-                              <span>View Pandal</span>
-                              <ExternalLink className="w-3 h-3 text-gray-500" />
+                              <div className="flex flex-col items-center leading-tight">
+                                <span>প্যান্ডেল দেখুন</span>
+                                <span className="text-[10px] opacity-75 font-normal">View Pandal</span>
+                              </div>
+                              <ExternalLink className="w-3 h-3 text-gray-500 shrink-0" />
                             </Link>
 
                             <button
                               type="button"
                               onClick={() => openVotingModal(pandal)}
-                              className="py-2.5 px-3 rounded-xl text-xs font-bold text-center bg-gradient-to-r from-sindoor-600 to-marigold-600 hover:from-sindoor-700 hover:to-marigold-700 text-white shadow-xs flex items-center justify-center gap-1 touch-manipulation active:scale-95"
+                              className="py-2 px-2.5 rounded-xl text-xs font-bold text-center bg-gradient-to-r from-sindoor-600 to-marigold-600 hover:from-sindoor-700 hover:to-marigold-700 text-white shadow-xs flex items-center justify-center gap-1.5 touch-manipulation active:scale-95"
                             >
-                              <Vote className="w-3.5 h-3.5 text-white" />
-                              <span>Vote Now</span>
+                              <Vote className="w-3.5 h-3.5 text-white shrink-0" />
+                              <div className="flex flex-col items-center leading-tight">
+                                <span>এখনই ভোট দিন</span>
+                                <span className="text-[10px] opacity-75 font-normal">Vote Now</span>
+                              </div>
                             </button>
                           </div>
                         </div>
@@ -443,13 +467,19 @@ export default function HomePage() {
                 <div className="max-w-2xl mx-auto text-center mb-8">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
                     <Sparkles className="w-3.5 h-3.5 text-sindoor-600" />
-                    <span>Fair Play Guarantee</span>
+                    <span>নিরপেক্ষ মূল্যায়ন <span className="text-[10px] opacity-75 normal-case font-normal">(Fair Play Guarantee)</span></span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-serif font-black text-gray-900 tracking-tight">
-                    How On-Site QR Voting Works
+                    কিউআর কোড অন-সাইট ভোটিং পদ্ধতি
+                    <span className="block text-sm sm:text-base text-gray-500 font-sans font-medium mt-0.5">
+                      How On-Site QR Voting Works
+                    </span>
                   </h2>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                    Each devotee receives 4 exclusive category tokens to award during Durga Puja 2026.
+                  <p className="text-xs sm:text-sm text-gray-600 mt-2 leading-relaxed">
+                    দুর্গাপূজা ২০২৬ উপলক্ষে প্রত্যেক ভক্তকে ৪টি বিশেষ ক্যাটাগরি টোকেন প্রদান করা হয়।
+                    <span className="block text-xs text-gray-500 opacity-75 mt-0.5">
+                      Each devotee receives 4 exclusive category tokens to award during Durga Puja 2026.
+                    </span>
                   </p>
                 </div>
 
@@ -458,9 +488,13 @@ export default function HomePage() {
                     <div className="w-8 h-8 rounded-xl bg-sindoor-100 text-sindoor-600 flex items-center justify-center font-bold text-sm mb-2.5">
                       1
                     </div>
-                    <h3 className="font-bold text-sm text-gray-900 mb-1">Best Idol Token</h3>
-                    <p className="text-xs text-gray-600">
-                      Award to the most exquisite clay sculpting and traditional Pratima artistry.
+                    <h3 className="font-bold text-sm text-gray-900 mb-1">
+                      সেরা প্রতিমা টোকেন
+                      <span className="block text-[11px] text-gray-500 font-normal">Best Idol Token</span>
+                    </h3>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      অনবদ্য মৃৎশিল্প ও ঐতিহ্যবাহী প্রতিমা ভাস্কর্যের জন্য।
+                      <span className="block text-[11px] text-gray-400 opacity-75 mt-0.5">Award to exquisite clay sculpting and traditional Pratima artistry.</span>
                     </p>
                   </div>
 
@@ -468,9 +502,13 @@ export default function HomePage() {
                     <div className="w-8 h-8 rounded-xl bg-marigold-100 text-marigold-600 flex items-center justify-center font-bold text-sm mb-2.5">
                       2
                     </div>
-                    <h3 className="font-bold text-sm text-gray-900 mb-1">Best Theme Token</h3>
-                    <p className="text-xs text-gray-600">
-                      Award to the most innovative social message and mandap srijan concept.
+                    <h3 className="font-bold text-sm text-gray-900 mb-1">
+                      সেরা থিম টোকেন
+                      <span className="block text-[11px] text-gray-500 font-normal">Best Theme Token</span>
+                    </h3>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      উদ্ভাবনী সামাজিক বার্তা ও মণ্ডপ সৃজন ধারণার জন্য।
+                      <span className="block text-[11px] text-gray-400 opacity-75 mt-0.5">Award to innovative social message and mandap srijan concept.</span>
                     </p>
                   </div>
 
@@ -478,9 +516,13 @@ export default function HomePage() {
                     <div className="w-8 h-8 rounded-xl bg-yellow-100 text-amber-700 flex items-center justify-center font-bold text-sm mb-2.5">
                       3
                     </div>
-                    <h3 className="font-bold text-sm text-gray-900 mb-1">Best Lighting Token</h3>
-                    <p className="text-xs text-gray-600">
-                      Award to Chandannagar-style dynamic illumination and radiant welcome gates.
+                    <h3 className="font-bold text-sm text-gray-900 mb-1">
+                      সেরা আলোকসজ্জা টোকেন
+                      <span className="block text-[11px] text-gray-500 font-normal">Best Lighting Token</span>
+                    </h3>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      চন্দননগর ঘরানার ডায়নামিক আলোকসজ্জা ও তোরণের জন্য।
+                      <span className="block text-[11px] text-gray-400 opacity-75 mt-0.5">Award to dynamic illumination and radiant welcome gates.</span>
                     </p>
                   </div>
 
@@ -488,9 +530,13 @@ export default function HomePage() {
                     <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm mb-2.5">
                       4
                     </div>
-                    <h3 className="font-bold text-sm text-gray-900 mb-1">Eco-Friendly Token</h3>
-                    <p className="text-xs text-gray-600">
-                      Award to 100% biodegradable materials, non-toxic colors, and zero plastic.
+                    <h3 className="font-bold text-sm text-gray-900 mb-1">
+                      পরিবেশ-বান্ধব টোকেন
+                      <span className="block text-[11px] text-gray-500 font-normal">Eco-Friendly Token</span>
+                    </h3>
+                    <p className="text-xs text-gray-600 leading-relaxed">
+                      ১০০% পরিবেশ-বান্ধব উপকরণ ও প্লাস্টিকমুক্ত পরিবেশের জন্য।
+                      <span className="block text-[11px] text-gray-400 opacity-75 mt-0.5">Award to 100% biodegradable materials and zero plastic.</span>
                     </p>
                   </div>
                 </div>
@@ -501,25 +547,34 @@ export default function HomePage() {
               {/* ============================================================= */}
               <section className="mt-12 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-amber-900 via-stone-900 to-amber-950 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="max-w-xl text-center md:text-left">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-amber-200 text-[11px] font-bold uppercase tracking-wider mb-2">
-                    <Building2 className="w-3.5 h-3.5 text-marigold-400" />
-                    <span>For Puja Committee Organizers</span>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-amber-200 text-xs font-bold mb-2">
+                    <Building2 className="w-3.5 h-3.5 text-marigold-400 shrink-0" />
+                    <span>পূজা কমিটি আয়োজকদের জন্য <span className="text-[10px] opacity-75 font-normal">(For Puja Committee Organizers)</span></span>
                   </div>
                   <h3 className="font-serif font-black text-xl sm:text-2xl text-white tracking-tight">
-                    Are You a Puja Committee Organizer?
+                    আপনি কি পূজা কমিটির আয়োজক?
+                    <span className="block text-sm sm:text-base text-amber-200/80 font-sans font-medium mt-1">
+                      Are You a Puja Committee Organizer?
+                    </span>
                   </h3>
-                  <p className="text-xs sm:text-sm text-gray-300 mt-1 leading-relaxed">
-                    Register your Puja Committee with Paschim Banga DurgaPuja Samannay Samity to generate your official universal QR code standee and track live voter analytics.
+                  <p className="text-xs sm:text-sm text-gray-300 mt-2 leading-relaxed">
+                    অফিসিয়াল কিউআর কোড স্ট্যান্ডি তৈরি করতে এবং লাইভ ভোটার অ্যানালিটিক্স দেখতে পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতির সাথে আপনার পূজা কমিটি নিবন্ধন করুন।
+                    <span className="block text-xs text-gray-400 opacity-75 mt-1">
+                      Register your Puja Committee with Paschim Banga DurgaPuja Samannay Samity to generate your official universal QR code standee and track live voter analytics.
+                    </span>
                   </p>
                 </div>
 
                 <Link
                   href="/organizer/auth"
-                  className="w-full md:w-auto px-6 py-3.5 rounded-2xl font-bold text-xs sm:text-sm bg-gradient-to-r from-marigold-500 to-amber-500 hover:from-marigold-400 hover:to-amber-400 text-gray-950 flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95 shrink-0"
+                  className="w-full md:w-auto px-6 py-3 rounded-2xl font-bold text-xs sm:text-sm bg-gradient-to-r from-marigold-500 to-amber-500 hover:from-marigold-400 hover:to-amber-400 text-gray-950 flex items-center justify-center gap-2 shadow-lg transition-transform active:scale-95 shrink-0"
                 >
-                  <Building2 className="w-4 h-4 text-gray-950" />
-                  <span>Organizer Login / Register</span>
-                  <ArrowRight className="w-4 h-4 text-gray-950 ml-1" />
+                  <Building2 className="w-4 h-4 text-gray-950 shrink-0" />
+                  <div className="flex flex-col items-center leading-tight">
+                    <span>আয়োজক লগইন / নিবন্ধন</span>
+                    <span className="text-[10px] opacity-75 font-normal">Organizer Login / Register</span>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-gray-950 ml-1 shrink-0" />
                 </Link>
               </section>
             </motion.div>
