@@ -36,24 +36,24 @@ export const Footer: React.FC<{
             <Phone className="w-3.5 h-3.5 text-sindoor-600 animate-pulse" />
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 leading-tight">
               <span>২৪/৭ আঞ্চলিক জরুরি হেল্পলাইন:</span>
-              <span className="text-[10px] sm:text-xs opacity-75 font-normal text-gray-600">(24/7 Regional Emergency Helplines:)</span>
+              <span className="text-[10px] opacity-75">24/7 Regional Emergency Helplines:</span>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-gray-600 font-medium text-xs">
             <div className="flex items-center gap-1">
-              <span className="font-bold text-gray-800">পুলিশ <span className="text-[10px] font-normal opacity-75">(Police)</span>:</span>
+              <span>পুলিশ (Police):</span>
               <strong className="text-gray-900 font-bold">100 / 0343-2546200</strong>
             </div>
             <div className="flex items-center gap-1">
-              <span className="font-bold text-gray-800">ফায়ার স্টেশন <span className="text-[10px] font-normal opacity-75">(Fire Station)</span>:</span>
+              <span>ফায়ার স্টেশন (Fire Station):</span>
               <strong className="text-gray-900 font-bold">101</strong>
             </div>
             <div className="flex items-center gap-1">
-              <span className="font-bold text-gray-800">অ্যাম্বুলেন্স <span className="text-[10px] font-normal opacity-75">(Ambulance)</span>:</span>
+              <span>অ্যাম্বুলেন্স (Ambulance):</span>
               <strong className="text-gray-900 font-bold">102</strong>
             </div>
             <div className="flex items-center gap-1">
-              <span className="font-bold text-gray-800">মহিলা হেল্পলাইন <span className="text-[10px] font-normal opacity-75">(Women Helpline)</span>:</span>
+              <span>মহিলা হেল্পলাইন (Women Helpline):</span>
               <strong className="text-gray-900 font-bold">1091</strong>
             </div>
           </div>
@@ -269,14 +269,13 @@ export const Footer: React.FC<{
         {/* Bottom Copyright & Greeting */}
         <div className="mt-12 pt-6 border-t border-amber-200/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
           <div className="text-center sm:text-left leading-relaxed">
-            <div className="flex flex-col">
-              <span className="font-semibold text-gray-800">© ২০২৬ পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি। সর্বস্বত্ব সংরক্ষিত।</span>
+            <p>
+              <span>© ২০২৬ পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি। সর্বস্বত্ব সংরক্ষিত।</span>
               <span className="block text-xs opacity-70 mt-1">© 2026 Paschim Banga DurgaPuja Samannay Samity. All rights reserved.</span>
-            </div>
-            <div className="text-amber-800 font-bold mt-2 flex flex-col sm:flex-row sm:items-center sm:gap-1.5">
+            </p>
+            <p className="text-amber-800 font-bold mt-2">
               <span>দুর্গাপূজার আন্তরিক প্রীতি ও শুভেচ্ছা</span>
-              <span className="text-[11px] opacity-75 font-normal text-amber-900/80">(Heartfelt greetings for Durga Puja)</span>
-            </div>
+            </p>
           </div>
           <div className="flex items-center gap-4 text-[11px] font-medium text-gray-600">
             <span>পশ্চিম বর্ধমান অঞ্চল <span className="opacity-70">(Paschim Bardhaman)</span></span>

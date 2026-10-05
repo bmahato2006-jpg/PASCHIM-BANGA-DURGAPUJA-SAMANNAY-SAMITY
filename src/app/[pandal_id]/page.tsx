@@ -358,8 +358,11 @@ export default function PandalVotingPage() {
           href="/"
           className="text-xs font-bold text-gray-600 hover:text-sindoor-600 transition-colors inline-flex items-center gap-1.5 touch-manipulation active:scale-95 duration-75"
         >
-          <QrCode className="w-3.5 h-3.5" />
-          <span>Need to scan another pandal? Return to QR Scanner</span>
+          <QrCode className="w-3.5 h-3.5 text-sindoor-600 shrink-0" />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-1.5 leading-tight">
+            <span>অন্য প্যান্ডেল স্ক্যান করতে চান? কিউআর স্ক্যানারে ফিরে যান</span>
+            <span className="text-[10px] opacity-75 font-normal text-gray-500">(Need to scan another pandal? Return to QR Scanner)</span>
+          </div>
         </Link>
       </footer>
 
