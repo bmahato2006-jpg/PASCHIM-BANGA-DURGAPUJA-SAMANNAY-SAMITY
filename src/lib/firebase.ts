@@ -1,9 +1,8 @@
 'use client';
 
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
-  Auth, 
   signInAnonymously as fbSignInAnonymously, 
   onAuthStateChanged,
   GoogleAuthProvider,
@@ -15,7 +14,6 @@ import {
 } from 'firebase/auth';
 import { 
   getFirestore, 
-  Firestore, 
   collection, 
   doc, 
   getDoc, 
@@ -30,34 +28,57 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 
-// Dummy placeholder config to prevent build crashes during fresh setup
-const dummyConfig = {
-  apiKey: 'dummy-api-key',
-  authDomain: 'dummy.firebaseapp.com',
-  projectId: 'dummy-project',
-  storageBucket: 'dummy.appspot.com',
-  messagingSenderId: '123456789',
-  appId: '1:123456789:web:dummy',
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-export const app: FirebaseApp = getApps().length ? getApp() : initializeApp(dummyConfig);
-export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
-export const appCheck = null;
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const db = getFirestore(app);
 
+/**
+ * Silently authenticate the voter using Firebase Anonymous Auth if not signed in.
+ * Returns the resolved Firebase user UID.
+ */
 export async function getOrSignInAnonymousUser(): Promise<string> {
-  if (typeof window !== 'undefined') {
-    let id = localStorage.getItem('durgapur_puja_anon_uid') || '';
-    if (!id) {
-      id = `anon-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`;
-      localStorage.setItem('durgapur_puja_anon_uid', id);
-    }
-    return id;
+  if (typeof window === 'undefined') return '';
+
+  if (auth.currentUser) {
+    return auth.currentUser.uid;
   }
-  return '';
+
+  try {
+    const cred = await fbSignInAnonymously(auth);
+    if (cred.user) {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('durgapur_puja_anon_uid', cred.user.uid);
+      }
+      return cred.user.uid;
+    }
+  } catch (err: any) {
+    console.warn('Firebase Anonymous Auth notice:', err?.message || err);
+  }
+
+  let fallbackId = '';
+  if (typeof window !== 'undefined') {
+    fallbackId = localStorage.getItem('durgapur_puja_anon_uid') || '';
+    if (!fallbackId) {
+      fallbackId = `anon-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 9)}`;
+      localStorage.setItem('durgapur_puja_anon_uid', fallbackId);
+    }
+  }
+  return fallbackId;
 }
 
-export {
+export { 
+  app, 
+  auth, 
+  db,
   fbSignInAnonymously as signInAnonymously,
   onAuthStateChanged,
   GoogleAuthProvider,
