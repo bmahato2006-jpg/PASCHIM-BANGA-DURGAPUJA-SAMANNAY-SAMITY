@@ -441,7 +441,7 @@ export default function HomePage() {
                     <div className="w-8 h-8 rounded-xl bg-sindoor-100 text-sindoor-600 flex items-center justify-center font-bold text-sm mb-2.5">
                       1
                     </div>
-                    <h4 className="font-bold text-sm text-gray-900 mb-1">Best Idol Token</h4>
+                    <h3 className="font-bold text-sm text-gray-900 mb-1">Best Idol Token</h3>
                     <p className="text-xs text-gray-600">
                       Award to the most exquisite clay sculpting and traditional Pratima artistry.
                     </p>
@@ -451,7 +451,7 @@ export default function HomePage() {
                     <div className="w-8 h-8 rounded-xl bg-marigold-100 text-marigold-600 flex items-center justify-center font-bold text-sm mb-2.5">
                       2
                     </div>
-                    <h4 className="font-bold text-sm text-gray-900 mb-1">Best Theme Token</h4>
+                    <h3 className="font-bold text-sm text-gray-900 mb-1">Best Theme Token</h3>
                     <p className="text-xs text-gray-600">
                       Award to the most innovative social message and mandap srijan concept.
                     </p>
@@ -461,7 +461,7 @@ export default function HomePage() {
                     <div className="w-8 h-8 rounded-xl bg-yellow-100 text-amber-700 flex items-center justify-center font-bold text-sm mb-2.5">
                       3
                     </div>
-                    <h4 className="font-bold text-sm text-gray-900 mb-1">Best Lighting Token</h4>
+                    <h3 className="font-bold text-sm text-gray-900 mb-1">Best Lighting Token</h3>
                     <p className="text-xs text-gray-600">
                       Award to Chandannagar-style dynamic illumination and radiant welcome gates.
                     </p>
@@ -471,7 +471,7 @@ export default function HomePage() {
                     <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm mb-2.5">
                       4
                     </div>
-                    <h4 className="font-bold text-sm text-gray-900 mb-1">Eco-Friendly Token</h4>
+                    <h3 className="font-bold text-sm text-gray-900 mb-1">Eco-Friendly Token</h3>
                     <p className="text-xs text-gray-600">
                       Award to 100% biodegradable materials, non-toxic colors, and zero plastic.
                     </p>

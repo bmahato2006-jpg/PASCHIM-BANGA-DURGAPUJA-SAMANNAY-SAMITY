@@ -19,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="scroll-smooth overflow-x-hidden">
-      <body className="min-h-screen bg-[#FFFDF9] text-[#22150F] relative selection:bg-marigold-200 selection:text-sindoor-900 pb-28 md:pb-0 overflow-x-hidden w-full max-w-full select-none">
+      <body className="min-h-screen bg-[#FFFDF9] text-[#22150F] relative pb-28 md:pb-0 overflow-x-hidden w-full max-w-full select-none">
         <Toaster
           position="top-center"
           toastOptions={{

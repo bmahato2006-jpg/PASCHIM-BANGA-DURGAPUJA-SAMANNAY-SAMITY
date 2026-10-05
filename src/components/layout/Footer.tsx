@@ -172,9 +172,9 @@ export const Footer: React.FC<{
                 href="https://wa.me/918918267828?text=Hi,%20I%20am%20a%20Pandal%20Organizer%20and%20need%20help%20with%20the%20Voting%20Platform"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full min-h-[44px] py-2.5 px-3.5 rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition"
+                className="w-full min-h-[44px] py-2.5 px-3.5 rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] text-gray-900 text-xs font-bold flex items-center justify-center gap-2 shadow-sm transition"
               >
-                <MessageCircle className="w-4 h-4 fill-white" />
+                <MessageCircle className="w-4 h-4 fill-current text-gray-900" />
                 <span>Organizer WhatsApp Desk</span>
                 <ExternalLink className="w-3.5 h-3.5 opacity-80" />
               </a>
@@ -213,7 +213,7 @@ export const Footer: React.FC<{
               শারদোৎসবের আন্তরিক প্রীতি ও শুভেচ্ছা
             </span>
           </p>
-          <div className="flex items-center gap-4 text-[11px] font-medium text-gray-400">
+          <div className="flex items-center gap-4 text-[11px] font-medium text-gray-600">
             <span>Paschim Bardhaman Region</span>
             <span>•</span>
             <span>Verified PWA Engine</span>
