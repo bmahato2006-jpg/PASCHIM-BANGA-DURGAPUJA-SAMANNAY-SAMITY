@@ -6,6 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { getOrSignInAnonymousUser } from '@/lib/firebase';
 import { 
   Sparkles, 
   Palette, 
@@ -101,6 +102,9 @@ export default function PandalVotingPage() {
 
   useEffect(() => {
     setIsMounted(true);
+    // Silently pre-authenticate anonymous voter
+    getOrSignInAnonymousUser().catch(() => {});
+
     if (typeof window !== 'undefined' && rawPandalId) {
       // Check if this pandal has already been voted for
       const isPandalVoted = localStorage.getItem(`hasVoted_${rawPandalId}`) === 'true';
@@ -159,18 +163,22 @@ export default function PandalVotingPage() {
     setActiveCategory(category.id);
 
     try {
-      const deviceId = getDeviceId();
+      const anonUid = await getOrSignInAnonymousUser();
+      const deviceId = anonUid || getDeviceId();
       const res = await fetch('/api/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           deviceId,
+          user_uid: deviceId,
+          voterUid: deviceId,
           pandalId: rawPandalId,
+          pandal_id: rawPandalId,
           category: category.id,
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (res.status === 200 && data.success) {
         toast.success(`🎉 Vote Recorded! You awarded "${category.name}" to ${formattedName}!`, {
@@ -189,11 +197,11 @@ export default function PandalVotingPage() {
         toast.error(data.message || 'You have already voted for this pandal or used this category token.');
         setHasVotedThisPandal(true);
       } else {
-        toast.error(data.message || 'Unable to record your vote. Please try again.');
+        toast.error(data.message || 'Unable to record your vote. Please check your connection and try again.');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Vote submission error:', err);
-      toast.error('Network connection issue. Please try again.');
+      toast.error(err?.message || 'Network connection issue. Please check your connection and try again.');
     } finally {
       setIsSubmitting(false);
       setActiveCategory(null);

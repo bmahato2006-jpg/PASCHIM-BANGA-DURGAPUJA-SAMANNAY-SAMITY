@@ -436,7 +436,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return false;
   };
 
-  // Cast vote solely utilizing our secure Supabase Edge /api/vote route
+  // Cast vote solely utilizing our secure Firebase Firestore /api/vote route
   const castVote = async (
     pandalId: string,
     category: VoteCategory,

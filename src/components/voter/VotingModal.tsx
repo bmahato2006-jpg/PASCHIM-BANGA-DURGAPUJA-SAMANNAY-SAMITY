@@ -8,6 +8,7 @@ import { DhakButton } from '@/components/ui/DhakButton';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import toast from 'react-hot-toast';
+import { getOrSignInAnonymousUser } from '@/lib/firebase';
 import { 
   X, 
   Sparkles, 
@@ -148,12 +149,17 @@ export const VotingModal: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const voterUid =
-        user?.id ||
-        (typeof window !== 'undefined'
-          ? localStorage.getItem('durgapur_puja_anon_uid') || localStorage.getItem('durgapur_device_id')
-          : '') ||
-        'anonymous_voter';
+      let voterUid = user?.id;
+      if (!voterUid && typeof window !== 'undefined') {
+        try {
+          const resolvedUid = await getOrSignInAnonymousUser();
+          if (resolvedUid) voterUid = resolvedUid;
+        } catch {}
+      }
+      if (!voterUid && typeof window !== 'undefined') {
+        voterUid = localStorage.getItem('durgapur_puja_anon_uid') || localStorage.getItem('durgapur_device_id') || '';
+      }
+      if (!voterUid) voterUid = 'anonymous_voter';
 
       // 1. Await API response directly from /api/vote
       const res = await fetch('/api/vote', {
@@ -161,8 +167,10 @@ export const VotingModal: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           deviceId: voterUid,
+          user_uid: voterUid,
           voterUid,
           pandalId: selectedPandal.id,
+          pandal_id: selectedPandal.id,
           category: categoryId,
         }),
       });
