@@ -176,22 +176,30 @@ export default function HomePage() {
                       className="w-full h-full object-cover rounded-full"
                     />
                   </div>
-                  <span className="text-xs font-black text-amber-950 tracking-wide uppercase">
-                    Paschim Banga DurgaPuja Samannay Samity
+                  <span className="text-xs font-black text-amber-950 tracking-wide">
+                    পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি
                   </span>
                 </div>
 
                 {/* Hero Title */}
-                <h1 className="text-3xl sm:text-5xl md:text-6xl font-serif font-black tracking-tight text-gray-900 leading-[1.15]">
-                  Honor the Art, Celebrate Devotion: <br />
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-black tracking-tight text-gray-900 leading-[1.2]">
+                  শিল্পের সম্মান, ভক্তির উদযাপন:<br />
                   <span className="bg-gradient-to-r from-sindoor-600 via-marigold-600 to-amber-600 text-transparent bg-clip-text">
-                    Your Voice Matters
+                    আপনার মতামত গুরুত্বপূর্ণ
+                  </span>
+                  <br />
+                  <span className="block text-xl sm:text-2xl text-gray-400 mt-2 font-sans font-medium">
+                    Honor the Art, Celebrate Devotion: Your Voice Matters
                   </span>
                 </h1>
 
                 {/* Welcoming Subtitle */}
                 <p className="text-sm sm:text-lg text-gray-700 font-medium max-w-2xl mx-auto mt-4 leading-relaxed">
-                  Celebrate Bengal&apos;s greatest festival by honoring the artistry, theme, and lighting of your favorite Puja Pandals. Cast your verified vote on-site at each pandal gate.
+                  বাংলার শ্রেষ্ঠ দুর্গাপূজা উদযাপন করুন আপনার প্রিয় পূজা প্যান্ডেলের শিল্পকলা এবং থিমকে সম্মান জানিয়ে।
+                  <br />
+                  <span className="text-sm opacity-80">
+                    Experience Bengal&apos;s greatest Durga Puja by honoring the artistry and theme of your favorite Puja Pandals.
+                  </span>
                 </p>
 
                 {/* CTAs */}
@@ -199,26 +207,35 @@ export default function HomePage() {
                   <DhakButton
                     variant="primary"
                     onClick={openQRScanner}
-                    className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 rounded-2xl text-sm sm:text-base font-bold shadow-festive flex items-center justify-center gap-2.5 touch-manipulation active:scale-95"
+                    className="w-full sm:w-auto min-h-[56px] px-8 py-3 rounded-2xl text-sm sm:text-base font-bold shadow-festive flex items-center justify-center gap-2.5 touch-manipulation active:scale-95"
                   >
-                    <Camera className="w-5 h-5 text-white" />
-                    <span>Open Camera QR Scanner</span>
+                    <Camera className="w-5 h-5 text-white shrink-0" />
+                    <div className="flex flex-col items-center leading-tight">
+                      <span className="font-bold">কিউআর স্ক্যানার খুলুন</span>
+                      <span className="text-[10px] opacity-80 font-normal">Open QR Scanner</span>
+                    </div>
                   </DhakButton>
 
                   <a
                     href="#voting-list"
-                    className="w-full sm:w-auto min-h-[52px] px-6 py-3.5 rounded-2xl text-xs sm:text-sm font-bold border border-amber-300/90 bg-white/90 hover:bg-amber-50 text-gray-800 flex items-center justify-center gap-2 transition shadow-xs touch-manipulation active:scale-95"
+                    className="w-full sm:w-auto min-h-[56px] px-6 py-3 rounded-2xl text-xs sm:text-sm font-bold border border-amber-300/90 bg-white/90 hover:bg-amber-50 text-gray-800 flex items-center justify-center gap-2 transition shadow-xs touch-manipulation active:scale-95"
                   >
-                    <Vote className="w-4 h-4 text-marigold-600" />
-                    <span>Explore Voting List</span>
+                    <Vote className="w-4 h-4 text-marigold-600 shrink-0" />
+                    <div className="flex flex-col items-center leading-tight">
+                      <span className="font-bold">ভোটিং তালিকা</span>
+                      <span className="text-[10px] opacity-75 font-normal">Voting List</span>
+                    </div>
                   </a>
 
                   <button
                     onClick={() => handleTabChange('leaderboard')}
-                    className="w-full sm:w-auto min-h-[52px] px-6 py-3.5 rounded-2xl text-xs sm:text-sm font-bold border border-amber-200 bg-amber-50/70 hover:bg-amber-100/80 text-amber-950 flex items-center justify-center gap-2 transition shadow-xs touch-manipulation active:scale-95"
+                    className="w-full sm:w-auto min-h-[56px] px-6 py-3 rounded-2xl text-xs sm:text-sm font-bold border border-amber-200 bg-amber-50/70 hover:bg-amber-100/80 text-amber-950 flex items-center justify-center gap-2 transition shadow-xs touch-manipulation active:scale-95"
                   >
-                    <Trophy className="w-4 h-4 text-marigold-600" />
-                    <span>Live Standings</span>
+                    <Trophy className="w-4 h-4 text-marigold-600 shrink-0" />
+                    <div className="flex flex-col items-center leading-tight">
+                      <span className="font-bold">লাইভ র্যাঙ্কিং</span>
+                      <span className="text-[10px] opacity-75 font-normal">Live Rankings</span>
+                    </div>
                   </button>
                 </div>
 
@@ -359,7 +376,7 @@ export default function HomePage() {
                             <div className="flex items-start gap-1.5 text-xs text-gray-700 font-medium mb-3">
                               <Palette className="w-3.5 h-3.5 text-marigold-600 shrink-0 mt-0.5" />
                               <span className="line-clamp-2">
-                                <strong className="text-gray-900">Theme:</strong> {pandal.theme || 'Traditional Sharodotsav'}
+                                <strong className="text-gray-900">Theme:</strong> {pandal.theme || 'Traditional Durga Puja'}
                               </span>
                             </div>
 

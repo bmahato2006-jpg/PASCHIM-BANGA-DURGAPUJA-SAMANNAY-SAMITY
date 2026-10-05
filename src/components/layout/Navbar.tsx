@@ -79,23 +79,18 @@ export const Navbar: React.FC<{
                 />
               </div>
 
-              <div className="min-w-0">
+              <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <h1 className="font-serif font-black text-xs xs:text-sm sm:text-base md:text-sm lg:text-[15px] xl:text-lg tracking-tight text-gray-900 group-hover:text-sindoor-600 transition-colors leading-tight whitespace-normal">
-                    <span className="block xl:inline font-black text-gray-900">
-                      PASCHIM BANGA <span className="text-sindoor-600">DURGAPUJA </span>
-                    </span>
-                    <span className="font-black text-gray-900 group-hover:text-amber-800">
-                      SAMANNAY SAMITY
-                    </span>
-                  </h1>
+                  <span className="font-bold text-sm sm:text-base md:text-lg text-gray-900 group-hover:text-sindoor-600 transition-colors leading-tight">
+                    পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি
+                  </span>
                   <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-marigold-100 text-marigold-800 border border-marigold-300 shrink-0">
                     2026
                   </span>
                 </div>
-                <p className="text-[9px] sm:text-xs text-amber-800 font-medium tracking-wide truncate mt-0.5">
-                  The Official Voting Platform
-                </p>
+                <span className="text-[9px] sm:text-[10px] tracking-widest text-gray-500 uppercase truncate">
+                  Paschim Banga DurgaPuja Samannay Samity
+                </span>
               </div>
             </div>
 
@@ -105,61 +100,75 @@ export const Navbar: React.FC<{
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.92 }}
                 onClick={() => handleNavClick('feed')}
-                className={`flex items-center gap-1.5 px-3 lg:px-3.5 py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
+                className={`flex items-center gap-2 px-3 lg:px-3.5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
                   activeTab === 'feed'
                     ? 'bg-sindoor-50 text-sindoor-600 border border-sindoor-200 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/60'
                 }`}
               >
-                <Compass className="w-4 h-4 text-sindoor-500" />
-                <span>Explore Pandals</span>
+                <Compass className="w-4 h-4 text-sindoor-500 shrink-0" />
+                <div className="flex flex-col items-center leading-tight">
+                  <span>মণ্ডপ দেখুন</span>
+                  <span className="text-[10px] opacity-75 block text-center">Explore Pandals</span>
+                </div>
               </motion.button>
 
               <motion.button
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.92 }}
                 onClick={() => handleNavClick('leaderboard')}
-                className={`flex items-center gap-1.5 px-3 lg:px-3.5 py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
+                className={`flex items-center gap-2 px-3 lg:px-3.5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
                   activeTab === 'leaderboard'
                     ? 'bg-sindoor-50 text-sindoor-600 border border-sindoor-200 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/60'
                 }`}
               >
-                <Trophy className="w-4 h-4 text-marigold-500" />
-                <span>Live Leaderboard</span>
+                <Trophy className="w-4 h-4 text-marigold-500 shrink-0" />
+                <div className="flex flex-col items-center leading-tight">
+                  <span>লাইভ লিডারবোর্ড</span>
+                  <span className="text-[10px] opacity-75 block text-center">Live Leaderboard</span>
+                </div>
               </motion.button>
 
               <motion.button
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.92 }}
                 onClick={() => handleNavClick('my-votes')}
-                className={`flex items-center gap-1.5 px-3 lg:px-3.5 py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
+                className={`flex items-center gap-2 px-3 lg:px-3.5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
                   activeTab === 'my-votes'
                     ? 'bg-sindoor-50 text-sindoor-600 border border-sindoor-200 shadow-sm'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100/60'
                 }`}
               >
-                <Vote className="w-4 h-4 text-sindoor-500" />
-                <span>My Votes</span>
-                {user && userVotes.filter(v => v.userId === user.id).length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-sindoor-600 text-white">
-                    {userVotes.filter(v => v.userId === user.id).length}
-                  </span>
-                )}
+                <Vote className="w-4 h-4 text-sindoor-500 shrink-0" />
+                <div className="flex flex-col items-center leading-tight">
+                  <div className="flex items-center gap-1">
+                    <span>আমার ভোট</span>
+                    {user && userVotes.filter(v => v.userId === user.id).length > 0 && (
+                      <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-sindoor-600 text-white">
+                        {userVotes.filter(v => v.userId === user.id).length}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] opacity-75 block text-center">My Votes</span>
+                </div>
               </motion.button>
 
               {/* If Organizer: Link to Organizer Dashboard */}
               {isOrganizer && (
                 <Link
                   href="/organizer"
-                  className={`flex items-center gap-1.5 px-3 lg:px-3.5 py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
+                  className={`flex items-center gap-1.5 px-3 lg:px-3.5 py-1.5 lg:py-2 rounded-xl text-xs lg:text-sm font-semibold transition-all ${
                     activeTab === 'organizer'
                       ? 'bg-marigold-50 text-marigold-700 border border-marigold-300 shadow-sm'
                       : 'text-gray-600 hover:text-marigold-700 hover:bg-marigold-50/50'
                   }`}
                 >
-                  <LayoutDashboard className="w-4 h-4 text-marigold-600" />
-                  <span>Dashboard</span>
+                  <LayoutDashboard className="w-4 h-4 text-marigold-600 shrink-0" />
+                  <div className="flex flex-col items-center leading-tight">
+                    <span>ড্যাশবোর্ড</span>
+                    <span className="text-[10px] opacity-75 block text-center">Dashboard</span>
+                  </div>
                 </Link>
               )}
             </nav>
@@ -201,23 +210,29 @@ export const Navbar: React.FC<{
                   {/* Distinct Organizer Login / Register Button (Desktop) */}
                   <Link
                     href="/organizer/auth"
-                    className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-amber-950 bg-gradient-to-r from-amber-50 via-white to-amber-50 hover:from-amber-100 hover:to-amber-50 border border-amber-300/90 hover:border-marigold-500 shadow-xs hover:shadow-md backdrop-blur-md transition-all duration-200 touch-manipulation active:scale-95 group"
+                    className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 lg:py-2 rounded-xl text-xs sm:text-sm font-bold text-amber-950 bg-gradient-to-r from-amber-50 via-white to-amber-50 hover:from-amber-100 hover:to-amber-50 border border-amber-300/90 hover:border-marigold-500 shadow-xs hover:shadow-md backdrop-blur-md transition-all duration-200 touch-manipulation active:scale-95 group"
                     title="Puja Committee Organizer Portal: Login or Register"
                   >
-                    <div className="w-5 h-5 rounded-lg bg-amber-100/90 flex items-center justify-center text-marigold-700 group-hover:bg-amber-200 transition-colors">
+                    <div className="w-5 h-5 rounded-lg bg-amber-100/90 flex items-center justify-center text-marigold-700 group-hover:bg-amber-200 transition-colors shrink-0">
                       <Building2 className="w-3.5 h-3.5" />
                     </div>
-                    <span>Organizer Login / Register</span>
+                    <div className="flex flex-col items-center leading-tight">
+                      <span>আয়োজক লগইন</span>
+                      <span className="text-[10px] opacity-75 block text-center">Organizer Login</span>
+                    </div>
                   </Link>
 
                   {/* Primary CTA: Scan & Vote (Desktop) */}
                   <DhakButton
                     variant="primary"
                     onClick={openQRScanner}
-                    className="px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-md flex items-center gap-1.5"
+                    className="px-3.5 sm:px-4 py-1.5 lg:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-md flex items-center gap-1.5"
                   >
-                    <QrCode className="w-4 h-4 text-white" />
-                    <span>Scan & Vote</span>
+                    <QrCode className="w-4 h-4 text-white shrink-0" />
+                    <div className="flex flex-col items-center leading-tight">
+                      <span>স্ক্যান ও ভোট</span>
+                      <span className="text-[10px] opacity-75 block text-center">Scan & Vote</span>
+                    </div>
                   </DhakButton>
                 </div>
               )}
@@ -230,7 +245,10 @@ export const Navbar: React.FC<{
                   title="Organizer Portal"
                 >
                   <Building2 className="w-3 h-3 text-marigold-600 shrink-0" />
-                  <span>{isOrganizer ? 'Dashboard' : 'Organizer'}</span>
+                  <div className="flex flex-col items-start leading-none">
+                    <span>{isOrganizer ? 'ড্যাশবোর্ড' : 'আয়োজক লগইন'}</span>
+                    <span className="text-[8px] opacity-75 block">{isOrganizer ? 'Dashboard' : 'Organizer Login'}</span>
+                  </div>
                 </Link>
 
                 <button
@@ -262,8 +280,11 @@ export const Navbar: React.FC<{
                 className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-amber-950 bg-gradient-to-r from-amber-50/90 via-marigold-50/70 to-amber-50/90 border border-amber-300/80 hover:bg-amber-100/80 transition-all shadow-xs touch-manipulation active:scale-[0.98]"
               >
                 <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-marigold-600" />
-                  <span>{isOrganizer ? 'Go to Organizer Dashboard' : 'Organizer Login / Register'}</span>
+                  <Building2 className="w-4 h-4 text-marigold-600 shrink-0" />
+                  <div className="flex flex-col items-start leading-tight">
+                    <span>{isOrganizer ? 'আয়োজক ড্যাশবোর্ড' : 'আয়োজক লগইন'}</span>
+                    <span className="text-[10px] opacity-75 block">{isOrganizer ? 'Organizer Dashboard' : 'Organizer Login'}</span>
+                  </div>
                 </div>
                 <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-marigold-100 text-marigold-800 border border-marigold-300">
                   {isOrganizer ? 'Active' : 'Club Desk'}
@@ -276,8 +297,11 @@ export const Navbar: React.FC<{
                   activeTab === 'feed' ? 'bg-sindoor-50 text-sindoor-600' : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                <Compass className="w-4 h-4 text-sindoor-500" />
-                <span>Explore Pandals Feed</span>
+                <Compass className="w-4 h-4 text-sindoor-500 shrink-0" />
+                <div className="flex flex-col items-start leading-tight">
+                  <span className="font-bold">মণ্ডপ দেখুন</span>
+                  <span className="text-[10px] opacity-75 block text-center">Explore Pandals</span>
+                </div>
               </button>
 
               <button
@@ -286,8 +310,11 @@ export const Navbar: React.FC<{
                   activeTab === 'leaderboard' ? 'bg-sindoor-50 text-sindoor-600' : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                <Trophy className="w-4 h-4 text-marigold-500" />
-                <span>Live Leaderboard</span>
+                <Trophy className="w-4 h-4 text-marigold-500 shrink-0" />
+                <div className="flex flex-col items-start leading-tight">
+                  <span className="font-bold">লাইভ লিডারবোর্ড</span>
+                  <span className="text-[10px] opacity-75 block text-center">Live Leaderboard</span>
+                </div>
               </button>
 
               <button
@@ -296,8 +323,11 @@ export const Navbar: React.FC<{
                   activeTab === 'my-votes' ? 'bg-sindoor-50 text-sindoor-600' : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                <Vote className="w-4 h-4 text-sindoor-500" />
-                <span>My Votes History</span>
+                <Vote className="w-4 h-4 text-sindoor-500 shrink-0" />
+                <div className="flex flex-col items-start leading-tight">
+                  <span className="font-bold">আমার ভোট</span>
+                  <span className="text-[10px] opacity-75 block text-center">My Votes</span>
+                </div>
               </button>
 
               <button
@@ -307,8 +337,11 @@ export const Navbar: React.FC<{
                 }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-xs sm:text-sm text-gray-700 hover:bg-gray-50 touch-manipulation active:scale-[0.98]"
               >
-                <QrCode className="w-4 h-4 text-marigold-600" />
-                <span>Scan Pandal QR to Vote</span>
+                <QrCode className="w-4 h-4 text-marigold-600 shrink-0" />
+                <div className="flex flex-col items-start leading-tight">
+                  <span className="font-bold">স্ক্যান ও ভোট</span>
+                  <span className="text-[10px] opacity-75 block text-center">Scan & Vote</span>
+                </div>
               </button>
 
               {isOrganizer && (

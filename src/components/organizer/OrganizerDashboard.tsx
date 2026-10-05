@@ -1013,7 +1013,7 @@ export const OrganizerDashboard: React.FC = () => {
               <h3 className="text-2xl sm:text-3xl font-serif font-black text-gray-900 mt-1">
                 {currentPandal.visitsToday.toLocaleString()}
               </h3>
-              <p className="text-xs text-green-600 font-semibold mt-1">↑ 28.4% festival surge</p>
+              <p className="text-xs text-green-600 font-semibold mt-1">↑ 28.4% Puja surge</p>
             </div>
 
             <div className="glass-panel rounded-3xl p-5 border border-amber-200/60 shadow-glass">

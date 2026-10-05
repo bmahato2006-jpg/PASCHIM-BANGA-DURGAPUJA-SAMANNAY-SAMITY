@@ -210,7 +210,7 @@ export const Footer: React.FC<{
           <p className="text-center sm:text-left">
             © 2026 Paschim Banga DurgaPuja Samannay Samity. All rights reserved. 
             <span className="text-amber-800 font-semibold block sm:inline sm:ml-2">
-              শারদোৎসবের আন্তরিক প্রীতি ও শুভেচ্ছা
+              দুর্গাপূজার আন্তরিক প্রীতি ও শুভেচ্ছা
             </span>
           </p>
           <div className="flex items-center gap-4 text-[11px] font-medium text-gray-600">
