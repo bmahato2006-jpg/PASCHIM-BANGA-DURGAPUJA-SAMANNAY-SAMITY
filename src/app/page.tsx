@@ -9,6 +9,7 @@ import { Footer } from '@/components/layout/Footer';
 import { LiveLeaderboard } from '@/components/voter/LiveLeaderboard';
 import { MyVotesView } from '@/components/voter/MyVotesView';
 import { DhakButton } from '@/components/ui/DhakButton';
+import { ScrollReveal } from '@/components/ui/ScrollReveal';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -164,125 +165,131 @@ export default function HomePage() {
             >
               {/* Top Welcoming Hero Section */}
               <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-                {/* Official State Emblem Pill */}
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-sindoor-50 via-marigold-50 to-amber-50 border border-marigold-300/80 shadow-xs mb-5">
-                  <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-orange-200 shadow-2xs">
-                    <Image
-                      src="/logo.jpg"
-                      alt="PBDS Logo"
-                      width={20}
-                      height={20}
-                      priority
-                      className="w-full h-full object-cover rounded-full"
-                    />
+                <ScrollReveal>
+                  {/* Official State Emblem Pill */}
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-sindoor-50 via-marigold-50 to-amber-50 border border-marigold-300/80 shadow-xs mb-5">
+                    <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 border border-orange-200 shadow-2xs">
+                      <Image
+                        src="/logo.jpg"
+                        alt="PBDS Logo"
+                        width={20}
+                        height={20}
+                        priority
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    </div>
+                    <span className="text-xs font-black text-amber-950 tracking-wide">
+                      পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি
+                    </span>
                   </div>
-                  <span className="text-xs font-black text-amber-950 tracking-wide">
-                    পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি
-                  </span>
-                </div>
 
-                {/* Hero Title */}
-                <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-black tracking-tight text-gray-900 leading-[1.2]">
-                  শিল্পের সম্মান, ভক্তির উদযাপন:<br />
-                  <span className="bg-gradient-to-r from-sindoor-600 via-marigold-600 to-amber-600 text-transparent bg-clip-text">
-                    আপনার মতামত গুরুত্বপূর্ণ
-                  </span>
-                  <br />
-                  <span className="block text-xl sm:text-2xl text-gray-400 mt-2 font-sans font-medium">
-                    Honor the Art, Celebrate Devotion: Your Voice Matters
-                  </span>
-                </h1>
+                  {/* Hero Title */}
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif font-black tracking-tight text-gray-900 leading-[1.2]">
+                    শিল্পের সম্মান, ভক্তির উদযাপন:<br />
+                    <span className="bg-gradient-to-r from-sindoor-600 via-marigold-600 to-amber-600 text-transparent bg-clip-text">
+                      আপনার মতামত গুরুত্বপূর্ণ
+                    </span>
+                    <br />
+                    <span className="block text-xl sm:text-2xl text-gray-400 mt-2 font-sans font-medium">
+                      Honor the Art, Celebrate Devotion: Your Voice Matters
+                    </span>
+                  </h1>
 
-                {/* Welcoming Subtitle */}
-                <p className="text-sm sm:text-lg text-gray-700 font-medium max-w-2xl mx-auto mt-4 leading-relaxed">
-                  বাংলার শ্রেষ্ঠ দুর্গাপূজা উদযাপন করুন আপনার প্রিয় পূজা প্যান্ডেলের শিল্পকলা এবং থিমকে সম্মান জানিয়ে।
-                  <br />
-                  <span className="text-sm opacity-80">
-                    Experience Bengal&apos;s greatest Durga Puja by honoring the artistry and theme of your favorite Puja Pandals.
-                  </span>
-                </p>
+                  {/* Welcoming Subtitle */}
+                  <p className="text-sm sm:text-lg text-gray-700 font-medium max-w-2xl mx-auto mt-4 leading-relaxed">
+                    বাংলার শ্রেষ্ঠ দুর্গাপূজা উদযাপন করুন আপনার প্রিয় পূজা প্যান্ডেলের শিল্পকলা এবং থিমকে সম্মান জানিয়ে।
+                    <br />
+                    <span className="text-sm opacity-80">
+                      Experience Bengal&apos;s greatest Durga Puja by honoring the artistry and theme of your favorite Puja Pandals.
+                    </span>
+                  </p>
 
-                {/* CTAs */}
-                <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <DhakButton
-                    variant="primary"
-                    onClick={openQRScanner}
-                    className="w-full sm:w-auto min-h-[56px] px-8 py-3 rounded-2xl text-sm sm:text-base font-bold shadow-festive flex items-center justify-center gap-2.5 touch-manipulation active:scale-95"
-                  >
-                    <Camera className="w-5 h-5 text-white shrink-0" />
-                    <div className="flex flex-col items-center leading-tight">
-                      <span className="font-bold">কিউআর স্ক্যানার খুলুন</span>
-                      <span className="text-[10px] opacity-80 font-normal">Open QR Scanner</span>
-                    </div>
-                  </DhakButton>
+                  {/* CTAs */}
+                  <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <DhakButton
+                      variant="primary"
+                      onClick={openQRScanner}
+                      className="w-full sm:w-auto min-h-[56px] px-8 py-3 rounded-2xl text-sm sm:text-base font-bold shadow-festive flex items-center justify-center gap-2.5 touch-manipulation active:scale-95"
+                    >
+                      <Camera className="w-5 h-5 text-white shrink-0" />
+                      <div className="flex flex-col items-center leading-tight">
+                        <span className="font-bold">কিউআর স্ক্যানার খুলুন</span>
+                        <span className="text-[10px] opacity-80 font-normal">Open QR Scanner</span>
+                      </div>
+                    </DhakButton>
 
-                  <a
-                    href="#voting-list"
-                    className="w-full sm:w-auto min-h-[56px] px-6 py-3 rounded-2xl text-xs sm:text-sm font-bold border border-amber-300/90 bg-white/90 hover:bg-amber-50 text-gray-800 flex items-center justify-center gap-2 transition shadow-xs touch-manipulation active:scale-95"
-                  >
-                    <Vote className="w-4 h-4 text-marigold-600 shrink-0" />
-                    <div className="flex flex-col items-center leading-tight">
-                      <span className="font-bold">ভোটিং তালিকা</span>
-                      <span className="text-[10px] opacity-75 font-normal">Voting List</span>
-                    </div>
-                  </a>
+                    <a
+                      href="#voting-list"
+                      className="w-full sm:w-auto min-h-[56px] px-6 py-3 rounded-2xl text-xs sm:text-sm font-bold border border-amber-300/90 bg-white/90 hover:bg-amber-50 text-gray-800 flex items-center justify-center gap-2 transition shadow-xs touch-manipulation active:scale-95"
+                    >
+                      <Vote className="w-4 h-4 text-marigold-600 shrink-0" />
+                      <div className="flex flex-col items-center leading-tight">
+                        <span className="font-bold">ভোটিং তালিকা</span>
+                        <span className="text-[10px] opacity-75 font-normal">Voting List</span>
+                      </div>
+                    </a>
 
-                  <button
-                    onClick={() => handleTabChange('leaderboard')}
-                    className="w-full sm:w-auto min-h-[56px] px-6 py-3 rounded-2xl text-xs sm:text-sm font-bold border border-amber-200 bg-amber-50/70 hover:bg-amber-100/80 text-amber-950 flex items-center justify-center gap-2 transition shadow-xs touch-manipulation active:scale-95"
-                  >
-                    <Trophy className="w-4 h-4 text-marigold-600 shrink-0" />
-                    <div className="flex flex-col items-center leading-tight">
-                      <span className="font-bold">লাইভ র্যাঙ্কিং</span>
-                      <span className="text-[10px] opacity-75 font-normal">Live Rankings</span>
-                    </div>
-                  </button>
-                </div>
-
-                {/* Prominent One Device • One Vote Security Badge */}
-                <div className="mt-7 flex justify-center">
-                  <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-300/90 text-emerald-950 text-xs sm:text-sm font-black tracking-wide shadow-sm shadow-emerald-900/5 hover:border-emerald-400 transition-all duration-200">
-                    <div className="w-5 h-5 rounded-full bg-emerald-100/90 flex items-center justify-center shrink-0 border border-emerald-300 shadow-2xs">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-center sm:gap-1.5 leading-tight">
-                      <span className="font-bold">এক ডিভাইস • এক ভোট</span>
-                      <span className="text-[10px] opacity-75 font-normal">(One Device • One Vote)</span>
-                    </div>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
+                    <button
+                      onClick={() => handleTabChange('leaderboard')}
+                      className="w-full sm:w-auto min-h-[56px] px-6 py-3 rounded-2xl text-xs sm:text-sm font-bold border border-amber-200 bg-amber-50/70 hover:bg-amber-100/80 text-amber-950 flex items-center justify-center gap-2 transition shadow-xs touch-manipulation active:scale-95"
+                    >
+                      <Trophy className="w-4 h-4 text-marigold-600 shrink-0" />
+                      <div className="flex flex-col items-center leading-tight">
+                        <span className="font-bold">লাইভ র্যাঙ্কিং</span>
+                        <span className="text-[10px] opacity-75 font-normal">Live Rankings</span>
+                      </div>
+                    </button>
                   </div>
-                </div>
+                </ScrollReveal>
 
-                {/* Trust Badges */}
-                <div className="mt-8 pt-6 border-t border-amber-200/60 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-gray-600">
-                  <div className="flex items-center gap-2 font-bold text-gray-800">
-                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <div className="flex flex-col items-start leading-tight">
-                      <span>হার্ডওয়্যার-বাউন্ড ব্যালট</span>
-                      <span className="text-[10px] opacity-75 font-normal text-gray-500">Hardware-Bound Ballot</span>
+                {/* Feature Badges Section */}
+                <ScrollReveal delay={0.15}>
+                  {/* Prominent One Device • One Vote Security Badge */}
+                  <div className="mt-7 flex justify-center">
+                    <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-300/90 text-emerald-950 text-xs sm:text-sm font-black tracking-wide shadow-sm shadow-emerald-900/5 hover:border-emerald-400 transition-all duration-200">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100/90 flex items-center justify-center shrink-0 border border-emerald-300 shadow-2xs">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                      </div>
+                      <div className="flex flex-col sm:flex-row items-center sm:gap-1.5 leading-tight">
+                        <span className="font-bold">এক ডিভাইস • এক ভোট</span>
+                        <span className="text-[10px] opacity-75 font-normal">(One Device • One Vote)</span>
+                      </div>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 font-bold text-gray-800">
-                    <Sparkles className="w-4 h-4 text-marigold-600 shrink-0" />
-                    <div className="flex flex-col items-start leading-tight">
-                      <span>৪টি অ্যাওয়ার্ড টোকেন</span>
-                      <span className="text-[10px] opacity-75 font-normal text-gray-500">4 Award Tokens</span>
+
+                  {/* Trust Badges */}
+                  <div className="mt-8 pt-6 border-t border-amber-200/60 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-gray-600">
+                    <div className="flex items-center gap-2 font-bold text-gray-800">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div className="flex flex-col items-start leading-tight">
+                        <span>হার্ডওয়্যার-বাউন্ড ব্যালট</span>
+                        <span className="text-[10px] opacity-75 font-normal text-gray-500">Hardware-Bound Ballot</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 font-bold text-gray-800">
+                      <Sparkles className="w-4 h-4 text-marigold-600 shrink-0" />
+                      <div className="flex flex-col items-start leading-tight">
+                        <span>৪টি অ্যাওয়ার্ড টোকেন</span>
+                        <span className="text-[10px] opacity-75 font-normal text-gray-500">4 Award Tokens</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 font-bold text-gray-800">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div className="flex flex-col items-start leading-tight">
+                        <span>রিয়েল-টাইম সুরক্ষিত ট্যালি</span>
+                        <span className="text-[10px] opacity-75 font-normal text-gray-500">Real-Time Secure Tally</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 font-bold text-gray-800">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <div className="flex flex-col items-start leading-tight">
-                      <span>রিয়েল-টাইম সুরক্ষিত ট্যালি</span>
-                      <span className="text-[10px] opacity-75 font-normal text-gray-500">Real-Time Secure Tally</span>
-                    </div>
-                  </div>
-                </div>
+                </ScrollReveal>
               </div>
 
               {/* ============================================================= */}
               {/* VOTING LIST & PARTICIPATING PANDALS DIRECTORY                 */}
               {/* ============================================================= */}
-              <section id="voting-list" className="mt-8 scroll-mt-24">
+              <ScrollReveal>
+                <section id="voting-list" className="mt-8 scroll-mt-24">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
                   <div>
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
@@ -459,10 +466,12 @@ export default function HomePage() {
                   </div>
                 )}
               </section>
+            </ScrollReveal>
 
-              {/* ============================================================= */}
-              {/* HOW IT WORKS / 4 TOKEN GAMIFIED EXPLAINER                    */}
-              {/* ============================================================= */}
+            {/* ============================================================= */}
+            {/* HOW IT WORKS / 4 TOKEN GAMIFIED EXPLAINER                    */}
+            {/* ============================================================= */}
+            <ScrollReveal>
               <section className="mt-14 p-6 sm:p-8 rounded-3xl bg-white/90 backdrop-blur-xl border border-amber-200/80 shadow-md">
                 <div className="max-w-2xl mx-auto text-center mb-8">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2">
@@ -541,10 +550,12 @@ export default function HomePage() {
                   </div>
                 </div>
               </section>
+            </ScrollReveal>
 
-              {/* ============================================================= */}
-              {/* ORGANIZER INVITATION BANNER                                   */}
-              {/* ============================================================= */}
+            {/* ============================================================= */}
+            {/* ORGANIZER INVITATION BANNER                                   */}
+            {/* ============================================================= */}
+            <ScrollReveal>
               <section className="mt-12 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-amber-900 via-stone-900 to-amber-950 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
                 <div className="max-w-xl text-center md:text-left">
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-amber-200 text-xs font-bold mb-2">
@@ -577,7 +588,8 @@ export default function HomePage() {
                   <ArrowRight className="w-4 h-4 text-gray-950 ml-1 shrink-0" />
                 </Link>
               </section>
-            </motion.div>
+            </ScrollReveal>
+          </motion.div>
           )}
 
         </AnimatePresence>
