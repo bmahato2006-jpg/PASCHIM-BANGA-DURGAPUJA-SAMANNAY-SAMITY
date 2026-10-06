@@ -292,13 +292,20 @@ export default function MasterAdminDashboardPage() {
         });
 
         const smsData = await smsRes.json().catch(() => ({}));
-        if (!smsRes.ok || !smsData.success || smsData.result?.return === false) {
-          toast.error('অনুমোদিত, কিন্তু এসএমএস পাঠানো যায়নি। (Approved, but SMS failed to send.)', { duration: 4000 });
+        if (!smsRes.ok || !smsData.success) {
+          const rawErr = 
+            (Array.isArray(smsData.result?.message) ? smsData.result.message.join(', ') : smsData.result?.message) ||
+            (typeof smsData.result === 'object' ? JSON.stringify(smsData.result) : '') ||
+            smsData.error ||
+            'Unknown Error';
+          toast.error("SMS Failed: " + rawErr, { duration: 8000 });
         }
+      } else {
+        toast.error("SMS Failed: কোনো ফোন নম্বর নেই (No phone number registered)", { duration: 8000 });
       }
     } catch (smsError: any) {
       console.warn('SMS fetch error:', smsError);
-      toast.error('অনুমোদিত, কিন্তু এসএমএস পাঠানো যায়নি। (Approved, but SMS failed to send.)', { duration: 4000 });
+      toast.error("SMS Failed: " + (smsError?.message || 'Network Error'), { duration: 8000 });
     } finally {
       setApprovingId(null);
     }
