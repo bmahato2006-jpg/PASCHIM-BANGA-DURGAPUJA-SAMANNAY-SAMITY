@@ -13,6 +13,7 @@ import {
   onSnapshot,
   doc,
   updateDoc,
+  deleteDoc,
   FirebaseUser 
 } from '@/lib/firebase';
 import { 
@@ -33,7 +34,8 @@ import {
   Building2,
   ArrowLeft,
   Phone,
-  Clock
+  Clock,
+  Trash2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { SUPER_ADMIN_EMAIL, isSuperAdmin } from '@/lib/admin';
@@ -76,6 +78,7 @@ export default function MasterAdminDashboardPage() {
 
   // Approval In-Progress Tracker
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Filter & Search
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -302,6 +305,80 @@ export default function MasterAdminDashboardPage() {
       }
     } finally {
       setApprovingId(null);
+    }
+  };
+
+  // Permanently Delete Committee with Native Confirmation & Instant UI Update
+  const handleDeleteCommittee = async (committeeId: string, committeeName: string) => {
+    if (!user?.email || !isSuperAdmin(user.email)) {
+      toast.error('অননুমোদিত প্রবেশাধিকার! শুধুমাত্র অনুমোদিত সুপার অ্যাডমিন কমিটি মুছে ফেলতে পারেন। (Super Admin only)');
+      return;
+    }
+
+    // Native browser confirmation prompt
+    const confirmed = window.confirm(
+      'Are you sure you want to permanently delete this committee? This action cannot be undone.'
+    );
+
+    if (!confirmed) return;
+
+    if (deletingId) return;
+    setDeletingId(committeeId);
+
+    // Instant UI update: Filter out the committee immediately from local state
+    setCommittees((prev) => prev.filter((c) => c.id !== committeeId));
+
+    const toastId = toast.loading(`"${committeeName}" স্থায়ীভাবে মুছে ফেলা হচ্ছে... (Deleting...)`);
+
+    try {
+      // Execute direct deleteDoc on Firestore committees collection
+      await deleteDoc(doc(db, 'committees', committeeId));
+
+      // Also clean up matching pandal entry if present
+      try {
+        await deleteDoc(doc(db, 'pandals', committeeId));
+      } catch {}
+
+      toast.success(
+        `🗑️ "${committeeName}" স্থায়ীভাবে মুছে ফেলা হয়েছে! (Committee permanently deleted!)`,
+        { id: toastId, duration: 4000 }
+      );
+
+      // Trigger resilient backend API deletion
+      fetch('/api/admin/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          committeeId,
+          adminEmail: user.email,
+        }),
+      }).catch((apiErr) => console.warn('Background delete API trigger notice:', apiErr));
+
+    } catch (err: any) {
+      console.warn('Direct deleteDoc notice, attempting backend delete API fallback:', err);
+      try {
+        const res = await fetch('/api/admin/delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            committeeId,
+            adminEmail: user.email,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
+          toast.success(
+            `🗑️ "${committeeName}" স্থায়ীভাবে মুছে ফেলা হয়েছে! (Committee permanently deleted!)`,
+            { id: toastId, duration: 4000 }
+          );
+        } else {
+          toast.error(data.message || 'কমিটি মুছে ফেলতে ব্যর্থ হয়েছে। (Deletion failed)', { id: toastId });
+        }
+      } catch (fallbackErr: any) {
+        toast.error('নেটওয়ার্ক ত্রুটি! কমিটি মুছে ফেলা যায়নি। (Network error during deletion)', { id: toastId });
+      }
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -797,7 +874,7 @@ export default function MasterAdminDashboardPage() {
                       <th className="py-3.5 px-4">যোগাযোগ (Contact Phone)</th>
                       <th className="py-3.5 px-4 text-right">মোট ভোট (Total Votes)</th>
                       <th className="py-3.5 px-4 text-center">স্থিতি (Status)</th>
-                      <th className="py-3.5 px-4 text-center w-24">ব্যালট (Ballot)</th>
+                      <th className="py-3.5 px-4 text-center">অ্যাকশন (Actions)</th>
                     </tr>
                   </thead>
 
@@ -931,16 +1008,38 @@ export default function MasterAdminDashboardPage() {
                             )}
                           </td>
 
-                          {/* Action Link to Live Voter Ballot */}
+                          {/* Action Links: Live Voter Ballot & Delete Button */}
                           <td className="py-4 px-4 text-center">
-                            <Link
-                              href={`/vote/${committee.id}`}
-                              target="_blank"
-                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-amber-50 text-[11px] font-bold text-gray-700 hover:text-sindoor-600 transition-all border border-gray-200 hover:border-amber-300 shadow-2xs active:scale-95"
-                            >
-                              <ExternalLink className="w-3 h-3 text-amber-600" />
-                              <span>দেখুন</span>
-                            </Link>
+                            <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                              <Link
+                                href={`/vote/${committee.id}`}
+                                target="_blank"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white hover:bg-amber-50 text-[11px] font-bold text-gray-700 hover:text-sindoor-600 transition-all border border-gray-200 hover:border-amber-300 shadow-2xs active:scale-95"
+                                title="ব্যালট দেখুন (View Ballot)"
+                              >
+                                <ExternalLink className="w-3 h-3 text-amber-600" />
+                                <span>দেখুন</span>
+                              </Link>
+
+                              <button
+                                onClick={() =>
+                                  handleDeleteCommittee(
+                                    committee.id,
+                                    committee.committee_name || committee.id
+                                  )
+                                }
+                                disabled={deletingId === committee.id}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-[11px] font-bold shadow-xs hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="স্থায়ীভাবে মুছে ফেলুন (Permanently Delete)"
+                              >
+                                {deletingId === committee.id ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-3 h-3" />
+                                )}
+                                <span>ডিলিট (Delete)</span>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );

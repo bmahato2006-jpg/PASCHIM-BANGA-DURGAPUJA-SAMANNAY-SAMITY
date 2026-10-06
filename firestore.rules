@@ -76,8 +76,8 @@ service cloud.firestore {
         request.resource.data.total_votes == resource.data.get('total_votes', 0) + 1
       );
 
-      // Deletions are forbidden to preserve audit integrity
-      allow delete: if false;
+      // Super Admin can delete pandals
+      allow delete: if isAuthenticated() && request.auth.token.email == 'admin111205@gmail.com';
     }
 
     // ===============================================================
@@ -100,7 +100,8 @@ service cloud.firestore {
                       request.auth.token.email == 'admin111205@gmail.com'
                     );
 
-      allow delete: if false;
+      // Super Admin can delete committees
+      allow delete: if isAuthenticated() && request.auth.token.email == 'admin111205@gmail.com';
     }
 
     // ===============================================================
