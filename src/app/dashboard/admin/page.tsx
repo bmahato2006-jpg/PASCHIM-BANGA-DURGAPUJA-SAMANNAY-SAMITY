@@ -234,7 +234,7 @@ export default function MasterAdminDashboardPage() {
     });
   }, [rankedCommittees, searchQuery, selectedWard, selectedStatus]);
 
-  // Approve Committee via Backend API (/api/admin/approve) with Database Update & Fast2SMS Dispatch
+  // Approve Committee: Client-side Firestore update first, then background SMS notification
   const handleApproveCommittee = async (
     committeeId: string, 
     committeeName: string,
@@ -260,39 +260,44 @@ export default function MasterAdminDashboardPage() {
     const toastId = toast.loading(`"${committeeName}" অনুমোদন করা হচ্ছে... (Approving...)`);
 
     try {
-      // Make a POST request to /api/admin/approve with the committee details
-      const res = await fetch('/api/admin/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          committeeId,
-          committeeName,
-          phone: targetPhone,
-          adminEmail: user.email,
-        }),
+      // 1. Update Firestore document directly on the client first
+      await updateDoc(doc(db, 'committees', committeeId), { 
+        status: 'approved' 
       });
 
-      const data = await res.json().catch(() => ({}));
+      // Synchronize in pandals collection if present
+      try {
+        await updateDoc(doc(db, 'pandals', committeeId), { 
+          status: 'approved' 
+        });
+      } catch {}
 
-      if (res.ok && data.success) {
-        // Fast UI State Update: Instantly reflect 'approved' state in the table
-        setCommittees((prev) =>
-          prev.map((c) => (c.id === committeeId ? { ...c, status: 'approved' } : c))
-        );
+      // 2. Immediately update the local React state so the UI reflects the 'approved' status instantly
+      setCommittees((prev) =>
+        prev.map((c) => (c.id === committeeId ? { ...c, status: 'approved' } : c))
+      );
 
-        toast.success(
-          `🎉 "${committeeName}" অনুমোদিত এবং এসএমএস পাঠানো হয়েছে! (Approved & SMS Sent!)`,
-          { id: toastId, duration: 4500 }
-        );
-      } else {
-        toast.error(
-          data.message || 'অনুমোদন প্রক্রিয়া ব্যর্থ হয়েছে। (Approval failed)',
-          { id: toastId }
-        );
+      // 3. Show success toast "Committee Approved!" regardless of the SMS result
+      toast.success(
+        `🎉 "${committeeName}" কমিটি অনুমোদিত হয়েছে! (Committee Approved!)`,
+        { id: toastId, duration: 4500 }
+      );
+
+      // 4. After DB update succeeds, make a lightweight POST request to the SMS API
+      if (targetPhone) {
+        fetch('/api/send-sms', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ phone: targetPhone, committeeName }) 
+        }).catch((smsErr) => console.warn('SMS dispatch notice:', smsErr));
       }
+
     } catch (err: any) {
-      console.error('API /api/admin/approve call error:', err);
-      toast.error('নেটওয়ার্ক ত্রুটি! অনুমোদন সম্পন্ন করা যায়নি। (Network error during approval)', { id: toastId });
+      console.error('Firestore updateDoc error:', err);
+      toast.error(
+        err?.message || 'ডাটাবেসে কমিটি অনুমোদন করতে ব্যর্থ হয়েছে। (Database approval failed)',
+        { id: toastId }
+      );
     } finally {
       // Clear loading state on the button
       setApprovingId(null);
