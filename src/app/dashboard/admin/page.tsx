@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { 
   auth, 
@@ -14,15 +15,11 @@ import {
 } from '@/lib/firebase';
 import { 
   ShieldCheck, 
-  Users, 
   Vote, 
-  BarChart3, 
   Lock, 
   Unlock,
-  AlertTriangle, 
   CheckCircle2, 
   Database, 
-  Activity, 
   Search, 
   LogOut, 
   Sliders, 
@@ -31,14 +28,11 @@ import {
   ExternalLink,
   Trophy,
   Award,
-  Layers,
-  ArrowUpDown,
-  Flame,
   Building2,
-  ChevronRight,
-  RefreshCw
+  ArrowLeft
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { SUPER_ADMIN_EMAIL, isSuperAdmin } from '@/lib/admin';
 
 interface CommitteeItem {
   id: string;
@@ -61,8 +55,6 @@ interface CommitteeItem {
   };
   resolvedVotes?: number;
 }
-
-import { SUPER_ADMIN_EMAIL, isSuperAdmin } from '@/lib/admin';
 
 export default function MasterAdminDashboardPage() {
   const router = useRouter();
@@ -104,7 +96,6 @@ export default function MasterAdminDashboardPage() {
   }, [router]);
 
   // 2. Fetch all committees and pandal vote tallies via real-time onSnapshot listeners
-  // Attached STRICTLY when user is authenticated as Super Admin
   useEffect(() => {
     if (authLoading || !user || !isSuperAdmin(user.email)) return;
 
@@ -123,11 +114,11 @@ export default function MasterAdminDashboardPage() {
             list.push({
               id: docSnap.id,
               committee_name: data.committee_name || data.name || data.clubName || docSnap.id,
-              ward: data.ward || 'সাধারণ অঞ্চল',
+              ward: data.ward || 'সাধারণ অঞ্চল (General Zone)',
               secretary_name: data.secretary_name || '',
               contact_number: data.contact_number || '',
               email: data.email || '',
-              theme: data.theme || 'ঐতিহ্যবাহী দুর্গাপূজা',
+              theme: data.theme || 'ঐতিহ্যবাহী দুর্গাপূজা (Traditional Durga Puja)',
               total_votes: Number(data.total_votes || 0),
               votes: data.votes || {},
               ...data,
@@ -142,7 +133,7 @@ export default function MasterAdminDashboardPage() {
         }
       );
 
-      // Real-time listener for pandals collection to mirror and aggregate vote counts
+      // Real-time listener for pandals collection to aggregate vote counts
       const pandalsRef = collection(db, 'pandals');
       unsubPandals = onSnapshot(
         pandalsRef,
@@ -227,17 +218,17 @@ export default function MasterAdminDashboardPage() {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      toast.success('অ্যাডমিন লগআউট সম্পন্ন হয়েছে');
+      toast.success('অ্যাডমিন লগআউট সম্পন্ন হয়েছে (Admin Logged Out)');
       router.push('/organizer/auth');
     } catch {
-      toast.error('লগআউট ব্যর্থ হয়েছে');
+      toast.error('লগআউট ব্যর্থ হয়েছে (Sign Out Failed)');
     }
   };
 
   // Export audit table as CSV
   const handleExportCSV = () => {
     if (rankedCommittees.length === 0) {
-      toast.error('রপ্তানি করার মতো কোনো ডেটা নেই');
+      toast.error('রপ্তানি করার মতো কোনো ডেটা নেই (No data to export)');
       return;
     }
 
@@ -259,65 +250,70 @@ export default function MasterAdminDashboardPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('অডিট সিএসভি সফলভাবে ডাউনলোড হয়েছে (CSV exported)!');
+    toast.success('অডিট সিএসভি সফলভাবে ডাউনলোড হয়েছে (CSV Exported Successfully)!');
   };
 
   // -----------------------------------------------------------------
-  // 4. ROUTE PROTECTION: AUTH LOADING, UNAUTHENTICATED, & RBAC GUARDS
+  // ROUTE PROTECTION: AUTH LOADING & UNAUTHENTICATED GUARDS
   // -----------------------------------------------------------------
   if (authLoading) {
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
-        <div className="flex flex-col items-center gap-3 text-slate-200">
-          <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-          <p className="text-sm font-semibold tracking-wide">
-            সুপার অ্যাডমিন অধিবেশন যাচাই করা হচ্ছে (Verifying Super Admin Access)...
-          </p>
+        <div className="bg-white/90 backdrop-blur-md border border-white/60 p-8 rounded-3xl shadow-xl flex flex-col items-center gap-3 text-gray-800 animate-slide-up">
+          <Loader2 className="w-10 h-10 text-sindoor-600 animate-spin" />
+          <div className="text-center space-y-1">
+            <p className="text-sm font-bold text-gray-900">
+              সুপার অ্যাডমিন অধিবেশন যাচাই করা হচ্ছে...
+            </p>
+            <p className="text-xs text-gray-500">
+              (Verifying Super Admin Access Session...)
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Strict Client-Side RBAC Guard: Unauthenticated OR Not the Designated Super Admin
+  // Strict Client-Side RBAC Guard: Unauthenticated OR Not Designated Super Admin
   if (!user || !isSuperAdmin(user.email)) {
     return (
-      <div className="min-h-screen bg-transparent flex items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
-        <div className="max-w-md w-full bg-slate-900 border border-rose-500/40 rounded-3xl p-8 shadow-2xl text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mx-auto">
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white/90 backdrop-blur-md border border-rose-200/80 rounded-3xl p-8 shadow-2xl text-center space-y-6 animate-slide-up">
+          <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 mx-auto">
             <Lock className="w-8 h-8" />
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-xl font-black tracking-tight text-white">
-              অননুমোদিত প্রবেশাধিকার (Access Denied)
+            <h2 className="text-xl font-black tracking-tight text-gray-900">
+              অননুমোদিত প্রবেশাধিকার
             </h2>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              সুপার অ্যাডমিন কন্ট্রোল প্যানেল শুধুমাত্র মনোনীত সুপার অ্যাডমিন অ্যাকাউন্টের জন্য সংরক্ষিত। আপনাকে আয়োজক ড্যাশবোর্ডে পুনর্নির্দেশ করা হচ্ছে...
+            <p className="text-xs text-rose-600 font-bold uppercase tracking-wider">
+              (Access Denied: Super Admin Only)
             </p>
-            <p className="text-[11px] text-rose-300 font-mono mt-1">
-              (Super Admin Panel is strictly restricted. Redirecting to Organizer Dashboard...)
+            <p className="text-xs text-gray-600 leading-relaxed pt-1">
+              সুপার অ্যাডমিন কন্ট্রোল প্যানেল শুধুমাত্র অনুমোদিত সুপার অ্যাডমিন অ্যাকাউন্টের জন্য সংরক্ষিত। আপনাকে আয়োজক ড্যাশবোর্ডে পুনর্নির্দেশ করা হচ্ছে...
+            </p>
+            <p className="text-[11px] text-gray-500 italic">
+              (This panel is strictly restricted. Redirecting to Organizer Dashboard...)
             </p>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-400 text-left space-y-1 font-mono">
-            <div className="flex items-center gap-2 text-rose-400 font-bold">
+          <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/70 text-[11px] text-gray-700 text-left space-y-1">
+            <div className="flex items-center gap-2 text-rose-600 font-bold">
               <ShieldCheck className="w-4 h-4" />
               <span>RBAC Security Gate: Active</span>
             </div>
-            <p className="truncate">Current Session: {user?.email || 'Unauthenticated'}</p>
-            <p className="text-slate-500">Authorized: VIP Pass Only ({SUPER_ADMIN_EMAIL})</p>
+            <p className="truncate text-gray-600">Current Session: {user?.email || 'Unauthenticated'}</p>
+            <p className="text-gray-500 font-mono text-[10px]">Authorized: VIP Pass Only ({SUPER_ADMIN_EMAIL})</p>
           </div>
 
-          <div className="flex justify-center py-2">
-            <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
-          </div>
-
-          <div className="space-y-3 pt-1">
+          <div className="pt-2">
             <Link
               href="/dashboard/organizer"
-              className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 rounded-xl bg-sindoor-600 hover:bg-sindoor-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 active:scale-95"
             >
-              আয়োজক ড্যাশবোর্ডে ফিরে যান (Return to Organizer Dashboard)
+              <ArrowLeft className="w-4 h-4" />
+              <span>আয়োজক ড্যাশবোর্ডে ফিরে যান (Return to Organizer Dashboard)</span>
             </Link>
           </div>
         </div>
@@ -326,31 +322,31 @@ export default function MasterAdminDashboardPage() {
   }
 
   // -----------------------------------------------------------------
-  // 5. MASTER ADMIN DASHBOARD - PROFESSIONAL SLATE & INDIGO PALETTE
+  // MASTER ADMIN DASHBOARD - LIGHT THEME, GLASSMORPHISM & SLIDE-UP
   // -----------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-slate-950/85 text-slate-100 selection:bg-indigo-500 selection:text-white font-sans">
+    <div className="min-h-screen bg-transparent text-gray-900 selection:bg-amber-200 selection:text-amber-950 flex flex-col justify-between">
       
       {/* Top Professional Admin Bar */}
-      <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-md">
+      <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-amber-200/60 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 via-indigo-600 to-purple-700 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 text-lg font-black">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600 flex items-center justify-center text-white shadow-md text-lg font-black shrink-0">
               👑
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-black tracking-tight text-white leading-none">
+                <h1 className="text-base sm:text-lg font-black tracking-tight text-gray-900 leading-none">
                   মাস্টার অ্যাডমিন ড্যাশবোর্ড
                 </h1>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30">
-                  VIP Pass Active
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full border border-amber-300">
+                  VIP Pass
                 </span>
               </div>
-              <span className="text-[11px] text-slate-400 font-medium">
-                পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি • গ্লোবাল কমান্ড সেন্টার
-              </span>
+              <p className="text-[11px] text-gray-500 font-medium">
+                (Master Admin Dashboard • Central Command)
+              </p>
             </div>
           </div>
 
@@ -358,28 +354,28 @@ export default function MasterAdminDashboardPage() {
             {/* Quick Switch to Organizer Live Desk */}
             <Link
               href="/dashboard/organizer"
-              className="px-3 py-1.5 rounded-xl border border-indigo-500/40 hover:border-indigo-400 text-xs font-bold text-indigo-300 hover:text-white bg-indigo-950/60 hover:bg-indigo-900/60 flex items-center gap-1.5 transition-all"
+              className="px-3 py-1.5 rounded-xl border border-amber-200 bg-amber-50/80 hover:bg-amber-100/90 text-xs font-bold text-amber-900 flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs"
             >
-              <span>←</span>
+              <ArrowLeft className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">আয়োজক ডেস্ক (Organizer Desk)</span>
               <span className="sm:hidden">ডেস্ক</span>
             </Link>
 
             <div className="hidden md:flex flex-col text-right">
-              <span className="text-xs font-bold text-amber-300 truncate max-w-[220px]">
-                {user.email || user.displayName || 'Super Admin'}
+              <span className="text-xs font-bold text-gray-900 truncate max-w-[200px]">
+                {user.email || 'Super Admin'}
               </span>
-              <span className="text-[10px] text-emerald-400 font-medium flex items-center justify-end gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-[10px] text-emerald-600 font-semibold flex items-center justify-end gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 অনুমোদিত সুপার অ্যাডমিন (Authorized)
               </span>
             </div>
 
             <button
               onClick={handleSignOut}
-              className="px-3.5 py-2 rounded-xl border border-slate-700 hover:border-slate-600 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 flex items-center gap-1.5 transition-all"
+              className="px-3 py-1.5 rounded-xl border border-gray-200 hover:border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 bg-white/80 hover:bg-white flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs"
             >
-              <LogOut className="w-3.5 h-3.5 text-slate-400" />
+              <LogOut className="w-3.5 h-3.5 text-gray-500" />
               <span className="hidden sm:inline">লগআউট (Sign Out)</span>
             </button>
           </div>
@@ -387,342 +383,427 @@ export default function MasterAdminDashboardPage() {
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-
-        {/* ------------------------------------------------------------- */}
-        {/* 2. GLOBAL STATISTICS OVERVIEW (Cards) */}
-        {/* ------------------------------------------------------------- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-
-          {/* Stat 1: Total Registered Committees */}
-          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/90 shadow-lg relative overflow-hidden group hover:border-slate-700 transition-all">
-            <div className="flex items-center justify-between text-slate-400 mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                মোট নিবন্ধিত কমিটি
-              </span>
-              <div className="w-9 h-9 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                <Building2 className="w-5 h-5" />
-              </div>
-            </div>
-            
-            <div className="space-y-1">
-              <span className="text-3xl sm:text-4xl font-black text-white font-sans tracking-tight">
-                {totalRegisteredCommittees.toLocaleString('bn-IN')}
-              </span>
-              <p className="text-xs text-slate-400 font-medium">
-                Total Registered Committees ({totalRegisteredCommittees})
-              </p>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center gap-1.5 text-[11px] text-emerald-400 font-semibold">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>পশ্চিম বর্ধমান অনুমোদিত পূজা মণ্ডপ</span>
-            </div>
-          </div>
-
-          {/* Stat 2: Total Votes Cast */}
-          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/90 shadow-lg relative overflow-hidden group hover:border-slate-700 transition-all">
-            <div className="flex items-center justify-between text-slate-400 mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                মোট প্রদত্ত ভোট
-              </span>
-              <div className="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400">
-                <Vote className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-3xl sm:text-4xl font-black text-rose-400 font-sans tracking-tight">
-                {totalVotesCast.toLocaleString('bn-IN')}
-              </span>
-              <p className="text-xs text-slate-400 font-medium">
-                Total Votes Cast ({totalVotesCast})
-              </p>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-              <span>Firestore Real-Time Atomic Sync</span>
-            </div>
-          </div>
-
-          {/* Stat 3: Top Leading Committee */}
-          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/90 shadow-lg relative overflow-hidden group hover:border-slate-700 transition-all">
-            <div className="flex items-center justify-between text-slate-400 mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                শীর্ষস্থানীয় মণ্ডপ (Top Leader)
-              </span>
-              <div className="w-9 h-9 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                <Trophy className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-base sm:text-lg font-bold text-amber-300 line-clamp-1">
-                {rankedCommittees[0]?.committee_name || 'তথ্য সংগৃহীত হচ্ছে...'}
-              </span>
-              <p className="text-xs text-slate-400">
-                ভোট সংখ্যা: <strong className="text-white font-mono">{rankedCommittees[0]?.resolvedVotes || 0}</strong> ভোট
-              </p>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center gap-1.5 text-[11px] text-amber-400/90 font-medium">
-              <Award className="w-3.5 h-3.5 text-amber-400" />
-              <span>১ম স্থান অধিকারী কমিটি</span>
-            </div>
-          </div>
-
-          {/* Stat 4: Security & Fraud Prevention Status */}
-          <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/90 shadow-lg relative overflow-hidden group hover:border-slate-700 transition-all">
-            <div className="flex items-center justify-between text-slate-400 mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                ভুয়ো ভোট প্রতিরোধ (Integrity)
-              </span>
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-3xl sm:text-4xl font-black text-emerald-400 font-sans tracking-tight">
-                ১০০%
-              </span>
-              <p className="text-xs text-slate-400 font-medium">
-                Device Hash + Token Lock
-              </p>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center gap-1.5 text-[11px] text-emerald-400 font-medium">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>এক ডিভাইসে এক ভোট নিশ্চিত</span>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Global Controls & Emergency Gatekeeper */}
-        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800/90 flex flex-col md:flex-row md:items-center justify-between gap-5 shadow-lg">
-          <div className="space-y-1">
-            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              <Sliders className="w-5 h-5 text-indigo-400" />
-              গ্লোবাল ভোটিং ব্যবস্থা পরিচালনা (Voting Gatekeeper)
-            </h2>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-2xl">
-              জরুরি পরিস্থিতিতে বা ভোট গ্রহণের নির্ধারিত সময়সীমা শেষে সমগ্র প্ল্যাটফর্মের ভোট গ্রহণ প্রক্রিয়া সক্রিয় অথবা সাময়িক স্থগিত রাখুন।
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0 flex-wrap">
-            <button
-              onClick={handleToggleVoting}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-md ${
-                votingEnabled 
-                  ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-600/20' 
-                  : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20'
-              }`}
-            >
-              {votingEnabled ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-              {votingEnabled ? 'ভোট সাময়িক স্থগিত করুন (Pause)' : 'ভোট পুনরায় চালু করুন (Resume)'}
-            </button>
-
-            <button
-              onClick={handleExportCSV}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 hover:text-white flex items-center gap-2 transition-all shadow-sm"
-            >
-              <Download className="w-4 h-4 text-indigo-400" />
-              অডিট লগ ডাউনলোড (CSV)
-            </button>
-          </div>
-        </div>
-
-        {/* ------------------------------------------------------------- */}
-        {/* 3. GLOBAL LEADERBOARD: RESPONSIVE TAILWIND DATA TABLE */}
-        {/* ------------------------------------------------------------- */}
-        <div className="bg-slate-900 rounded-3xl border border-slate-800/90 shadow-xl overflow-hidden space-y-4 p-6 sm:p-7">
+      {/* Main Frosted Glass Bottom Sheet Container with Slide-Up Animation */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 pb-12">
+        <div className="bg-white/90 backdrop-blur-md shadow-2xl rounded-t-[2.5rem] sm:rounded-[2.5rem] border border-white/60 p-5 sm:p-8 space-y-8 animate-slide-up">
           
-          {/* Table Header & Controls */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          {/* Mobile Bottom-Sheet Grab Handle Indicator */}
+          <div className="w-12 h-1.5 bg-gray-300/80 rounded-full mx-auto -mt-1 mb-2 sm:hidden" />
+
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200/70 pb-4">
             <div>
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-amber-400" />
-                <h3 className="text-lg font-black text-white tracking-tight">
-                  গ্লোবাল লিডারবোর্ড (Global Live Leaderboard)
-                </h3>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold mb-1 shadow-2xs">
+                <ShieldCheck className="w-3.5 h-3.5 text-sindoor-600" />
+                <span>পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি • লাইভ অডিট কনসোল</span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
-                সর্বাধিক ভোটপ্রাপ্তির ক্রমানুসারে লাইভ সাজানো তালিকা (Dynamically sorted by votes in descending order).
+              <h2 className="text-xl sm:text-2xl font-black text-gray-900 font-serif">
+                সার্বজনীন পর্যবেক্ষণ ও পরিসংখ্যান
+              </h2>
+              <p className="text-xs text-gray-500">
+                (Global Real-Time Overview & Auditing Desk)
               </p>
             </div>
 
-            {/* Search and Ward Filter Controls */}
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Search input */}
-              <div className="relative min-w-[220px]">
-                <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="কমিটি বা অঞ্চল খুঁজুন..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-hidden focus:border-indigo-500 transition-colors"
-                />
-              </div>
-
-              {/* Ward Filter */}
-              <select
-                value={selectedWard}
-                onChange={(e) => setSelectedWard(e.target.value)}
-                className="py-2 px-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 focus:outline-hidden focus:border-indigo-500 transition-colors cursor-pointer"
-              >
-                <option value="all">সকল অঞ্চল (All Zones)</option>
-                {wardsList.map((ward) => (
-                  <option key={ward} value={ward}>
-                    {ward}
-                  </option>
-                ))}
-              </select>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <span>লাইভ ফায়ারস্টোর সিঙ্ক (Live Sync)</span>
+              </span>
             </div>
           </div>
 
-          {/* Table Content */}
-          {dataLoading ? (
-            <div className="py-16 flex flex-col items-center justify-center text-center">
-              <Loader2 className="w-8 h-8 text-indigo-400 animate-spin mb-3" />
-              <p className="text-xs text-slate-400">ফায়ারস্টোর থেকে লাইভ লিডারবোর্ড লোড হচ্ছে...</p>
+          {/* ------------------------------------------------------------- */}
+          {/* GLOBAL STATISTICS OVERVIEW (4 Light Frosted Glass Cards) */}
+          {/* ------------------------------------------------------------- */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+
+            {/* Stat 1: Total Registered Committees */}
+            <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 backdrop-blur-md border border-indigo-100/90 shadow-sm hover:shadow-md transition-all group">
+              <div className="flex items-center justify-between text-gray-500 mb-3">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-900 block">
+                    মোট নিবন্ধিত কমিটি
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-medium">
+                    (Total Registered Committees)
+                  </span>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 shrink-0 group-hover:scale-105 transition-transform">
+                  <Building2 className="w-5 h-5" />
+                </div>
+              </div>
+              
+              <div className="space-y-1">
+                <span className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight font-sans">
+                  {totalRegisteredCommittees.toLocaleString('bn-IN')}
+                </span>
+                <p className="text-xs text-gray-500 font-medium">
+                  {totalRegisteredCommittees} Committees Enrolled
+                </p>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-1.5 text-[11px] text-emerald-700 font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>পশ্চিম বর্ধমান অঞ্চল (Paschim Bardhaman)</span>
+              </div>
             </div>
-          ) : filteredLeaderboard.length === 0 ? (
-            <div className="py-16 text-center text-slate-500 text-xs">
-              <Database className="w-8 h-8 mx-auto mb-2 text-slate-600" />
-              কোনো কমিটি বা মণ্ডপ খুঁজে পাওয়া যায়নি।
+
+            {/* Stat 2: Total Votes Cast */}
+            <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 backdrop-blur-md border border-rose-100/90 shadow-sm hover:shadow-md transition-all group">
+              <div className="flex items-center justify-between text-gray-500 mb-3">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-rose-900 block">
+                    মোট প্রদত্ত ভোট
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-medium">
+                    (Total Votes Cast)
+                  </span>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-center text-sindoor-600 shrink-0 group-hover:scale-105 transition-transform">
+                  <Vote className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-3xl sm:text-4xl font-black text-sindoor-600 tracking-tight font-sans">
+                  {totalVotesCast.toLocaleString('bn-IN')}
+                </span>
+                <p className="text-xs text-gray-500 font-medium">
+                  {totalVotesCast} Verified Citizen Ballots
+                </p>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-1.5 text-[11px] text-gray-600 font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                <span>Firestore Realtime Atomic Sync</span>
+              </div>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                
-                {/* Table Head */}
-                <thead>
-                  <tr className="border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-slate-950/40">
-                    <th className="py-3.5 px-4 rounded-l-xl w-16 text-center">র‍্যাংক (Rank)</th>
-                    <th className="py-3.5 px-4">কমিটির নাম (Committee Name)</th>
-                    <th className="py-3.5 px-4">অঞ্চল / ওয়ার্ড (Location / Zone)</th>
-                    <th className="py-3.5 px-4">ভাবনা (Theme)</th>
-                    <th className="py-3.5 px-4 text-right">মোট ভোট (Total Votes)</th>
-                    <th className="py-3.5 px-4 rounded-r-xl text-center w-28">অ্যাকশন</th>
-                  </tr>
-                </thead>
 
-                {/* Table Body */}
-                <tbody className="divide-y divide-slate-800/60">
-                  {filteredLeaderboard.map((committee, index) => {
-                    const rank = index + 1;
-                    const votes = committee.resolvedVotes || 0;
+            {/* Stat 3: Top Leading Committee */}
+            <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 backdrop-blur-md border border-amber-100/90 shadow-sm hover:shadow-md transition-all group">
+              <div className="flex items-center justify-between text-gray-500 mb-3">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-900 block">
+                    শীর্ষস্থানীয় মণ্ডপ
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-medium">
+                    (Leading Pandal Committee)
+                  </span>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0 group-hover:scale-105 transition-transform">
+                  <Trophy className="w-5 h-5" />
+                </div>
+              </div>
 
-                    // Rank Badges
-                    let rankBadge = (
-                      <span className="font-mono font-bold text-slate-400">
-                        #{rank}
-                      </span>
-                    );
-                    if (rank === 1) {
-                      rankBadge = (
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-400 text-slate-950 font-black text-xs shadow-md shadow-amber-400/20">
-                          1
+              <div className="space-y-1">
+                <span className="text-base sm:text-lg font-bold text-gray-900 line-clamp-1">
+                  {rankedCommittees[0]?.committee_name || 'তথ্য সংগৃহীত হচ্ছে...'}
+                </span>
+                <p className="text-xs text-amber-800 font-medium">
+                  ভোট সংখ্যা: <strong className="font-mono text-gray-900">{rankedCommittees[0]?.resolvedVotes || 0}</strong> ভোট (Votes)
+                </p>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-1.5 text-[11px] text-amber-800 font-medium">
+                <Award className="w-3.5 h-3.5 text-amber-600" />
+                <span>১ম স্থান অধিকারী কমিটি (Rank 1 Leader)</span>
+              </div>
+            </div>
+
+            {/* Stat 4: Security & Integrity */}
+            <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 backdrop-blur-md border border-emerald-100/90 shadow-sm hover:shadow-md transition-all group">
+              <div className="flex items-center justify-between text-gray-500 mb-3">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-900 block">
+                    ভোটিং নিরাপত্তা
+                  </span>
+                  <span className="text-[10px] text-gray-400 font-medium">
+                    (Voting Integrity & Security)
+                  </span>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-105 transition-transform">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-3xl sm:text-4xl font-black text-emerald-600 tracking-tight font-sans">
+                  ১০০%
+                </span>
+                <p className="text-xs text-gray-500 font-medium">
+                  Device Hash + Anonymous UID Lock
+                </p>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-1.5 text-[11px] text-emerald-700 font-medium">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                <span>এক ডিভাইসে এক ভোট (1 Vote Per Device)</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* ------------------------------------------------------------- */}
+          {/* GLOBAL CONTROLS & AUDIT ACTIONS */}
+          {/* ------------------------------------------------------------- */}
+          <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 backdrop-blur-md border border-gray-200/80 flex flex-col md:flex-row md:items-center justify-between gap-5 shadow-xs">
+            <div className="space-y-1">
+              <h3 className="text-base sm:text-lg font-bold text-gray-900 flex items-center gap-2">
+                <Sliders className="w-5 h-5 text-amber-600" />
+                <span>গ্লোবাল ভোটিং ব্যবস্থা পরিচালনা (Voting Gatekeeper)</span>
+              </h3>
+              <p className="text-xs text-gray-600 leading-relaxed max-w-2xl">
+                জরুরি পরিস্থিতিতে বা ভোট গ্রহণের নির্ধারিত সময়সীমা শেষে প্ল্যাটফর্মের ভোট গ্রহণ প্রক্রিয়া সক্রিয় অথবা স্থগিত রাখুন। 
+                <span className="block text-[11px] text-gray-500">(Toggle voting availability or export verified audit logs)</span>
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0 flex-wrap">
+              <button
+                onClick={handleToggleVoting}
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm active:scale-95 ${
+                  votingEnabled 
+                    ? 'bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100' 
+                    : 'bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                }`}
+              >
+                {votingEnabled ? <Lock className="w-4 h-4 text-rose-600" /> : <Unlock className="w-4 h-4 text-emerald-600" />}
+                <span>
+                  {votingEnabled 
+                    ? 'ভোট সাময়িক স্থগিত করুন (Pause Voting)' 
+                    : 'ভোট পুনরায় চালু করুন (Resume Voting)'}
+                </span>
+              </button>
+
+              <button
+                onClick={handleExportCSV}
+                className="px-4 py-2.5 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-sm active:scale-95"
+              >
+                <Download className="w-4 h-4 text-amber-300" />
+                <span>অডিট লগ ডাউনলোড (Export CSV)</span>
+              </button>
+            </div>
+          </div>
+
+          {/* ------------------------------------------------------------- */}
+          {/* GLOBAL LEADERBOARD: RESPONSIVE DATA TABLE */}
+          {/* ------------------------------------------------------------- */}
+          <div className="bg-white/90 backdrop-blur-md rounded-2xl sm:rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden p-5 sm:p-7 space-y-5">
+            
+            {/* Table Header & Controls */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-200">
+              <div>
+                <div className="flex items-center gap-2">
+                  <Trophy className="w-5 h-5 text-amber-500" />
+                  <h3 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight font-serif">
+                    গ্লোবাল লিডারবোর্ড
+                  </h3>
+                  <span className="text-xs text-gray-500 font-sans">
+                    (Global Live Leaderboard)
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  সর্বাধিক ভোটপ্রাপ্তির ক্রমানুসারে লাইভ সাজানো তালিকা (Dynamically sorted by votes in descending order).
+                </p>
+              </div>
+
+              {/* Search and Ward Filter Controls */}
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Search input */}
+                <div className="relative min-w-[220px]">
+                  <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="কমিটি বা অঞ্চল খুঁজুন (Search)..."
+                    className="w-full pl-10 pr-4 py-2 bg-gray-50/90 border border-gray-200 rounded-xl text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-amber-500 transition-colors"
+                  />
+                </div>
+
+                {/* Ward Filter */}
+                <select
+                  value={selectedWard}
+                  onChange={(e) => setSelectedWard(e.target.value)}
+                  className="py-2 px-3 bg-gray-50/90 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-hidden focus:border-amber-500 transition-colors cursor-pointer"
+                >
+                  <option value="all">সকল অঞ্চল (All Zones)</option>
+                  {wardsList.map((ward) => (
+                    <option key={ward} value={ward}>
+                      {ward}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Table Content */}
+            {dataLoading ? (
+              <div className="py-16 flex flex-col items-center justify-center text-center">
+                <Loader2 className="w-8 h-8 text-sindoor-600 animate-spin mb-3" />
+                <p className="text-xs text-gray-600 font-medium">ফায়ারস্টোর থেকে লাইভ লিডারবোর্ড লোড হচ্ছে...</p>
+                <p className="text-[11px] text-gray-400">(Loading real-time leaderboard from Firestore...)</p>
+              </div>
+            ) : filteredLeaderboard.length === 0 ? (
+              <div className="py-16 text-center text-gray-500 text-xs space-y-2">
+                <Database className="w-8 h-8 mx-auto text-gray-400" />
+                <p className="font-semibold text-gray-700">কোনো কমিটি বা মণ্ডপ খুঁজে পাওয়া যায়নি।</p>
+                <p className="text-gray-400">(No registered committees match your query)</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-gray-200">
+                <table className="w-full text-left text-xs border-collapse">
+                  
+                  {/* Table Head */}
+                  <thead>
+                    <tr className="border-b border-gray-200 text-[11px] font-bold uppercase tracking-wider text-gray-600 bg-gray-50/80">
+                      <th className="py-3.5 px-4 w-16 text-center">র‍্যাংক (Rank)</th>
+                      <th className="py-3.5 px-4">কমিটির নাম (Committee Name)</th>
+                      <th className="py-3.5 px-4">অঞ্চল / ওয়ার্ড (Location / Zone)</th>
+                      <th className="py-3.5 px-4">ভাবনা (Theme)</th>
+                      <th className="py-3.5 px-4 text-right">মোট ভোট (Total Votes)</th>
+                      <th className="py-3.5 px-4 text-center w-28">ব্যালট (Ballot)</th>
+                    </tr>
+                  </thead>
+
+                  {/* Table Body */}
+                  <tbody className="divide-y divide-gray-100">
+                    {filteredLeaderboard.map((committee, index) => {
+                      const rank = index + 1;
+                      const votes = committee.resolvedVotes || 0;
+                      const votePercent = totalVotesCast > 0 ? ((votes / totalVotesCast) * 100).toFixed(1) : '0';
+
+                      // Rank Badges
+                      let rankBadge = (
+                        <span className="font-mono font-bold text-gray-500 text-xs">
+                          #{rank}
                         </span>
                       );
-                    } else if (rank === 2) {
-                      rankBadge = (
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-300 text-slate-900 font-black text-xs shadow-md">
-                          2
-                        </span>
-                      );
-                    } else if (rank === 3) {
-                      rankBadge = (
-                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-700 text-white font-black text-xs shadow-md">
-                          3
-                        </span>
-                      );
-                    }
-
-                    return (
-                      <tr 
-                        key={committee.id}
-                        className="hover:bg-slate-800/40 transition-colors group"
-                      >
-                        {/* Rank */}
-                        <td className="py-4 px-4 text-center">
-                          {rankBadge}
-                        </td>
-
-                        {/* Committee Name */}
-                        <td className="py-4 px-4">
-                          <div className="space-y-0.5">
-                            <span className="font-bold text-sm text-white group-hover:text-indigo-300 transition-colors block">
-                              {committee.committee_name}
-                            </span>
-                            <span className="text-[11px] text-slate-500 font-mono block">
-                              আইডি: {committee.id}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Location / Zone */}
-                        <td className="py-4 px-4">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-800 text-slate-300 border border-slate-700/80">
-                            {committee.ward}
+                      if (rank === 1) {
+                        rankBadge = (
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-400 text-amber-950 font-black text-xs shadow-sm">
+                            🥇 1
                           </span>
-                        </td>
+                        );
+                      } else if (rank === 2) {
+                        rankBadge = (
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-200 text-slate-800 font-black text-xs shadow-xs">
+                            🥈 2
+                          </span>
+                        );
+                      } else if (rank === 3) {
+                        rankBadge = (
+                          <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-700/20 text-amber-900 font-black text-xs shadow-xs">
+                            🥉 3
+                          </span>
+                        );
+                      }
 
-                        {/* Theme */}
-                        <td className="py-4 px-4 text-slate-400 max-w-xs truncate">
-                          {committee.theme || 'ঐতিহ্যবাহী দুর্গাপূজা'}
-                        </td>
+                      return (
+                        <tr 
+                          key={committee.id}
+                          className="hover:bg-amber-50/40 transition-colors group"
+                        >
+                          {/* Rank */}
+                          <td className="py-4 px-4 text-center">
+                            {rankBadge}
+                          </td>
 
-                        {/* Total Votes */}
-                        <td className="py-4 px-4 text-right">
-                          <div className="space-y-0.5 inline-block text-right">
-                            <span className="text-base font-black text-indigo-400 font-mono block">
-                              {votes.toLocaleString('bn-IN')}
+                          {/* Committee Name */}
+                          <td className="py-4 px-4">
+                            <div className="space-y-0.5">
+                              <span className="font-bold text-sm text-gray-900 group-hover:text-sindoor-600 transition-colors block">
+                                {committee.committee_name}
+                              </span>
+                              <span className="text-[11px] text-gray-400 font-mono block">
+                                ID: {committee.id}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Location / Zone */}
+                          <td className="py-4 px-4">
+                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                              {committee.ward}
                             </span>
-                            <span className="text-[10px] text-slate-500 font-mono block">
-                              ({votes} votes)
-                            </span>
-                          </div>
-                        </td>
+                          </td>
 
-                        {/* Action Link */}
-                        <td className="py-4 px-4 text-center">
-                          <Link
-                            href={`/vote/${committee.id}`}
-                            target="_blank"
-                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600 text-[11px] font-bold text-slate-200 hover:text-white transition-all border border-slate-700 hover:border-indigo-500"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            <span>দেখুন</span>
-                          </Link>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
+                          {/* Theme */}
+                          <td className="py-4 px-4 text-gray-600 max-w-xs truncate font-medium">
+                            {committee.theme || 'ঐতিহ্যবাহী দুর্গাপূজা'}
+                          </td>
 
-              </table>
+                          {/* Total Votes */}
+                          <td className="py-4 px-4 text-right">
+                            <div className="space-y-0.5 inline-block text-right">
+                              <span className="text-base font-black text-sindoor-600 font-mono block">
+                                {votes.toLocaleString('bn-IN')}
+                              </span>
+                              <span className="text-[10px] text-gray-400 font-mono block">
+                                ({votes} votes • {votePercent}%)
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Action Link to Live Voter Ballot */}
+                          <td className="py-4 px-4 text-center">
+                            <Link
+                              href={`/vote/${committee.id}`}
+                              target="_blank"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-amber-50 text-[11px] font-bold text-gray-700 hover:text-sindoor-600 transition-all border border-gray-200 hover:border-amber-300 shadow-2xs active:scale-95"
+                            >
+                              <ExternalLink className="w-3 h-3 text-amber-600" />
+                              <span>দেখুন (View)</span>
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+
+                </table>
+              </div>
+            )}
+
+            {/* Table Footer Summary */}
+            <div className="pt-3 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-gray-500 gap-2">
+              <span>
+                মোট তালিকাভুক্ত মণ্ডপ: <strong className="text-gray-900 font-mono">{filteredLeaderboard.length}</strong> / {totalRegisteredCommittees}
+              </span>
+              <span className="font-mono text-[11px] text-gray-400">
+                Auto-refreshed via Firebase Firestore Realtime Snapshots
+              </span>
             </div>
-          )}
 
-          {/* Table Footer Summary */}
-          <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 gap-2">
-            <span>
-              মোট তালিকাভুক্ত মণ্ডপ: <strong className="text-slate-300 font-mono">{filteredLeaderboard.length}</strong> / {totalRegisteredCommittees}
-            </span>
-            <span className="font-mono text-[11px] text-slate-500">
-              Auto-refreshed via Firebase Firestore Realtime Snapshots
-            </span>
           </div>
 
         </div>
-
       </main>
+
+      {/* Clean Bottom Bar */}
+      <footer className="w-full border-t border-amber-200/60 bg-white/70 backdrop-blur-md py-4 text-center">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full overflow-hidden border border-amber-300">
+              <Image
+                src="/logo.jpg"
+                alt="PBDS Logo"
+                width={20}
+                height={20}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <span className="font-serif font-bold text-gray-700">
+              পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি (Paschim Banga DurgaPuja Samannay Samity)
+            </span>
+          </div>
+          <p className="text-[11px] text-gray-400 font-mono">
+            Vercel Edge Network • Central Super Admin Control Desk
+          </p>
+        </div>
+      </footer>
+
     </div>
   );
 }

@@ -70,6 +70,7 @@ const config: Config = {
         'float-diya': 'floatDiya 8s ease-in-out infinite',
         'pulse-subtle': 'pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'glow': 'glow 3s ease-in-out infinite alternate',
+        'slide-up': 'slideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards',
       },
       keyframes: {
         float: {
@@ -87,6 +88,10 @@ const config: Config = {
         glow: {
           '0%': { filter: 'drop-shadow(0 0 4px rgba(245,130,32,0.4))' },
           '100%': { filter: 'drop-shadow(0 0 16px rgba(217,34,42,0.7))' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(60px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
         },
       },
       backdropBlur: {

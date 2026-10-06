@@ -85,6 +85,22 @@ main.bg-slate-50 {
   box-shadow: 0 25px 50px -12px rgba(217, 34, 42, 0.25), 0 0 35px rgba(255, 215, 0, 0.15);
 }
 
+/* App-feel Slide-Up Entrance Animation */
+@keyframes slideUp {
+  0% {
+    transform: translateY(60px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* Subtle festive red-gold gradient text */
 .festive-gradient-text {
   background: linear-gradient(135deg, #D9222A 0%, #F58220 50%, #B87A1A 100%);
