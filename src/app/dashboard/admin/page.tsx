@@ -11,6 +11,8 @@ import {
   signOut, 
   collection, 
   onSnapshot,
+  doc,
+  updateDoc,
   FirebaseUser 
 } from '@/lib/firebase';
 import { 
@@ -239,34 +241,65 @@ export default function MasterAdminDashboardPage() {
     if (approvingId) return;
 
     setApprovingId(committeeId);
+
+    // Fast UI State Update: Instantly reflect 'approved' state in the table
+    setCommittees((prev) =>
+      prev.map((c) => (c.id === committeeId ? { ...c, status: 'approved' } : c))
+    );
+
     const toastId = toast.loading(`"${committeeName}" অনুমোদন করা হচ্ছে... (Approving...)`);
 
     try {
-      const res = await fetch('/api/admin/approve', {
+      // Direct Firestore update strictly triggered by button: updateDoc(doc(db, 'committees', committeeId), { status: 'approved' })
+      await updateDoc(doc(db, 'committees', committeeId), {
+        status: 'approved',
+      });
+
+      toast.success(
+        `🎉 "${committeeName}" সফলভাবে অনুমোদিত হয়েছে! (Approved successfully!)`,
+        { id: toastId, duration: 4000 }
+      );
+
+      // Trigger background SMS notification and pandal sync
+      fetch('/api/admin/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           committeeId,
           adminEmail: user.email,
         }),
-      });
+      }).catch((smsErr) => console.warn('Background SMS trigger notice:', smsErr));
 
-      const data = await res.json().catch(() => ({}));
-
-      if (res.ok && data.success) {
-        toast.success(
-          `🎉 "${committeeName}" সফলভাবে অনুমোদিত হয়েছে এবং এসএমএস বিজ্ঞপ্তি প্রস্তুত করা হয়েছে! (Approved & SMS queued!)`,
-          { id: toastId, duration: 5000 }
-        );
-      } else {
-        toast.error(
-          data.message || 'অনুমোদন ব্যর্থ হয়েছে। অনুগ্রহ করে পুনরায় চেষ্টা করুন। (Approval failed)',
-          { id: toastId }
-        );
-      }
     } catch (err: any) {
-      console.error('Approval API error:', err);
-      toast.error('নেটওয়ার্ক সমস্যা। অনুমোদন সম্পন্ন করা যায়নি। (Network error during approval)', { id: toastId });
+      console.warn('Direct updateDoc notice, trying backend approval API fallback:', err);
+      try {
+        const res = await fetch('/api/admin/approve', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            committeeId,
+            adminEmail: user.email,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success) {
+          toast.success(
+            `🎉 "${committeeName}" সফলভাবে অনুমোদিত হয়েছে! (Approved successfully!)`,
+            { id: toastId, duration: 4000 }
+          );
+        } else {
+          // Revert optimistic update if both fail
+          setCommittees((prev) =>
+            prev.map((c) => (c.id === committeeId ? { ...c, status: 'pending' } : c))
+          );
+          toast.error(data.message || 'অনুমোদন ব্যর্থ হয়েছে। (Approval failed)', { id: toastId });
+        }
+      } catch (fallbackErr: any) {
+        setCommittees((prev) =>
+          prev.map((c) => (c.id === committeeId ? { ...c, status: 'pending' } : c))
+        );
+        toast.error('নেটওয়ার্ক ত্রুটি! অনুমোদন সম্পন্ন করা যায়নি। (Approval failed)', { id: toastId });
+      }
     } finally {
       setApprovingId(null);
     }
@@ -763,7 +796,7 @@ export default function MasterAdminDashboardPage() {
                       <th className="py-3.5 px-4">অঞ্চল / ওয়ার্ড (Location / Zone)</th>
                       <th className="py-3.5 px-4">যোগাযোগ (Contact Phone)</th>
                       <th className="py-3.5 px-4 text-right">মোট ভোট (Total Votes)</th>
-                      <th className="py-3.5 px-4 text-center">অনুমোদন ও স্থিতি (Status / Approve)</th>
+                      <th className="py-3.5 px-4 text-center">স্থিতি (Status)</th>
                       <th className="py-3.5 px-4 text-center w-24">ব্যালট (Ballot)</th>
                     </tr>
                   </thead>
@@ -880,8 +913,8 @@ export default function MasterAdminDashboardPage() {
                                   )
                                 }
                                 disabled={isCurrentlyApproving}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold shadow-xs hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                title="অনুমোদন করুন এবং এসএমএস পাঠান (Approve and send SMS notification)"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-xs hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="কমিটি অনুমোদন করুন (Approve Committee)"
                               >
                                 {isCurrentlyApproving ? (
                                   <>
@@ -890,7 +923,7 @@ export default function MasterAdminDashboardPage() {
                                   </>
                                 ) : (
                                   <>
-                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                    <CheckCircle2 className="w-3.5 h-3.5" />
                                     <span>অনুমোদন করুন (Approve)</span>
                                   </>
                                 )}

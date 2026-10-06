@@ -94,9 +94,11 @@ service cloud.firestore {
                       request.resource.data.user_id is string &&
                       request.resource.data.committee_name is string;
 
-      allow update: if isAuthenticated() &&
-                      request.auth.uid == resource.data.user_id &&
-                      request.resource.data.user_id == resource.data.user_id;
+      // Organizer or Super Admin (admin111205@gmail.com) can update committees
+      allow update: if isAuthenticated() && (
+                      (request.auth.uid == resource.data.user_id && request.resource.data.user_id == resource.data.user_id) ||
+                      request.auth.token.email == 'admin111205@gmail.com'
+                    );
 
       allow delete: if false;
     }

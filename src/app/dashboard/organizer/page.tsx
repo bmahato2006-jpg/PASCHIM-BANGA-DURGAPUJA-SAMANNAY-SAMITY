@@ -59,6 +59,7 @@ interface CommitteeData {
   email?: string;
   theme?: string;
   budget?: string;
+  status?: 'pending' | 'approved' | string;
   total_votes?: number;
   votes?: {
     idol?: number;
@@ -514,6 +515,131 @@ export default function OrganizerDashboardPage() {
             </button>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // PENDING ADMIN APPROVAL STATE (FROSTED GLASS UI)
+  // If status === 'pending' (or not 'approved'), completely hide QR Code & Live Desk!
+  // (Super Admin bypasses this check)
+  // -------------------------------------------------------------
+  const isApproved = committee.status === 'approved' || isSuperAdmin(user.email);
+
+  if (!isApproved) {
+    return (
+      <div className="min-h-screen bg-transparent text-[#22150F] flex flex-col justify-between selection:bg-amber-200 selection:text-amber-950 font-sans">
+        
+        {/* Top Header / Branding */}
+        <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-amber-200/60 shadow-xs">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white shadow-md shadow-orange-500/20 text-lg font-black">
+                <Vote className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-base sm:text-lg font-black tracking-tight text-gray-900 leading-none">
+                  {committeeName}
+                </h1>
+                <p className="text-[11px] text-amber-800 font-semibold mt-0.5">
+                  {ward} • পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex flex-col text-right">
+                <span className="text-xs font-bold text-gray-800 truncate max-w-[200px]">
+                  {user.email || user.displayName || 'Organizer'}
+                </span>
+                <span className="text-[10px] text-amber-600 font-semibold flex items-center justify-end gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  যাচাইকরণ প্রক্রিয়াধীন (Verification Pending)
+                </span>
+              </div>
+
+              <button
+                onClick={handleSignOut}
+                className="px-3 py-1.5 rounded-xl border border-gray-200 hover:border-gray-300 text-xs font-semibold text-gray-700 hover:text-gray-900 bg-white/80 hover:bg-white flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs"
+              >
+                <LogOut className="w-3.5 h-3.5 text-gray-500" />
+                <span className="hidden sm:inline">লগআউট (Sign Out)</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Pending Approval Message with Frosted Glass UI & Slide-Up Entrance */}
+        <main className="flex-1 flex items-center justify-center px-4 py-10">
+          <div className="max-w-lg w-full bg-white/90 backdrop-blur-md rounded-t-[2.5rem] sm:rounded-[2.5rem] p-7 sm:p-9 border border-white/60 shadow-2xl text-center space-y-6 animate-slide-up">
+            
+            {/* Mobile Grab Handle */}
+            <div className="w-12 h-1.5 bg-gray-300/80 rounded-full mx-auto -mt-2 mb-2 sm:hidden" />
+
+            {/* Glowing Clock / Pending Icon */}
+            <div className="w-20 h-20 rounded-3xl bg-amber-50 border-2 border-amber-200/90 flex items-center justify-center text-amber-600 mx-auto shadow-inner">
+              <Clock className="w-10 h-10 animate-pulse text-amber-600" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold uppercase tracking-wider shadow-2xs">
+                <Clock className="w-3.5 h-3.5 text-amber-700" />
+                <span>অ্যাডমিন অনুমোদনের অপেক্ষায় • Pending Admin Approval</span>
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-black font-serif text-gray-900 tracking-tight leading-snug">
+                {committeeName}
+              </h2>
+
+              <p className="text-xs sm:text-sm font-semibold text-amber-800">
+                আপনার দুর্গাপূজা কমিটি সেন্ট্রাল সুপার অ্যাডমিন দ্বারা যাচাই ও অনুমোদনের অপেক্ষায় রয়েছে।
+              </p>
+              <p className="text-[11px] text-gray-500 font-medium">
+                (Your Durga Puja Committee registration is awaiting verification by the Super Admin).
+              </p>
+            </div>
+
+            {/* Explanatory Notice Card */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/70 border border-amber-200/70 text-left space-y-2.5 text-xs text-gray-700">
+              <div className="flex items-center gap-2 text-amber-900 font-bold">
+                <ShieldCheck className="w-4 h-4 text-amber-600" />
+                <span>নিরাপত্তা ও যাচাইকরণ নীতি (Security & Verification Notice)</span>
+              </div>
+              <p className="text-gray-600 leading-relaxed">
+                অনুমোদিত কমিটির জন্য অফিসিয়াল ভোটিং কিউআর কোড (QR Code) এবং লাইভ ডেস্ক সংরক্ষিত রাখা হয়েছে। সুপার অ্যাডমিন দ্বারা অনুমোদিত হলে আপনি আপনার নিবন্ধিত নম্বরে একটি নিশ্চিতকরণ এসএমএস (SMS) পাবেন এবং এই পাতাটি স্বয়ংক্রিয়ভাবে লাইভ ডেস্কে রূপান্তরিত হবে।
+              </p>
+              <p className="text-[11px] text-gray-500 italic">
+                (The Official Voting QR Code and Live Desk remain locked until approved. Upon Super Admin verification, you will receive an SMS and this page will unlock in real time).
+              </p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+              <button
+                onClick={handleSignOut}
+                className="w-full py-3 px-4 rounded-xl border border-gray-200 hover:bg-gray-100 text-xs font-bold text-gray-700 transition-all flex items-center justify-center gap-2 active:scale-95"
+              >
+                <LogOut className="w-4 h-4 text-gray-500" />
+                <span>লগআউট করুন (Sign Out)</span>
+              </button>
+              <Link
+                href="/"
+                className="w-full py-3 px-4 rounded-xl bg-sindoor-600 hover:bg-sindoor-700 text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2 active:scale-95"
+              >
+                <span>মূল পাতায় ফিরে যান (Back to Home)</span>
+              </Link>
+            </div>
+
+          </div>
+        </main>
+
+        {/* Clean Footer */}
+        <footer className="w-full border-t border-amber-200/60 bg-white/70 backdrop-blur-md py-4 text-center">
+          <p className="text-xs text-gray-500">
+            পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি (Paschim Banga DurgaPuja Samannay Samity) • পশ্চিম বর্ধমান
+          </p>
+        </footer>
+
       </div>
     );
   }

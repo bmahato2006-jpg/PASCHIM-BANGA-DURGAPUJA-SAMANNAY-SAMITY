@@ -24,6 +24,7 @@ export interface CommitteeRecord {
   theme?: string;
   budget?: string;
   logo_url?: string;
+  status?: 'pending' | 'approved' | string;
   total_votes?: number;
   created_at?: string;
   updated_at?: string;
@@ -216,6 +217,7 @@ export async function registerCommittee(input: RegisterCommitteeInput): Promise<
       email: input.email?.trim() || '',
       theme: input.theme?.trim() || 'Traditional Durga Puja',
       budget: '₹35 Lakhs',
+      status: 'pending',
       total_votes: 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -224,6 +226,7 @@ export async function registerCommittee(input: RegisterCommitteeInput): Promise<
     // Save in committees collection with user_id, userId, and uid for strict querying compatibility
     await setDoc(committeeDocRef, {
       ...record,
+      status: 'pending',
       userId: input.userId,
       uid: input.userId,
       server_created_at: serverTimestamp(),
@@ -236,6 +239,7 @@ export async function registerCommittee(input: RegisterCommitteeInput): Promise<
       clubName: cleanName,
       ward: record.ward,
       theme: record.theme,
+      status: 'pending',
       total_votes: 0,
       votes: { idol: 0, theme: 0, lighting: 0, eco: 0 },
       server_created_at: serverTimestamp(),
