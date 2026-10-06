@@ -234,8 +234,12 @@ export default function MasterAdminDashboardPage() {
     });
   }, [rankedCommittees, searchQuery, selectedWard, selectedStatus]);
 
-  // Approve Committee via Next.js API Route with SMS Dispatch
-  const handleApproveCommittee = async (committeeId: string, committeeName: string) => {
+  // Approve Committee via Firestore update & Fast2SMS Notification
+  const handleApproveCommittee = async (
+    committeeId: string, 
+    committeeName: string,
+    phone?: string
+  ) => {
     if (!user?.email || !isSuperAdmin(user.email)) {
       toast.error('অননুমোদিত প্রবেশাধিকার! শুধুমাত্র অনুমোদিত সুপার অ্যাডমিন কমিটি অনুমোদন করতে পারেন। (Super Admin only)');
       return;
@@ -253,17 +257,58 @@ export default function MasterAdminDashboardPage() {
     const toastId = toast.loading(`"${committeeName}" অনুমোদন করা হচ্ছে... (Approving...)`);
 
     try {
-      // Direct Firestore update strictly triggered by button: updateDoc(doc(db, 'committees', committeeId), { status: 'approved' })
+      // 1. Direct Firestore update strictly triggered by button: updateDoc(doc(db, 'committees', committeeId), { status: 'approved' })
       await updateDoc(doc(db, 'committees', committeeId), {
         status: 'approved',
       });
 
-      toast.success(
-        `🎉 "${committeeName}" সফলভাবে অনুমোদিত হয়েছে! (Approved successfully!)`,
-        { id: toastId, duration: 4000 }
-      );
+      // Also sync status in pandals collection if present
+      try {
+        await updateDoc(doc(db, 'pandals', committeeId), {
+          status: 'approved',
+        });
+      } catch {}
 
-      // Trigger background SMS notification and pandal sync
+      // 2. Resolve phone number
+      let targetPhone = phone || '';
+      if (!targetPhone) {
+        const found = committees.find((c) => c.id === committeeId);
+        targetPhone = found?.phone || found?.contact_number || (found as any)?.contactNumber || (found as any)?.phoneNumber || '';
+      }
+
+      // 3. Make POST request to /api/send-sms AFTER updateDoc successfully changes status
+      let smsSent = false;
+      if (targetPhone) {
+        try {
+          const smsRes = await fetch('/api/send-sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone: targetPhone,
+              committeeName,
+            }),
+          });
+          const smsData = await smsRes.json().catch(() => ({}));
+          smsSent = smsRes.ok && smsData.success;
+        } catch (smsErr) {
+          console.warn('SMS dispatch notification notice:', smsErr);
+        }
+      }
+
+      // 4. Show success toast indicating "Approved & SMS Sent!" or graceful success if SMS fails
+      if (smsSent) {
+        toast.success(
+          `🎉 "${committeeName}" অনুমোদিত এবং এসএমএস পাঠানো হয়েছে! (Approved & SMS Sent!)`,
+          { id: toastId, duration: 4500 }
+        );
+      } else {
+        toast.success(
+          `🎉 "${committeeName}" সফলভাবে অনুমোদিত হয়েছে! (Approved successfully!)`,
+          { id: toastId, duration: 4000 }
+        );
+      }
+
+      // Trigger background approval API for server audit logging
       fetch('/api/admin/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -271,7 +316,7 @@ export default function MasterAdminDashboardPage() {
           committeeId,
           adminEmail: user.email,
         }),
-      }).catch((smsErr) => console.warn('Background SMS trigger notice:', smsErr));
+      }).catch((adminApiErr) => console.warn('Background admin approval notice:', adminApiErr));
 
     } catch (err: any) {
       console.warn('Direct updateDoc notice, trying backend approval API fallback:', err);
@@ -286,10 +331,34 @@ export default function MasterAdminDashboardPage() {
         });
         const data = await res.json().catch(() => ({}));
         if (res.ok && data.success) {
-          toast.success(
-            `🎉 "${committeeName}" সফলভাবে অনুমোদিত হয়েছে! (Approved successfully!)`,
-            { id: toastId, duration: 4000 }
-          );
+          // Attempt SMS dispatch
+          let smsSent = false;
+          if (phone) {
+            try {
+              const smsRes = await fetch('/api/send-sms', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  phone,
+                  committeeName,
+                }),
+              });
+              const smsData = await smsRes.json().catch(() => ({}));
+              smsSent = smsRes.ok && smsData.success;
+            } catch {}
+          }
+
+          if (smsSent) {
+            toast.success(
+              `🎉 "${committeeName}" অনুমোদিত এবং এসএমএস পাঠানো হয়েছে! (Approved & SMS Sent!)`,
+              { id: toastId, duration: 4500 }
+            );
+          } else {
+            toast.success(
+              `🎉 "${committeeName}" সফলভাবে অনুমোদিত হয়েছে! (Approved successfully!)`,
+              { id: toastId, duration: 4000 }
+            );
+          }
         } else {
           // Revert optimistic update if both fail
           setCommittees((prev) =>
@@ -886,7 +955,7 @@ export default function MasterAdminDashboardPage() {
                       const votePercent = totalVotesCast > 0 ? ((votes / totalVotesCast) * 100).toFixed(1) : '0';
                       const isApproved = committee.status === 'approved';
                       const isCurrentlyApproving = approvingId === committee.id;
-                      const displayPhone = committee.contact_number || committee.phone || '';
+                      const displayPhone = committee.contact_number || committee.phone || (committee as any).contactNumber || (committee as any).phoneNumber || '';
 
                       // Rank Badges
                       let rankBadge = (
@@ -986,7 +1055,8 @@ export default function MasterAdminDashboardPage() {
                                 onClick={() =>
                                   handleApproveCommittee(
                                     committee.id,
-                                    committee.committee_name || committee.id
+                                    committee.committee_name || committee.id,
+                                    displayPhone
                                   )
                                 }
                                 disabled={isCurrentlyApproving}
