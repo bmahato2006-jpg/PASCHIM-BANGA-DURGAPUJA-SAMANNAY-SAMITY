@@ -11,6 +11,8 @@ import {
   signOut, 
   collection, 
   doc, 
+  getDoc,
+  getDocs,
   query, 
   where, 
   onSnapshot,
@@ -44,6 +46,8 @@ import toast from 'react-hot-toast';
 interface CommitteeData {
   id: string;
   user_id?: string;
+  userId?: string;
+  uid?: string;
   committee_name?: string;
   name?: string;
   clubName?: string;
@@ -80,7 +84,7 @@ export default function OrganizerDashboardPage() {
   const [origin, setOrigin] = useState<string>('https://durgapur-puja-voting.vercel.app');
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
-  // 1. Listen to Firebase Auth state
+  // 1. Listen to Firebase Auth state & Redirection Guard if unauthenticated
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setOrigin(window.location.origin);
@@ -89,39 +93,44 @@ export default function OrganizerDashboardPage() {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setAuthLoading(false);
+      if (!currentUser) {
+        // Redirection Guard: unauthenticated user forced to login
+        router.replace('/organizer/auth');
+      }
     });
 
     return () => unsubscribeAuth();
-  }, []);
+  }, [router]);
 
-  // 2. Fetch organizer's committee document in real-time using onSnapshot
+  // 2. Fetch organizer's committee document strictly filtered by logged-in user's UID
   useEffect(() => {
     if (authLoading) return;
 
     if (!user) {
-      setCommittee(null);
-      setCommitteeLoading(false);
+      router.replace('/organizer/auth');
       return;
     }
 
     setCommitteeLoading(true);
 
     let unsubCommitteeQuery: (() => void) | null = null;
-    let unsubDirectDoc: (() => void) | null = null;
     let unsubPandalDoc: (() => void) | null = null;
+    let isCancelled = false;
 
     try {
-      // Primary query: committees collection where user_id matches logged-in UID
+      // Strict Querying: Query committees collection strictly where user_id matches logged-in UID
       const committeesRef = collection(db, 'committees');
       const q = query(committeesRef, where('user_id', '==', user.uid));
 
       unsubCommitteeQuery = onSnapshot(
         q,
-        (snapshot) => {
+        async (snapshot) => {
+          if (isCancelled) return;
+
           if (!snapshot.empty) {
             const firstDoc = snapshot.docs[0];
             const data = firstDoc.data() as Partial<CommitteeData>;
-            const resolvedId = firstDoc.id || data.slug || data.id || 'committee';
+            const resolvedId = firstDoc.id || data.slug || data.id || '';
 
             const resolvedCommittee: CommitteeData = {
               id: resolvedId,
@@ -147,54 +156,59 @@ export default function OrganizerDashboardPage() {
               );
             }
           } else {
-            // Secondary fallback: Direct document lookup by UID
-            const directRef = doc(db, 'committees', user.uid);
-            unsubDirectDoc = onSnapshot(
-              directRef,
-              (directSnap) => {
-                if (directSnap.exists()) {
-                  const directData = directSnap.data() as Partial<CommitteeData>;
-                  const resolvedId = directSnap.id || directData.slug || directData.id || user.uid;
+            // Secondary check: query by userId == user.uid or uid == user.uid or docId == user.uid
+            try {
+              const qUserId = query(committeesRef, where('userId', '==', user.uid));
+              const snapUserId = await getDocs(qUserId);
+              if (!snapUserId.empty) {
+                const firstDoc = snapUserId.docs[0];
+                const data = firstDoc.data() as Partial<CommitteeData>;
+                const resolvedId = firstDoc.id || data.slug || data.id || '';
+                setCommittee({ id: resolvedId, ...data });
+                setCommitteeLoading(false);
+                return;
+              }
 
-                  setCommittee({
-                    id: resolvedId,
-                    ...directData,
-                  });
+              const qUid = query(committeesRef, where('uid', '==', user.uid));
+              const snapUid = await getDocs(qUid);
+              if (!snapUid.empty) {
+                const firstDoc = snapUid.docs[0];
+                const data = firstDoc.data() as Partial<CommitteeData>;
+                const resolvedId = firstDoc.id || data.slug || data.id || '';
+                setCommittee({ id: resolvedId, ...data });
+                setCommitteeLoading(false);
+                return;
+              }
+
+              const directDoc = await getDoc(doc(db, 'committees', user.uid));
+              if (directDoc.exists()) {
+                const data = directDoc.data() as Partial<CommitteeData>;
+                if (!data.user_id || data.user_id === user.uid || data.userId === user.uid || data.uid === user.uid) {
+                  const resolvedId = directDoc.id || data.slug || data.id || '';
+                  setCommittee({ id: resolvedId, ...data });
                   setCommitteeLoading(false);
-                } else if (user.email) {
-                  // Tertiary fallback: query by email
-                  const emailQ = query(collection(db, 'committees'), where('email', '==', user.email));
-                  onSnapshot(
-                    emailQ,
-                    (emailSnap) => {
-                      if (!emailSnap.empty) {
-                        const eDoc = emailSnap.docs[0];
-                        const eData = eDoc.data() as Partial<CommitteeData>;
-                        const resolvedId = eDoc.id || eData.slug || eData.id || 'committee';
-                        setCommittee({
-                          id: resolvedId,
-                          ...eData,
-                        });
-                      } else {
-                        setCommittee(null);
-                      }
-                      setCommitteeLoading(false);
-                    },
-                    () => {
-                      setCommittee(null);
-                      setCommitteeLoading(false);
-                    }
-                  );
-                } else {
-                  setCommittee(null);
-                  setCommitteeLoading(false);
+                  return;
                 }
-              },
-              () => {
+              }
+
+              // Redirection Guard: Authenticated user has NO associated committee document
+              if (!isCancelled) {
+                toast.error('আপনার অ্যাকাউন্টে কোনো নিবন্ধিত দুর্গাপূজা কমিটি পাওয়া যায়নি। অনুগ্রহ করে নিবন্ধন সম্পন্ন করুন। (No registered committee found. Redirecting to registration...)', {
+                  id: 'no-committee-redirect-toast',
+                  duration: 4000,
+                });
                 setCommittee(null);
                 setCommitteeLoading(false);
+                router.replace('/organizer/setup');
               }
-            );
+            } catch (err) {
+              console.error('Strict committee query error:', err);
+              if (!isCancelled) {
+                setCommittee(null);
+                setCommitteeLoading(false);
+                router.replace('/organizer/setup');
+              }
+            }
           }
         },
         (error) => {
@@ -208,11 +222,11 @@ export default function OrganizerDashboardPage() {
     }
 
     return () => {
+      isCancelled = true;
       if (unsubCommitteeQuery) unsubCommitteeQuery();
-      if (unsubDirectDoc) unsubDirectDoc();
       if (unsubPandalDoc) unsubPandalDoc();
     };
-  }, [user, authLoading]);
+  }, [user, authLoading, router]);
 
   // Extract resolved committee details & dynamic voting URL
   const committeeId = committee?.id || committee?.slug || '';
@@ -346,7 +360,7 @@ export default function OrganizerDashboardPage() {
   }
 
   // -------------------------------------------------------------
-  // UNAUTHENTICATED STATE
+  // UNAUTHENTICATED STATE (REDIRECTION GUARD)
   // -------------------------------------------------------------
   if (!user) {
     return (
@@ -358,19 +372,23 @@ export default function OrganizerDashboardPage() {
           <h2 className="text-xl font-black text-gray-900 tracking-tight">
             আয়োজক লগইন প্রয়োজন (Organizer Sign In Required)
           </h2>
-          <p className="text-xs text-gray-600 mt-2 mb-6 leading-relaxed">
-            আপনার দুর্গাপূজা কমিটির লাইভ ভোটিং ডেস্ক ও অফিশিয়াল মণ্ডপ কিউআর কোড পরিচালনা করতে অনুগ্রহ করে আপনার অ্যাকাউন্টে লগইন করুন।
+          <p className="text-xs text-gray-600 mt-2 mb-4 leading-relaxed">
+            আপনার দুর্গাপূজা কমিটির লাইভ ভোটিং ডেস্ক পরিচালনা করতে লগইন করুন। লগইন পেজে পুনর্নির্দেশ করা হচ্ছে...
             <span className="block text-[11px] text-gray-500 mt-1">
-              (Please sign in to manage your Durga Puja Live Voting Desk and official QR code).
+              (Please sign in to manage your Durga Puja Live Voting Desk. Redirecting to login...)
             </span>
           </p>
+
+          <div className="flex justify-center mb-6">
+            <Loader2 className="w-6 h-6 text-sindoor-600 animate-spin" />
+          </div>
 
           <Link
             href="/organizer/auth"
             className="w-full py-3 px-4 rounded-xl bg-sindoor-600 hover:bg-sindoor-700 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
           >
             <ShieldCheck className="w-4 h-4" />
-            আয়োজক লগইন করুন (Organizer Login)
+            আয়োজক লগইন করুন (Go to Organizer Login)
           </Link>
 
           <div className="mt-4 pt-4 border-t border-gray-100">
@@ -387,70 +405,50 @@ export default function OrganizerDashboardPage() {
   }
 
   // -------------------------------------------------------------
-  // NO REGISTERED COMMITTEE FOUND STATE
+  // NO REGISTERED COMMITTEE FOUND STATE (REDIRECTION GUARD)
   // -------------------------------------------------------------
   if (!committee) {
     return (
-      <div className="min-h-screen bg-[#FFFDF9] text-[#22150F] flex flex-col">
-        {/* Header */}
-        <header className="bg-white/90 backdrop-blur-md border-b border-amber-200/60 shadow-xs">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sindoor-600 to-marigold-500 flex items-center justify-center text-white shadow-sm">
-                <Vote className="w-5 h-5" />
-              </div>
-              <span className="font-bold text-sm sm:text-base text-gray-900">
-                লাইভ ভোটিং ডেস্ক (Live Voting Desk)
-              </span>
-            </div>
+      <div className="min-h-screen bg-[#FFFDF9] flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-2xl p-8 border border-amber-200 shadow-md text-center">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mx-auto mb-4">
+            <AlertCircle className="w-7 h-7 text-sindoor-600" />
+          </div>
+          <h2 className="text-lg font-black text-gray-900 tracking-tight">
+            কমিটি নিবন্ধন প্রয়োজন (Committee Registration Required)
+          </h2>
+          <p className="text-xs text-gray-600 mt-2 mb-1">
+            লগইন করা অ্যাকাউন্ট (Logged in as): <strong className="text-gray-900">{user.email || user.uid}</strong>
+          </p>
+          <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+            আপনার অ্যাকাউন্টের অধীনে কোনো অনুমোদিত দুর্গাপূজা কমিটি পাওয়া যায়নি। নিবন্ধন পেজে পুনর্নির্দেশ করা হচ্ছে...
+            <span className="block text-[11px] text-gray-400 mt-1">
+              (No registered committee found for this UID. Forcefully redirecting to registration...)
+            </span>
+          </p>
+
+          <div className="flex justify-center mb-6">
+            <Loader2 className="w-6 h-6 text-sindoor-600 animate-spin" />
+          </div>
+
+          <div className="space-y-3">
+            <Link
+              href="/organizer/setup"
+              className="w-full py-3 px-4 rounded-xl bg-sindoor-600 hover:bg-sindoor-700 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
+            >
+              <Building2 className="w-4 h-4" />
+              কমিটি নিবন্ধন সম্পন্ন করুন (Complete Registration)
+            </Link>
+
             <button
               onClick={handleSignOut}
-              className="px-3 py-1.5 rounded-lg border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-100 flex items-center gap-1.5 transition-colors"
+              className="w-full py-2.5 px-4 rounded-xl border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
             >
               <LogOut className="w-3.5 h-3.5 text-gray-500" />
-              লগআউট (Logout)
+              অন্য অ্যাকাউন্ট দিয়ে লগইন করুন (Switch Account)
             </button>
           </div>
-        </header>
-
-        {/* Content */}
-        <main className="flex-1 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-2xl p-8 border border-amber-200 shadow-md text-center">
-            <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mx-auto mb-4">
-              <AlertCircle className="w-7 h-7" />
-            </div>
-            <h2 className="text-lg font-black text-gray-900 tracking-tight">
-              কোনো নিবন্ধিত দুর্গাপূজা কমিটি পাওয়া যায়নি (No Registered Committee Found)
-            </h2>
-            <p className="text-xs text-gray-600 mt-2 mb-1">
-              লগইন করা অ্যাকাউন্ট (Logged in as): <strong className="text-gray-900">{user.email}</strong>
-            </p>
-            <p className="text-xs text-gray-500 mb-6 leading-relaxed">
-              আপনার অ্যাকাউন্টের অধীনে এখনও কোনো দুর্গাপূজা কমিটি নিবন্ধিত হয়নি। অনুগ্রহ করে আপনার মণ্ডপ ও কমিটি নিবন্ধন সম্পন্ন করুন।
-              <span className="block text-[11px] text-gray-400 mt-1">
-                (No registered committee found for your account. Please complete committee registration).
-              </span>
-            </p>
-
-            <div className="space-y-3">
-              <Link
-                href="/organizer/setup"
-                className="w-full py-3 px-4 rounded-xl bg-sindoor-600 hover:bg-sindoor-700 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
-              >
-                <Building2 className="w-4 h-4" />
-                কমিটি নিবন্ধন করুন (Register Committee)
-              </Link>
-
-              <button
-                onClick={handleSignOut}
-                className="w-full py-2.5 px-4 rounded-xl border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <LogOut className="w-3.5 h-3.5 text-gray-500" />
-                অন্য অ্যাকাউন্ট দিয়ে লগইন করুন (Switch Account)
-              </button>
-            </div>
-          </div>
-        </main>
+        </div>
       </div>
     );
   }

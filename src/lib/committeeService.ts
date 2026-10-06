@@ -6,12 +6,15 @@ import {
   getDocs, 
   setDoc, 
   query, 
+  where,
   serverTimestamp 
 } from '@/lib/firebase';
 
 export interface CommitteeRecord {
   id: string;
   user_id: string;
+  userId?: string;
+  uid?: string;
   committee_name: string;
   slug: string;
   ward?: string;
@@ -51,7 +54,7 @@ export function slugifyCommitteeName(name: string): string {
 }
 
 /**
- * Fetch the registered committee record matching user.id or email from Firestore
+ * Fetch the registered committee record strictly matching user UID from Firestore
  */
 export async function getCommitteeByUser(
   userId?: string | null,
@@ -61,18 +64,58 @@ export async function getCommitteeByUser(
   error?: any;
   tableMissing?: boolean;
 }> {
-  if (!userId && !email) return { committee: null };
+  if (!userId) return { committee: null };
 
   try {
     const committeesRef = collection(db, 'committees');
-    const snapshot = await getDocs(committeesRef);
 
-    for (const d of snapshot.docs) {
-      const data = d.data();
-      if ((userId && data.user_id === userId) || (email && data.email === email)) {
+    // 1. Strict query on user_id (primary field enforcing 1-to-1 mapping)
+    const q1 = query(committeesRef, where('user_id', '==', userId));
+    const snap1 = await getDocs(q1);
+    if (!snap1.empty) {
+      const d = snap1.docs[0];
+      return {
+        committee: {
+          id: d.id,
+          ...d.data(),
+        } as CommitteeRecord,
+      };
+    }
+
+    // 2. Query on userId (alias)
+    const q2 = query(committeesRef, where('userId', '==', userId));
+    const snap2 = await getDocs(q2);
+    if (!snap2.empty) {
+      const d = snap2.docs[0];
+      return {
+        committee: {
+          id: d.id,
+          ...d.data(),
+        } as CommitteeRecord,
+      };
+    }
+
+    // 3. Query on uid (alias)
+    const q3 = query(committeesRef, where('uid', '==', userId));
+    const snap3 = await getDocs(q3);
+    if (!snap3.empty) {
+      const d = snap3.docs[0];
+      return {
+        committee: {
+          id: d.id,
+          ...d.data(),
+        } as CommitteeRecord,
+      };
+    }
+
+    // 4. Direct document ID lookup if doc was created with ID == userId
+    const directDoc = await getDoc(doc(db, 'committees', userId));
+    if (directDoc.exists()) {
+      const data = directDoc.data();
+      if (!data.user_id || data.user_id === userId || data.userId === userId || data.uid === userId) {
         return {
           committee: {
-            id: d.id,
+            id: directDoc.id,
             ...data,
           } as CommitteeRecord,
         };
@@ -178,9 +221,11 @@ export async function registerCommittee(input: RegisterCommitteeInput): Promise<
       updated_at: new Date().toISOString(),
     };
 
-    // Save in committees collection
+    // Save in committees collection with user_id, userId, and uid for strict querying compatibility
     await setDoc(committeeDocRef, {
       ...record,
+      userId: input.userId,
+      uid: input.userId,
       server_created_at: serverTimestamp(),
     });
 

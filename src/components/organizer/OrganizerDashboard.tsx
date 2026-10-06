@@ -122,7 +122,7 @@ export const OrganizerDashboard: React.FC = () => {
 
       try {
         // Strict Check: Must have a verified committee record in database
-        const { committee } = await getCommitteeByUser(user.uid, user.email);
+        const { committee } = await getCommitteeByUser(user.uid);
         if (!committee) {
           if (isSubscribed) {
             setIsAuthenticated(false);

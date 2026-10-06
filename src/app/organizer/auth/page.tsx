@@ -44,11 +44,11 @@ function OrganizerAuthContent() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-
-      const { committee } = await getCommitteeByUser(user.uid, user.email);
+      // Strict 1-to-1 data check by user.uid
+      const { committee } = await getCommitteeByUser(user.uid);
       if (committee) {
         toast.success(`Welcome back, ${committee.committee_name}!`);
-        router.replace('/organizer');
+        router.replace('/dashboard/organizer');
       } else {
         toast.success('Account authenticated. Complete your committee setup.');
         router.replace('/organizer/setup');

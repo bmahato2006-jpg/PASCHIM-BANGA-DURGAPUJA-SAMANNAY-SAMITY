@@ -43,15 +43,15 @@ export default function OrganizerLayout({
       }
 
       try {
-        // Query Firestore for committee record matching user.uid or user.email
-        const { committee } = await getCommitteeByUser(user.uid, user.email);
+        // Query Firestore for committee record strictly matching user.uid
+        const { committee } = await getCommitteeByUser(user.uid);
 
         if (isSetupRoute) {
           // If on /organizer/setup:
           // If committee already exists, they don't need setup -> redirect to dashboard
           if (committee) {
             if (isSubscribed) {
-              router.replace('/organizer');
+              router.replace('/dashboard/organizer');
             }
             return;
           }

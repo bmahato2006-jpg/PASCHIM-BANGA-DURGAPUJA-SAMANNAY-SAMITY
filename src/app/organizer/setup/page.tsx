@@ -66,15 +66,15 @@ export default function OrganizerSetupPage() {
         }
       }
 
-      // Check if committee is already registered in Firestore
-      const { committee } = await getCommitteeByUser(user.uid, user.email);
+      // Check if committee is already registered in Firestore strictly by UID
+      const { committee } = await getCommitteeByUser(user.uid);
       if (committee) {
         if (isSubscribed) {
           toast('Account already registered. Redirecting to your dashboard...', {
             id: 'already-registered',
             icon: 'ℹ️',
           });
-          router.replace('/organizer');
+          router.replace('/dashboard/organizer');
         }
         return;
       }
@@ -174,7 +174,7 @@ export default function OrganizerSetupPage() {
         duration: 4000,
       });
 
-      router.replace('/organizer');
+      router.replace('/dashboard/organizer');
     } catch (err: any) {
       setIsSubmitting(false);
       setError(err?.message || 'Unexpected registration error.');
