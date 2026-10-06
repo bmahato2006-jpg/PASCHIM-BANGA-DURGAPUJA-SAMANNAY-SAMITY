@@ -16,7 +16,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const user_uid = body.user_uid || body.voterUid || body.deviceId;
     const pandal_id = body.pandal_id || body.pandalId;
-    const category = body.category ? body.category.toLowerCase().trim() : 'overall';
+    const rawCategory = body.category ? body.category.toLowerCase().trim() : 'overall';
+    const category = rawCategory;
+    const shortCategory = category.replace(/^best_/, '');
 
     if (!user_uid || !pandal_id) {
       return NextResponse.json(
@@ -32,36 +34,59 @@ export async function POST(request: NextRequest) {
     const voteDocId = `${user_uid}_${pandal_id}`;
     const voteDocRef = adminDb.collection('votes_log').doc(voteDocId);
 
-    // Optional category token lock document to prevent duplicate usage of the same category token
+    // Optional category token lock documents to prevent duplicate usage of the same category token
     const categoryDocRef = category !== 'overall'
       ? adminDb.collection('votes_log').doc(`${user_uid}_cat_${category}`)
       : null;
+    const shortCategoryDocRef = category !== 'overall' && shortCategory !== category
+      ? adminDb.collection('votes_log').doc(`${user_uid}_cat_${shortCategory}`)
+      : null;
 
-    // Reference to the target pandal document
+    // References to the target pandal and committee documents
     const pandalDocRef = adminDb.collection('pandals').doc(pandal_id);
+    const committeeDocRef = adminDb.collection('committees').doc(pandal_id);
 
-    // Run atomic transaction to guarantee concurrency safety and zero over-counting
+    // Run atomic transaction strictly adhering to Firestore rule: ALL READS BEFORE ALL WRITES
     const result = await adminDb.runTransaction(async (transaction: Transaction) => {
-      // 1. Check if user already voted for this pandal
-      const existingVote = await transaction.get(voteDocRef);
+      // =========================================================================
+      // 1. ALL READS FIRST (STRICT REQUIREMENT: NO READS CAN OCCUR AFTER WRITES)
+      // =========================================================================
+      const [
+        existingVote,
+        existingCategoryVote,
+        existingShortCategoryVote,
+        pandalDoc,
+        committeeDoc,
+      ] = await Promise.all([
+        transaction.get(voteDocRef),
+        categoryDocRef ? transaction.get(categoryDocRef) : Promise.resolve(null),
+        shortCategoryDocRef ? transaction.get(shortCategoryDocRef) : Promise.resolve(null),
+        transaction.get(pandalDocRef),
+        transaction.get(committeeDocRef),
+      ]);
+
+      // =========================================================================
+      // 2. LOGIC & VALIDATION CHECKS (PERFORMED AFTER ALL READS ARE COMPLETED)
+      // =========================================================================
+      // Validation Check 1: User has already cast a vote for this specific pandal
       if (existingVote.exists) {
         throw new Error('DUPLICATE_PANDAL_VOTE');
       }
 
-      // 2. If a specific category token was used, check if already exhausted
-      if (categoryDocRef) {
-        const existingCategoryVote = await transaction.get(categoryDocRef);
-        if (existingCategoryVote.exists) {
-          throw new Error('DUPLICATE_CATEGORY_TOKEN');
-        }
+      // Validation Check 2: Category token already exhausted by this user device
+      if (
+        (existingCategoryVote && existingCategoryVote.exists) ||
+        (existingShortCategoryVote && existingShortCategoryVote.exists)
+      ) {
+        throw new Error('DUPLICATE_CATEGORY_TOKEN');
       }
 
-      // 3. Read the pandal document to determine whether it exists
-      const pandalDoc = await transaction.get(pandalDocRef);
-
+      // =========================================================================
+      // 3. ALL WRITES LAST (STRICT REQUIREMENT: PERFORMED AFTER ALL READS & CHECKS)
+      // =========================================================================
       const serverTime = FieldValue.serverTimestamp();
 
-      // 4. Insert vote record into votes_log (Fields: id, pandal_id, user_uid, timestamp)
+      // Write 1: Record primary vote document in votes_log
       transaction.set(voteDocRef, {
         id: voteDocId,
         pandal_id,
@@ -70,6 +95,7 @@ export async function POST(request: NextRequest) {
         timestamp: serverTime,
       });
 
+      // Write 2: Record category token locks in votes_log to prevent double awarding
       if (categoryDocRef) {
         transaction.set(categoryDocRef, {
           id: categoryDocRef.id,
@@ -79,40 +105,55 @@ export async function POST(request: NextRequest) {
           timestamp: serverTime,
         });
       }
-
-      // 5. Atomically increment total_votes on pandal document strictly by 1
-      if (pandalDoc.exists) {
-        const updatePayload: Record<string, any> = {
-          total_votes: FieldValue.increment(1),
-          updated_at: serverTime,
-        };
-        if (category && category !== 'overall') {
-          updatePayload[`votes.${category}`] = FieldValue.increment(1);
-        }
-        transaction.update(pandalDocRef, updatePayload);
-      } else {
-        // Pre-initialize pandal document if not yet seeded
-        transaction.set(pandalDocRef, {
-          id: pandal_id,
-          name: pandal_id,
-          total_votes: 1,
-          votes: category && category !== 'overall' ? { [category]: 1 } : {},
-          created_at: serverTime,
-        }, { merge: true });
+      if (shortCategoryDocRef) {
+        transaction.set(shortCategoryDocRef, {
+          id: shortCategoryDocRef.id,
+          pandal_id,
+          user_uid,
+          category: shortCategory,
+          timestamp: serverTime,
+        });
       }
 
-      // 6. Also atomically sync total_votes on matching committees document if present
-      const committeeDocRef = adminDb.collection('committees').doc(pandal_id);
-      const committeeDoc = await transaction.get(committeeDocRef);
-      if (committeeDoc.exists) {
-        const commPayload: Record<string, any> = {
-          total_votes: FieldValue.increment(1),
-          updated_at: serverTime,
-        };
-        if (category && category !== 'overall') {
-          commPayload[`votes.${category}`] = FieldValue.increment(1);
+      // Prepare incremental payload for vote counts
+      const updatePayload: Record<string, any> = {
+        total_votes: FieldValue.increment(1),
+        updated_at: serverTime,
+      };
+      if (category && category !== 'overall') {
+        updatePayload[`votes.${category}`] = FieldValue.increment(1);
+        if (shortCategory !== category) {
+          updatePayload[`votes.${shortCategory}`] = FieldValue.increment(1);
         }
-        transaction.update(committeeDocRef, commPayload);
+      }
+
+      // Write 3: Atomically increment or initialize pandal document
+      if (pandalDoc.exists) {
+        transaction.update(pandalDocRef, updatePayload);
+      } else {
+        const initialVotes: Record<string, number> = {};
+        if (category && category !== 'overall') {
+          initialVotes[category] = 1;
+          if (shortCategory !== category) {
+            initialVotes[shortCategory] = 1;
+          }
+        }
+        transaction.set(
+          pandalDocRef,
+          {
+            id: pandal_id,
+            name: pandal_id,
+            total_votes: 1,
+            votes: initialVotes,
+            created_at: serverTime,
+          },
+          { merge: true }
+        );
+      }
+
+      // Write 4: Atomically synchronize matching committees document if present
+      if (committeeDoc.exists) {
+        transaction.update(committeeDocRef, updatePayload);
       }
 
       return { voteId: voteDocId };
