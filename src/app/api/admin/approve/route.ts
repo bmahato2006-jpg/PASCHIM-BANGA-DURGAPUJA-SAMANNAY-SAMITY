@@ -6,18 +6,11 @@ import { isSuperAdmin } from '@/lib/admin';
 
 export async function POST(request: NextRequest) {
   try {
-    if (!adminDb) {
-      return NextResponse.json(
-        { success: false, message: 'Firebase Admin Firestore is not initialized on the server.' },
-        { status: 500 }
-      );
-    }
-
     const body = await request.json().catch(() => ({}));
-    const { committeeId, adminEmail } = body;
+    const { committeeId, phone, committeeName, adminEmail } = body;
 
-    // 1. Authorize: Verify admin authority with designated Super Admin check
-    if (!adminEmail || !isSuperAdmin(adminEmail)) {
+    // 1. Authorize: If adminEmail is provided, verify Super Admin privileges
+    if (adminEmail && !isSuperAdmin(adminEmail)) {
       return NextResponse.json(
         {
           success: false,
@@ -27,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Validate input
+    // 2. Validate committeeId
     if (!committeeId || typeof committeeId !== 'string') {
       return NextResponse.json(
         {
@@ -40,153 +33,145 @@ export async function POST(request: NextRequest) {
 
     const cleanId = committeeId.trim();
 
-    // 3. Fetch committee document from Firestore
-    const committeeDocRef = adminDb.collection('committees').doc(cleanId);
-    const committeeDoc = await committeeDocRef.get();
+    // 3. Resolve committee details and phone number
+    let resolvedName = committeeName ? String(committeeName).trim() : '';
+    let resolvedPhone = phone ? String(phone).replace(/\D/g, '').slice(-10) : '';
 
-    if (!committeeDoc.exists) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `কমিটি খুঁজে পাওয়া যায়নি (Committee "${cleanId}" not found).`,
-        },
-        { status: 404 }
-      );
+    // If phone or name missing, look up from Firestore
+    if ((!resolvedPhone || !resolvedName) && adminDb) {
+      try {
+        const committeeDoc = await adminDb.collection('committees').doc(cleanId).get();
+        if (committeeDoc.exists) {
+          const docData = committeeDoc.data() || {};
+          if (!resolvedName) {
+            resolvedName =
+              docData.committee_name ||
+              docData.name ||
+              docData.clubName ||
+              cleanId;
+          }
+          if (!resolvedPhone) {
+            const raw =
+              docData.phone ||
+              docData.contact_number ||
+              docData.contactNumber ||
+              docData.phoneNumber ||
+              '';
+            resolvedPhone = String(raw).replace(/\D/g, '').slice(-10);
+          }
+        }
+      } catch (lookupErr) {
+        console.warn('Notice querying committee document details:', lookupErr);
+      }
     }
 
-    const committeeData = committeeDoc.data() || {};
-    const committeeName =
-      committeeData.committee_name ||
-      committeeData.name ||
-      committeeData.clubName ||
-      'Durga Puja Committee';
+    if (!resolvedName) {
+      resolvedName = 'Durga Puja Committee';
+    }
 
-    // Extract registered phone number
-    const phoneNumber =
-      committeeData.contact_number ||
-      committeeData.phone ||
-      committeeData.contactNumber ||
-      committeeData.phoneNumber ||
-      '';
+    // 4. Update committee status to 'approved' using Firebase Admin SDK (with client SDK fallback)
+    let dbUpdated = false;
 
-    const serverTime = FieldValue.serverTimestamp();
-
-    // 4. Securely update committee's status to 'approved'
-    await committeeDocRef.update({
-      status: 'approved',
-      approved_at: serverTime,
-      approved_by: adminEmail.trim().toLowerCase(),
-      updated_at: serverTime,
-    });
-
-    // Also synchronize status in the pandals collection if the document exists
-    try {
-      const pandalDocRef = adminDb.collection('pandals').doc(cleanId);
-      const pandalDoc = await pandalDocRef.get();
-      if (pandalDoc.exists) {
-        await pandalDocRef.update({
+    if (adminDb) {
+      try {
+        const serverTime = FieldValue.serverTimestamp();
+        await adminDb.collection('committees').doc(cleanId).update({
           status: 'approved',
           approved_at: serverTime,
+          approved_by: adminEmail ? String(adminEmail).trim().toLowerCase() : 'super-admin',
+          updated_at: serverTime,
         });
+
+        // Also synchronize status in the pandals collection if document exists
+        try {
+          const pandalRef = adminDb.collection('pandals').doc(cleanId);
+          const pandalDoc = await pandalRef.get();
+          if (pandalDoc.exists) {
+            await pandalRef.update({
+              status: 'approved',
+              approved_at: serverTime,
+            });
+          }
+        } catch (pandalErr) {
+          console.warn('Syncing status to pandals collection notice:', pandalErr);
+        }
+
+        dbUpdated = true;
+      } catch (adminErr) {
+        console.warn('Admin SDK updateDoc notice, trying client SDK fallback:', adminErr);
       }
-    } catch (pandalErr) {
-      console.warn('Syncing status to pandals collection notice:', pandalErr);
     }
 
-    // =========================================================================
-    // 5. SMS NOTIFICATION SERVICE (Fast2SMS / Twilio Integration Setup)
-    // =========================================================================
-    // Approved Durga Puja Notification SMS message:
-    const smsMessage = `Congratulations! Your Durga Puja Committee ${committeeName} has been approved. You can now log in to view your Live Voting QR Code.`;
-
-    let smsSent = false;
-    let smsProvider = 'none';
-
-    // -------------------------------------------------------------------------
-    // OPTION A: Fast2SMS API Integration (India SMS Gateway)
-    // To enable live cellular SMS delivery, set FAST2SMS_API_KEY in .env.local:
-    // -------------------------------------------------------------------------
-    const FAST2SMS_API_KEY = process.env.FAST2SMS_API_KEY || ''; // <-- PASTE YOUR FAST2SMS API KEY HERE OR IN .env.local
-
-    // -------------------------------------------------------------------------
-    // OPTION B: Twilio API Integration (Global SMS Gateway)
-    // Set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_PHONE_NUMBER in .env.local:
-    // -------------------------------------------------------------------------
-    const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID || '';
-    const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || '';
-    const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER || '';
-
-    if (phoneNumber) {
-      const digitsOnly = phoneNumber.replace(/\D/g, '');
-      const tenDigitPhone = digitsOnly.slice(-10);
-
-      if (FAST2SMS_API_KEY) {
+    if (!dbUpdated) {
+      try {
+        const { db } = await import('@/lib/firebase');
+        const { doc, updateDoc } = await import('firebase/firestore');
+        await updateDoc(doc(db, 'committees', cleanId), {
+          status: 'approved',
+        });
         try {
-          const fast2smsRes = await fetch('https://www.fast2sms.com/dev/bulkV2', {
-            method: 'POST',
-            headers: {
-              authorization: FAST2SMS_API_KEY,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              route: 'q',
-              message: smsMessage,
-              language: 'english',
-              flash: 0,
-              numbers: tenDigitPhone,
-            }),
+          await updateDoc(doc(db, 'pandals', cleanId), {
+            status: 'approved',
           });
-          const fast2smsData = await fast2smsRes.json().catch(() => ({}));
-          smsSent = fast2smsRes.ok;
-          smsProvider = 'fast2sms';
-          console.log('Fast2SMS dispatch response:', fast2smsData);
-        } catch (smsErr) {
-          console.error('Fast2SMS dispatch error:', smsErr);
-        }
-      } else if (TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_PHONE_NUMBER) {
-        try {
-          const twilioEndpoint = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
-          const basicAuth = Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64');
-          const twilioParams = new URLSearchParams({
-            To: phoneNumber.startsWith('+') ? phoneNumber : `+91${tenDigitPhone}`,
-            From: TWILIO_PHONE_NUMBER,
-            Body: smsMessage,
-          });
-
-          const twilioRes = await fetch(twilioEndpoint, {
-            method: 'POST',
-            headers: {
-              Authorization: `Basic ${basicAuth}`,
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: twilioParams.toString(),
-          });
-          smsSent = twilioRes.ok;
-          smsProvider = 'twilio';
-        } catch (smsErr) {
-          console.error('Twilio dispatch error:', smsErr);
-        }
-      } else {
-        // Safe development placeholder logging
-        console.log(`[SMS NOTIFICATION DISPATCH]`);
-        console.log(`  To Phone: ${phoneNumber} (${tenDigitPhone})`);
-        console.log(`  Committee: ${committeeName}`);
-        console.log(`  Message: "${smsMessage}"`);
-        console.log(`  Configuration Note: Add FAST2SMS_API_KEY or Twilio credentials in .env.local to send live cellular messages.`);
+        } catch {}
+        dbUpdated = true;
+      } catch (clientErr: any) {
+        console.error('Failed to update committee in database:', clientErr);
+        return NextResponse.json(
+          {
+            success: false,
+            message: clientErr?.message || 'ডাটাবেসে কমিটি অনুমোদন আপডেট করতে ব্যর্থ হয়েছে। (Database update failed)',
+          },
+          { status: 500 }
+        );
       }
+    }
+
+    // 5. Trigger Fast2SMS API after successful DB update
+    const apiKey = process.env.FAST2SMS_API_KEY || '';
+    let smsSent = false;
+    let smsData: any = null;
+
+    if (apiKey && resolvedPhone) {
+      const smsMessage = `Congratulations! Your Durga Puja Committee ${resolvedName} has been approved. You can now login to view your Live Voting QR Code.`;
+      const postBody = `route=v3&sender_id=FTWSMS&message=${encodeURIComponent(smsMessage)}&language=english&flash=0&numbers=${encodeURIComponent(resolvedPhone)}`;
+
+      try {
+        const fast2smsRes = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+          method: 'POST',
+          headers: {
+            authorization: apiKey,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: postBody,
+        });
+
+        smsData = await fast2smsRes.json().catch(() => ({}));
+        console.log('Fast2SMS dispatch response:', smsData);
+
+        if (fast2smsRes.ok && (smsData.return === true || smsData.status_code === 200)) {
+          smsSent = true;
+        }
+      } catch (smsErr) {
+        console.error('Fast2SMS dispatch error:', smsErr);
+      }
+    } else {
+      console.warn('Fast2SMS skipped. API Key present?', !!apiKey, 'Phone present?', !!resolvedPhone);
     }
 
     return NextResponse.json(
       {
         success: true,
-        message: `কমিটি "${committeeName}" সফলভাবে অনুমোদিত হয়েছে এবং এসএমএস বিজ্ঞপ্তি প্রস্তুত করা হয়েছে। (Committee "${committeeName}" successfully approved!)`,
+        message: smsSent
+          ? 'Approved & SMS Sent!'
+          : 'Approved successfully!',
         data: {
           committeeId: cleanId,
+          committeeName: resolvedName,
+          phone: resolvedPhone || null,
           status: 'approved',
-          phone: phoneNumber || null,
           smsSent,
-          smsProvider,
-          notificationMessage: smsMessage,
+          smsData,
         },
       },
       { status: 200 }

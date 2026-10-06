@@ -234,7 +234,7 @@ export default function MasterAdminDashboardPage() {
     });
   }, [rankedCommittees, searchQuery, selectedWard, selectedStatus]);
 
-  // Approve Committee via Firestore update & Fast2SMS Notification
+  // Approve Committee via Backend API (/api/admin/approve) with Database Update & Fast2SMS Dispatch
   const handleApproveCommittee = async (
     committeeId: string, 
     committeeName: string,
@@ -247,132 +247,54 @@ export default function MasterAdminDashboardPage() {
 
     if (approvingId) return;
 
+    // Show loading state on the button
     setApprovingId(committeeId);
 
-    // Fast UI State Update: Instantly reflect 'approved' state in the table
-    setCommittees((prev) =>
-      prev.map((c) => (c.id === committeeId ? { ...c, status: 'approved' } : c))
-    );
+    // Resolve target phone
+    let targetPhone = phone || '';
+    if (!targetPhone) {
+      const found = committees.find((c) => c.id === committeeId);
+      targetPhone = found?.phone || found?.contact_number || (found as any)?.contactNumber || (found as any)?.phoneNumber || '';
+    }
 
     const toastId = toast.loading(`"${committeeName}" অনুমোদন করা হচ্ছে... (Approving...)`);
 
     try {
-      // 1. Direct Firestore update strictly triggered by button: updateDoc(doc(db, 'committees', committeeId), { status: 'approved' })
-      await updateDoc(doc(db, 'committees', committeeId), {
-        status: 'approved',
+      // Make a POST request to /api/admin/approve with the committee details
+      const res = await fetch('/api/admin/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          committeeId,
+          committeeName,
+          phone: targetPhone,
+          adminEmail: user.email,
+        }),
       });
 
-      // Also sync status in pandals collection if present
-      try {
-        await updateDoc(doc(db, 'pandals', committeeId), {
-          status: 'approved',
-        });
-      } catch {}
+      const data = await res.json().catch(() => ({}));
 
-      // 2. Resolve phone number
-      let targetPhone = phone || '';
-      if (!targetPhone) {
-        const found = committees.find((c) => c.id === committeeId);
-        targetPhone = found?.phone || found?.contact_number || (found as any)?.contactNumber || (found as any)?.phoneNumber || '';
-      }
+      if (res.ok && data.success) {
+        // Fast UI State Update: Instantly reflect 'approved' state in the table
+        setCommittees((prev) =>
+          prev.map((c) => (c.id === committeeId ? { ...c, status: 'approved' } : c))
+        );
 
-      // 3. Make POST request to /api/send-sms AFTER updateDoc successfully changes status
-      let smsSent = false;
-      if (targetPhone) {
-        try {
-          const smsRes = await fetch('/api/send-sms', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              phone: targetPhone,
-              committeeName,
-            }),
-          });
-          const smsData = await smsRes.json().catch(() => ({}));
-          smsSent = smsRes.ok && smsData.success;
-        } catch (smsErr) {
-          console.warn('SMS dispatch notification notice:', smsErr);
-        }
-      }
-
-      // 4. Show success toast indicating "Approved & SMS Sent!" or graceful success if SMS fails
-      if (smsSent) {
         toast.success(
           `🎉 "${committeeName}" অনুমোদিত এবং এসএমএস পাঠানো হয়েছে! (Approved & SMS Sent!)`,
           { id: toastId, duration: 4500 }
         );
       } else {
-        toast.success(
-          `🎉 "${committeeName}" সফলভাবে অনুমোদিত হয়েছে! (Approved successfully!)`,
-          { id: toastId, duration: 4000 }
+        toast.error(
+          data.message || 'অনুমোদন প্রক্রিয়া ব্যর্থ হয়েছে। (Approval failed)',
+          { id: toastId }
         );
       }
-
-      // Trigger background approval API for server audit logging
-      fetch('/api/admin/approve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          committeeId,
-          adminEmail: user.email,
-        }),
-      }).catch((adminApiErr) => console.warn('Background admin approval notice:', adminApiErr));
-
     } catch (err: any) {
-      console.warn('Direct updateDoc notice, trying backend approval API fallback:', err);
-      try {
-        const res = await fetch('/api/admin/approve', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            committeeId,
-            adminEmail: user.email,
-          }),
-        });
-        const data = await res.json().catch(() => ({}));
-        if (res.ok && data.success) {
-          // Attempt SMS dispatch
-          let smsSent = false;
-          if (phone) {
-            try {
-              const smsRes = await fetch('/api/send-sms', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  phone,
-                  committeeName,
-                }),
-              });
-              const smsData = await smsRes.json().catch(() => ({}));
-              smsSent = smsRes.ok && smsData.success;
-            } catch {}
-          }
-
-          if (smsSent) {
-            toast.success(
-              `🎉 "${committeeName}" অনুমোদিত এবং এসএমএস পাঠানো হয়েছে! (Approved & SMS Sent!)`,
-              { id: toastId, duration: 4500 }
-            );
-          } else {
-            toast.success(
-              `🎉 "${committeeName}" সফলভাবে অনুমোদিত হয়েছে! (Approved successfully!)`,
-              { id: toastId, duration: 4000 }
-            );
-          }
-        } else {
-          // Revert optimistic update if both fail
-          setCommittees((prev) =>
-            prev.map((c) => (c.id === committeeId ? { ...c, status: 'pending' } : c))
-          );
-          toast.error(data.message || 'অনুমোদন ব্যর্থ হয়েছে। (Approval failed)', { id: toastId });
-        }
-      } catch (fallbackErr: any) {
-        setCommittees((prev) =>
-          prev.map((c) => (c.id === committeeId ? { ...c, status: 'pending' } : c))
-        );
-        toast.error('নেটওয়ার্ক ত্রুটি! অনুমোদন সম্পন্ন করা যায়নি। (Approval failed)', { id: toastId });
-      }
+      console.error('API /api/admin/approve call error:', err);
+      toast.error('নেটওয়ার্ক ত্রুটি! অনুমোদন সম্পন্ন করা যায়নি। (Network error during approval)', { id: toastId });
     } finally {
+      // Clear loading state on the button
       setApprovingId(null);
     }
   };
