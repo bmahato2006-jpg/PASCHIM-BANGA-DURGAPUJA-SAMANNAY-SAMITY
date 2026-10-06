@@ -10,6 +10,7 @@ import {
   slugifyCommitteeName, 
   getCommitteeByUser 
 } from '@/lib/committeeService';
+import { isSuperAdmin } from '@/lib/admin';
 import { useApp } from '@/context/AppContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DhakButton } from '@/components/ui/DhakButton';
@@ -66,7 +67,19 @@ export default function OrganizerSetupPage() {
         }
       }
 
-      // Check if committee is already registered in Firestore strictly by UID
+      // 1. Super Admin VIP Bypass: Redirect directly to /dashboard/admin
+      if (isSuperAdmin(user.email)) {
+        if (isSubscribed) {
+          toast.success('সুপার অ্যাডমিন অধিবেশন সক্রিয় (Bypassing setup to Admin Panel...)', {
+            id: 'super-admin-setup-bypass',
+            duration: 3000,
+          });
+          router.replace('/dashboard/admin');
+        }
+        return;
+      }
+
+      // 2. Normal User: Check if committee is already registered in Firestore strictly by UID
       const { committee } = await getCommitteeByUser(user.uid);
       if (committee) {
         if (isSubscribed) {
@@ -187,11 +200,15 @@ export default function OrganizerSetupPage() {
     router.replace('/organizer/auth');
   };
 
-  if (isVerifying) {
+  if (isVerifying || (currentUser && isSuperAdmin(currentUser.email))) {
     return (
       <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6 text-center">
         <div className="w-10 h-10 border-3 border-marigold-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-sm font-bold text-gray-800">Verifying Account Status...</p>
+        <p className="text-sm font-bold text-gray-800">
+          {currentUser && isSuperAdmin(currentUser.email)
+            ? 'সুপার অ্যাডমিন অধিবেশন পুনর্নির্দেশ করা হচ্ছে (Redirecting Super Admin...)'
+            : 'Verifying Account Status...'}
+        </p>
       </div>
     );
   }

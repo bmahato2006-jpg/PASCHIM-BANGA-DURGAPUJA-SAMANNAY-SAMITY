@@ -123,6 +123,14 @@ export const OrganizerDashboard: React.FC = () => {
       }
 
       try {
+        // Super Admin VIP Bypass: Redirect directly to /dashboard/admin
+        if (isSuperAdmin(user.email)) {
+          if (isSubscribed) {
+            router.replace('/dashboard/admin');
+          }
+          return;
+        }
+
         // Strict Check: Must have a verified committee record in database
         const { committee } = await getCommitteeByUser(user.uid);
         if (!committee) {

@@ -2,12 +2,22 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { auth, onAuthStateChanged } from '@/lib/firebase';
+import { isSuperAdmin } from '@/lib/admin';
 
 export default function OrganizerLoginRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace('/organizer/auth');
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && isSuperAdmin(user.email)) {
+        router.replace('/dashboard/admin');
+      } else {
+        router.replace('/organizer/auth');
+      }
+    });
+
+    return () => unsubscribe();
   }, [router]);
 
   return (

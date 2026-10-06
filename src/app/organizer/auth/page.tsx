@@ -4,8 +4,9 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { auth, GoogleAuthProvider, signInWithPopup } from '@/lib/firebase';
+import { auth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from '@/lib/firebase';
 import { getCommitteeByUser } from '@/lib/committeeService';
+import { isSuperAdmin } from '@/lib/admin';
 import { DhakButton } from '@/components/ui/DhakButton';
 import toast from 'react-hot-toast';
 import {
@@ -37,6 +38,17 @@ function OrganizerAuthContent() {
     }
   }, [initialMode]);
 
+  // Bypass on mount if already authenticated as Super Admin
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser && isSuperAdmin(currentUser.email)) {
+        router.replace('/dashboard/admin');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
   const handleOAuth = async (action: 'register' | 'login') => {
     setIsLoading(true);
 
@@ -44,7 +56,18 @@ function OrganizerAuthContent() {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      // Strict 1-to-1 data check by user.uid
+
+      // 1. Super Admin VIP Bypass: Redirect directly to /dashboard/admin
+      if (isSuperAdmin(user.email)) {
+        toast.success('স্বাগতম সুপার অ্যাডমিন! (Welcome Super Admin!)', {
+          id: 'super-admin-direct-login',
+          duration: 3000,
+        });
+        router.replace('/dashboard/admin');
+        return;
+      }
+
+      // 2. Normal User: Strict 1-to-1 data check by user.uid
       const { committee } = await getCommitteeByUser(user.uid);
       if (committee) {
         toast.success(`Welcome back, ${committee.committee_name}!`);

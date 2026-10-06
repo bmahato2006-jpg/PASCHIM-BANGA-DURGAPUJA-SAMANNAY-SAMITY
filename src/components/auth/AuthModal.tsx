@@ -1,7 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { auth } from '@/lib/firebase';
+import { isSuperAdmin } from '@/lib/admin';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DhakButton } from '@/components/ui/DhakButton';
 import { 
@@ -27,6 +30,7 @@ export const AuthModal: React.FC = () => {
     signInWithEmail
   } = useApp();
 
+  const router = useRouter();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -47,6 +51,14 @@ export const AuthModal: React.FC = () => {
     if (!res.success) {
       setError(res.error || 'Organizer Google Sign-In failed.');
       setIsLoading(false);
+    } else {
+      setIsLoading(false);
+      closeAuthModal();
+      if (isSuperAdmin(auth.currentUser?.email)) {
+        router.replace('/dashboard/admin');
+      } else {
+        router.replace('/dashboard/organizer');
+      }
     }
   };
 
@@ -72,12 +84,26 @@ export const AuthModal: React.FC = () => {
       setIsLoading(false);
       if (!res.success) {
         setError(res.error || 'Organizer registration failed.');
+      } else {
+        closeAuthModal();
+        if (isSuperAdmin(email)) {
+          router.replace('/dashboard/admin');
+        } else {
+          router.replace('/organizer/setup');
+        }
       }
     } else {
       const res = await signInWithEmail(email.trim(), password, 'organizer');
       setIsLoading(false);
       if (!res.success) {
         setError(res.error || 'Organizer sign in failed.');
+      } else {
+        closeAuthModal();
+        if (isSuperAdmin(email)) {
+          router.replace('/dashboard/admin');
+        } else {
+          router.replace('/dashboard/organizer');
+        }
       }
     }
   };

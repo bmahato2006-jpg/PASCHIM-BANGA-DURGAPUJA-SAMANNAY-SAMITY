@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { auth, onAuthStateChanged, signOut } from '@/lib/firebase';
 import { getCommitteeByUser } from '@/lib/committeeService';
+import { isSuperAdmin } from '@/lib/admin';
 import toast from 'react-hot-toast';
 
 function GatekeeperCallbackContent() {
@@ -24,6 +25,15 @@ function GatekeeperCallbackContent() {
           id: 'auth-not-found',
         });
         router.replace('/organizer/auth?mode=register');
+        return;
+      }
+
+      // Super Admin VIP Bypass: Redirect directly to /dashboard/admin
+      if (isSuperAdmin(user.email)) {
+        toast.success('স্বাগতম সুপার অ্যাডমিন! (Welcome Super Admin!)', {
+          id: 'super-admin-callback-toast',
+        });
+        router.replace('/dashboard/admin');
         return;
       }
 
