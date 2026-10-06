@@ -29,7 +29,9 @@ import {
   Trophy,
   Award,
   Building2,
-  ArrowLeft
+  ArrowLeft,
+  Phone,
+  Clock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { SUPER_ADMIN_EMAIL, isSuperAdmin } from '@/lib/admin';
@@ -44,6 +46,8 @@ interface CommitteeItem {
   ward?: string;
   secretary_name?: string;
   contact_number?: string;
+  phone?: string;
+  status?: 'pending' | 'approved' | string;
   email?: string;
   theme?: string;
   total_votes?: number;
@@ -68,9 +72,13 @@ export default function MasterAdminDashboardPage() {
   const [pandalVotes, setPandalVotes] = useState<Record<string, number>>({});
   const [dataLoading, setDataLoading] = useState<boolean>(true);
 
+  // Approval In-Progress Tracker
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+
   // Filter & Search
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedWard, setSelectedWard] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [votingEnabled, setVotingEnabled] = useState<boolean>(true);
 
   // 1. Verify Authentication & Enforce Strict Client-Side RBAC Guard
@@ -116,7 +124,9 @@ export default function MasterAdminDashboardPage() {
               committee_name: data.committee_name || data.name || data.clubName || docSnap.id,
               ward: data.ward || 'সাধারণ অঞ্চল (General Zone)',
               secretary_name: data.secretary_name || '',
-              contact_number: data.contact_number || '',
+              contact_number: data.contact_number || data.phone || data.contactNumber || '',
+              phone: data.phone || data.contact_number || '',
+              status: data.status || 'pending',
               email: data.email || '',
               theme: data.theme || 'ঐতিহ্যবাহী দুর্গাপূজা (Traditional Durga Puja)',
               total_votes: Number(data.total_votes || 0),
@@ -176,6 +186,11 @@ export default function MasterAdminDashboardPage() {
 
   // Global Statistics calculations
   const totalRegisteredCommittees = committees.length;
+  const approvedCommitteesCount = useMemo(() => {
+    return committees.filter((c) => c.status === 'approved').length;
+  }, [committees]);
+  const pendingCommitteesCount = totalRegisteredCommittees - approvedCommitteesCount;
+
   const totalVotesCast = useMemo(() => {
     return rankedCommittees.reduce((sum, item) => sum + (item.resolvedVotes || 0), 0);
   }, [rankedCommittees]);
@@ -194,14 +209,68 @@ export default function MasterAdminDashboardPage() {
     return rankedCommittees.filter((item) => {
       const name = (item.committee_name || '').toLowerCase();
       const ward = (item.ward || '').toLowerCase();
+      const phone = (item.contact_number || item.phone || '').toLowerCase();
       const query = searchQuery.toLowerCase().trim();
 
-      const matchesQuery = !query || name.includes(query) || ward.includes(query) || item.id.includes(query);
-      const matchesWard = selectedWard === 'all' || item.ward === selectedWard;
+      const matchesQuery =
+        !query ||
+        name.includes(query) ||
+        ward.includes(query) ||
+        phone.includes(query) ||
+        item.id.includes(query);
 
-      return matchesQuery && matchesWard;
+      const matchesWard = selectedWard === 'all' || item.ward === selectedWard;
+      const matchesStatus =
+        selectedStatus === 'all' ||
+        (selectedStatus === 'approved' && item.status === 'approved') ||
+        (selectedStatus === 'pending' && item.status !== 'approved');
+
+      return matchesQuery && matchesWard && matchesStatus;
     });
-  }, [rankedCommittees, searchQuery, selectedWard]);
+  }, [rankedCommittees, searchQuery, selectedWard, selectedStatus]);
+
+  // Approve Committee via Next.js API Route with SMS Dispatch
+  const handleApproveCommittee = async (committeeId: string, committeeName: string) => {
+    if (!user?.email || !isSuperAdmin(user.email)) {
+      toast.error('অননুমোদিত প্রবেশাধিকার! শুধুমাত্র অনুমোদিত সুপার অ্যাডমিন কমিটি অনুমোদন করতে পারেন। (Super Admin only)');
+      return;
+    }
+
+    if (approvingId) return;
+
+    setApprovingId(committeeId);
+    const toastId = toast.loading(`"${committeeName}" অনুমোদন করা হচ্ছে... (Approving...)`);
+
+    try {
+      const res = await fetch('/api/admin/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          committeeId,
+          adminEmail: user.email,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.success) {
+        toast.success(
+          `🎉 "${committeeName}" সফলভাবে অনুমোদিত হয়েছে এবং এসএমএস বিজ্ঞপ্তি প্রস্তুত করা হয়েছে! (Approved & SMS queued!)`,
+          { id: toastId, duration: 5000 }
+        );
+      } else {
+        toast.error(
+          data.message || 'অনুমোদন ব্যর্থ হয়েছে। অনুগ্রহ করে পুনরায় চেষ্টা করুন। (Approval failed)',
+          { id: toastId }
+        );
+      }
+    } catch (err: any) {
+      console.error('Approval API error:', err);
+      toast.error('নেটওয়ার্ক সমস্যা। অনুমোদন সম্পন্ন করা যায়নি। (Network error during approval)', { id: toastId });
+    } finally {
+      setApprovingId(null);
+    }
+  };
 
   // Global voting switch
   const handleToggleVoting = () => {
@@ -232,17 +301,29 @@ export default function MasterAdminDashboardPage() {
       return;
     }
 
-    const headers = ['Rank', 'Committee ID', 'Committee Name', 'Location / Ward', 'Theme', 'Total Votes'];
+    const headers = [
+      'Rank',
+      'Committee ID',
+      'Committee Name',
+      'Location / Ward',
+      'Status',
+      'Contact Number',
+      'Theme',
+      'Total Votes',
+    ];
     const rows = rankedCommittees.map((c, index) => [
       index + 1,
       `"${c.id}"`,
       `"${c.committee_name || ''}"`,
       `"${c.ward || ''}"`,
+      `"${c.status || 'pending'}"`,
+      `"${c.contact_number || c.phone || ''}"`,
       `"${c.theme || ''}"`,
       c.resolvedVotes || 0,
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const csvContent =
+      'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
@@ -398,10 +479,10 @@ export default function MasterAdminDashboardPage() {
                 <span>পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতি • লাইভ অডিট কনসোল</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-gray-900 font-serif">
-                সার্বজনীন পর্যবেক্ষণ ও পরিসংখ্যান
+                সার্বজনীন পর্যবেক্ষণ ও অনুমোদন কেন্দ্র
               </h2>
               <p className="text-xs text-gray-500">
-                (Global Real-Time Overview & Auditing Desk)
+                (Global Real-Time Overview, Verification & SMS Gateway Desk)
               </p>
             </div>
 
@@ -418,7 +499,7 @@ export default function MasterAdminDashboardPage() {
           {/* ------------------------------------------------------------- */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
 
-            {/* Stat 1: Total Registered Committees */}
+            {/* Stat 1: Total Registered Committees & Approval Split */}
             <div className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl bg-white/80 backdrop-blur-md border border-indigo-100/90 shadow-sm hover:shadow-md transition-all group">
               <div className="flex items-center justify-between text-gray-500 mb-3">
                 <div>
@@ -443,9 +524,17 @@ export default function MasterAdminDashboardPage() {
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center gap-1.5 text-[11px] text-emerald-700 font-semibold">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>পশ্চিম বর্ধমান অঞ্চল (Paschim Bardhaman)</span>
+              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-[11px] font-semibold">
+                <span className="text-emerald-700 flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>অনুমোদিত: {approvedCommitteesCount}</span>
+                </span>
+                {pendingCommitteesCount > 0 && (
+                  <span className="text-amber-700 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>অপেক্ষমান: {pendingCommitteesCount}</span>
+                  </span>
+                )}
               </div>
             </div>
 
@@ -554,7 +643,7 @@ export default function MasterAdminDashboardPage() {
                 <span>গ্লোবাল ভোটিং ব্যবস্থা পরিচালনা (Voting Gatekeeper)</span>
               </h3>
               <p className="text-xs text-gray-600 leading-relaxed max-w-2xl">
-                জরুরি পরিস্থিতিতে বা ভোট গ্রহণের নির্ধারিত সময়সীমা শেষে প্ল্যাটফর্মের ভোট গ্রহণ প্রক্রিয়া সক্রিয় অথবা স্থগিত রাখুন। 
+                জরুরি পরিস্থিতিতে প্ল্যাটফর্মের ভোট গ্রহণ সক্রিয় বা স্থগিত রাখুন এবং অনুমোদিত কমিটির অডিট লগ ডাউনলোড করুন।
                 <span className="block text-[11px] text-gray-500">(Toggle voting availability or export verified audit logs)</span>
               </p>
             </div>
@@ -587,7 +676,7 @@ export default function MasterAdminDashboardPage() {
           </div>
 
           {/* ------------------------------------------------------------- */}
-          {/* GLOBAL LEADERBOARD: RESPONSIVE DATA TABLE */}
+          {/* GLOBAL LEADERBOARD & COMMITTEE APPROVAL DATA TABLE */}
           {/* ------------------------------------------------------------- */}
           <div className="bg-white/90 backdrop-blur-md rounded-2xl sm:rounded-3xl border border-gray-200/80 shadow-sm overflow-hidden p-5 sm:p-7 space-y-5">
             
@@ -597,30 +686,41 @@ export default function MasterAdminDashboardPage() {
                 <div className="flex items-center gap-2">
                   <Trophy className="w-5 h-5 text-amber-500" />
                   <h3 className="text-lg sm:text-xl font-black text-gray-900 tracking-tight font-serif">
-                    গ্লোবাল লিডারবোর্ড
+                    গ্লোবাল লিডারবোর্ড ও কমিটি অনুমোদন
                   </h3>
                   <span className="text-xs text-gray-500 font-sans">
-                    (Global Live Leaderboard)
+                    (Global Leaderboard & Verification Desk)
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  সর্বাধিক ভোটপ্রাপ্তির ক্রমানুসারে লাইভ সাজানো তালিকা (Dynamically sorted by votes in descending order).
+                  সর্বাধিক ভোটপ্রাপ্তির ক্রমানুসারে লাইভ তালিকা। এক ক্লিকে কমিটি অনুমোদন করুন এবং স্বয়ংক্রিয় এসএমএস পাঠান।
                 </p>
               </div>
 
-              {/* Search and Ward Filter Controls */}
+              {/* Search, Ward Filter, and Status Filter Controls */}
               <div className="flex items-center gap-3 flex-wrap">
                 {/* Search input */}
-                <div className="relative min-w-[220px]">
+                <div className="relative min-w-[200px]">
                   <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="কমিটি বা অঞ্চল খুঁজুন (Search)..."
+                    placeholder="কমিটি, ফোন বা অঞ্চল খুঁজুন..."
                     className="w-full pl-10 pr-4 py-2 bg-gray-50/90 border border-gray-200 rounded-xl text-xs text-gray-900 placeholder-gray-400 focus:outline-hidden focus:border-amber-500 transition-colors"
                   />
                 </div>
+
+                {/* Status Filter */}
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="py-2 px-3 bg-gray-50/90 border border-gray-200 rounded-xl text-xs text-gray-800 focus:outline-hidden focus:border-amber-500 transition-colors cursor-pointer"
+                >
+                  <option value="all">সকল স্থিতি (All Statuses)</option>
+                  <option value="approved">অনুমোদিত (Approved)</option>
+                  <option value="pending">অপেক্ষমান (Pending)</option>
+                </select>
 
                 {/* Ward Filter */}
                 <select
@@ -642,13 +742,13 @@ export default function MasterAdminDashboardPage() {
             {dataLoading ? (
               <div className="py-16 flex flex-col items-center justify-center text-center">
                 <Loader2 className="w-8 h-8 text-sindoor-600 animate-spin mb-3" />
-                <p className="text-xs text-gray-600 font-medium">ফায়ারস্টোর থেকে লাইভ লিডারবোর্ড লোড হচ্ছে...</p>
-                <p className="text-[11px] text-gray-400">(Loading real-time leaderboard from Firestore...)</p>
+                <p className="text-xs text-gray-600 font-medium">ফায়ারস্টোর থেকে লাইভ তালিকা লোড হচ্ছে...</p>
+                <p className="text-[11px] text-gray-400">(Loading real-time committees from Firestore...)</p>
               </div>
             ) : filteredLeaderboard.length === 0 ? (
               <div className="py-16 text-center text-gray-500 text-xs space-y-2">
                 <Database className="w-8 h-8 mx-auto text-gray-400" />
-                <p className="font-semibold text-gray-700">কোনো কমিটি বা মণ্ডপ খুঁজে পাওয়া যায়নি।</p>
+                <p className="font-semibold text-gray-700">কোনো কমিটি খুঁজে পাওয়া যায়নি।</p>
                 <p className="text-gray-400">(No registered committees match your query)</p>
               </div>
             ) : (
@@ -661,9 +761,10 @@ export default function MasterAdminDashboardPage() {
                       <th className="py-3.5 px-4 w-16 text-center">র‍্যাংক (Rank)</th>
                       <th className="py-3.5 px-4">কমিটির নাম (Committee Name)</th>
                       <th className="py-3.5 px-4">অঞ্চল / ওয়ার্ড (Location / Zone)</th>
-                      <th className="py-3.5 px-4">ভাবনা (Theme)</th>
+                      <th className="py-3.5 px-4">যোগাযোগ (Contact Phone)</th>
                       <th className="py-3.5 px-4 text-right">মোট ভোট (Total Votes)</th>
-                      <th className="py-3.5 px-4 text-center w-28">ব্যালট (Ballot)</th>
+                      <th className="py-3.5 px-4 text-center">অনুমোদন ও স্থিতি (Status / Approve)</th>
+                      <th className="py-3.5 px-4 text-center w-24">ব্যালট (Ballot)</th>
                     </tr>
                   </thead>
 
@@ -673,6 +774,9 @@ export default function MasterAdminDashboardPage() {
                       const rank = index + 1;
                       const votes = committee.resolvedVotes || 0;
                       const votePercent = totalVotesCast > 0 ? ((votes / totalVotesCast) * 100).toFixed(1) : '0';
+                      const isApproved = committee.status === 'approved';
+                      const isCurrentlyApproving = approvingId === committee.id;
+                      const displayPhone = committee.contact_number || committee.phone || '';
 
                       // Rank Badges
                       let rankBadge = (
@@ -729,9 +833,23 @@ export default function MasterAdminDashboardPage() {
                             </span>
                           </td>
 
-                          {/* Theme */}
-                          <td className="py-4 px-4 text-gray-600 max-w-xs truncate font-medium">
-                            {committee.theme || 'ঐতিহ্যবাহী দুর্গাপূজা'}
+                          {/* Contact Phone */}
+                          <td className="py-4 px-4">
+                            <div className="space-y-0.5">
+                              {displayPhone ? (
+                                <span className="font-mono text-gray-800 text-[11px] font-semibold flex items-center gap-1">
+                                  <Phone className="w-3 h-3 text-emerald-600 shrink-0" />
+                                  <span>{displayPhone}</span>
+                                </span>
+                              ) : (
+                                <span className="text-[11px] text-gray-400 italic">ফোন নেই (No phone)</span>
+                              )}
+                              {committee.secretary_name && (
+                                <span className="text-[10px] text-gray-500 block truncate max-w-[130px]">
+                                  {committee.secretary_name}
+                                </span>
+                              )}
+                            </div>
                           </td>
 
                           {/* Total Votes */}
@@ -746,6 +864,40 @@ export default function MasterAdminDashboardPage() {
                             </div>
                           </td>
 
+                          {/* Status & Approval Button */}
+                          <td className="py-4 px-4 text-center">
+                            {isApproved ? (
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-bold shadow-2xs">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                <span>অনুমোদিত (Approved)</span>
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() =>
+                                  handleApproveCommittee(
+                                    committee.id,
+                                    committee.committee_name || committee.id
+                                  )
+                                }
+                                disabled={isCurrentlyApproving}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-[11px] font-bold shadow-xs hover:shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                title="অনুমোদন করুন এবং এসএমএস পাঠান (Approve and send SMS notification)"
+                              >
+                                {isCurrentlyApproving ? (
+                                  <>
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    <span>অনুমোদন হচ্ছে...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <ShieldCheck className="w-3.5 h-3.5" />
+                                    <span>অনুমোদন করুন (Approve)</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </td>
+
                           {/* Action Link to Live Voter Ballot */}
                           <td className="py-4 px-4 text-center">
                             <Link
@@ -754,7 +906,7 @@ export default function MasterAdminDashboardPage() {
                               className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-amber-50 text-[11px] font-bold text-gray-700 hover:text-sindoor-600 transition-all border border-gray-200 hover:border-amber-300 shadow-2xs active:scale-95"
                             >
                               <ExternalLink className="w-3 h-3 text-amber-600" />
-                              <span>দেখুন (View)</span>
+                              <span>দেখুন</span>
                             </Link>
                           </td>
                         </tr>
@@ -799,7 +951,7 @@ export default function MasterAdminDashboardPage() {
             </span>
           </div>
           <p className="text-[11px] text-gray-400 font-mono">
-            Vercel Edge Network • Central Super Admin Control Desk
+            Vercel Edge Network • Central Super Admin Control Desk & SMS Gateway
           </p>
         </div>
       </footer>
