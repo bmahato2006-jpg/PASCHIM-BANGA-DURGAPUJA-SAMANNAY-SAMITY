@@ -19,32 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="scroll-smooth overflow-x-hidden">
-      <body className="min-h-screen text-[#22150F] relative pb-28 md:pb-0 overflow-x-hidden w-full max-w-full select-none bg-[#FFFDF9]">
-        {/* ========================================================================= */}
-        {/* GLOBAL DIVINE MAA DURGA WATERMARK BACKGROUND                              */}
-        {/* ========================================================================= */}
-        <div
-          aria-hidden="true"
-          className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"
-        >
-          {/* Fixed, Centered, Cover Image with Soft-Light Blending */}
-          <div
-            className="absolute inset-0 bg-cover bg-center bg-fixed bg-no-repeat bg-blend-soft-light transform-gpu"
-            style={{
-              backgroundImage: `url('/durga-bg.png')`,
-            }}
-          />
-
-          {/* Strong Festive Light Overlay for Subtle Watermark Effect & High Text Contrast */}
-          <div
-            className="absolute inset-0 bg-gradient-to-b from-[#FFFDF9]/92 via-[#FFFDF9]/88 to-[#FFFDF9]/94 bg-blend-overlay"
-          />
-
-          {/* Soft White Translucent Veil to Ensure 100% Pristine Readability */}
-          <div
-            className="absolute inset-0 bg-white/70"
-          />
-        </div>
+      <body className="min-h-screen text-[#22150F] relative pb-28 md:pb-0 overflow-x-hidden w-full max-w-full select-none bg-[url('/durga-bg.png')] bg-cover bg-center bg-fixed bg-no-repeat before:fixed before:inset-0 before:bg-white/90 before:-z-10 before:pointer-events-none">
 
         <Toaster
           position="top-center"
@@ -79,7 +54,7 @@ export default function RootLayout({
         <GlobalClickAnimation>
           <AppProvider>
             <FestiveBackground />
-            <div className="relative z-10 w-full min-h-screen">
+            <div className="relative z-10 w-full min-h-screen bg-transparent">
               {children}
             </div>
             {/* Universal Modals (Lazy Loaded on Demand) */}

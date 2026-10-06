@@ -189,7 +189,7 @@ export default function OrganizerSetupPage() {
 
   if (isVerifying) {
     return (
-      <div className="min-h-screen bg-[#FFFDF9] flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6 text-center">
         <div className="w-10 h-10 border-3 border-marigold-500 border-t-transparent rounded-full animate-spin mb-4" />
         <p className="text-sm font-bold text-gray-800">Verifying Account Status...</p>
       </div>
@@ -197,7 +197,7 @@ export default function OrganizerSetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFFDF9] text-[#22150F] flex flex-col justify-center items-center px-4 py-8 relative selection:bg-marigold-200 selection:text-amber-950">
+    <div className="min-h-screen bg-transparent text-[#22150F] flex flex-col justify-center items-center px-4 py-8 relative selection:bg-marigold-200 selection:text-amber-950">
       {/* Background Radial Glow */}
       <div
         className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[500px] rounded-full blur-[130px] opacity-25 pointer-events-none"

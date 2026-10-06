@@ -91,7 +91,7 @@ export default function OrganizerLayout({
 
   if (isVerifying) {
     return (
-      <div className="min-h-screen bg-[#FFFDF9] flex flex-col items-center justify-center p-6 text-center">
+      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6 text-center">
         <div className="w-16 h-16 mb-4 rounded-full overflow-hidden shadow-sm border border-orange-200 flex items-center justify-center">
           <Image
             src="/logo.jpg"

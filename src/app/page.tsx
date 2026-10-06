@@ -445,7 +445,7 @@ export default function HomePage() {
                   </div>
                 ) : (
                   /* Empty state for search */
-                  <div className="p-12 text-center bg-white rounded-3xl border border-dashed border-amber-300">
+                  <div className="p-12 text-center bg-white/80 backdrop-blur-md rounded-3xl border border-dashed border-amber-300">
                     <Building2 className="w-12 h-12 text-amber-300 mx-auto mb-3" />
                     <h3 className="font-serif font-bold text-lg text-gray-800">
                       No participating pandals found

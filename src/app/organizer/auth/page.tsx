@@ -60,7 +60,7 @@ function OrganizerAuthContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFFDF9] text-[#22150F] flex flex-col justify-center items-center px-4 py-8 relative selection:bg-marigold-200 selection:text-amber-950 overflow-x-hidden">
+    <div className="min-h-screen bg-transparent text-[#22150F] flex flex-col justify-center items-center px-4 py-8 relative selection:bg-marigold-200 selection:text-amber-950 overflow-x-hidden">
       {/* Background Radial Glow */}
       <div
         className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[550px] rounded-full blur-[130px] opacity-25 pointer-events-none"
@@ -304,7 +304,7 @@ export default function OrganizerAuthPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#FFFDF9] flex items-center justify-center">
+        <div className="min-h-screen bg-transparent flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
         </div>
       }

@@ -66,7 +66,7 @@ function GatekeeperCallbackContent() {
   }, [router, searchParams]);
 
   return (
-    <div className="min-h-screen bg-[#FFFDF9] flex flex-col items-center justify-center p-6 text-center selection:bg-marigold-200">
+    <div className="min-h-screen bg-transparent flex flex-col items-center justify-center p-6 text-center selection:bg-marigold-200">
       <div className="w-16 h-16 mb-4 rounded-full overflow-hidden shadow-sm border border-orange-200 flex items-center justify-center">
         <Image
           src="/logo.jpg"
@@ -92,7 +92,7 @@ export default function GatekeeperCallbackPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#FFFDF9] flex items-center justify-center">
+        <div className="min-h-screen bg-transparent flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-amber-600 border-t-transparent rounded-full animate-spin" />
         </div>
       }

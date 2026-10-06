@@ -336,7 +336,7 @@ export default function OrganizerDashboardPage() {
   // -------------------------------------------------------------
   if (authLoading || (user && committeeLoading)) {
     return (
-      <div className="min-h-screen bg-[#FFFDF9] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-4 text-center max-w-sm">
           <div className="relative">
             <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center text-sindoor-600 shadow-inner">
@@ -364,8 +364,8 @@ export default function OrganizerDashboardPage() {
   // -------------------------------------------------------------
   if (!user) {
     return (
-      <div className="min-h-screen bg-[#FFFDF9] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl p-8 border border-amber-200 shadow-md text-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white/90 backdrop-blur-md rounded-2xl p-8 border border-amber-200 shadow-md text-center">
           <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 mx-auto mb-4">
             <Building2 className="w-7 h-7" />
           </div>
@@ -409,8 +409,8 @@ export default function OrganizerDashboardPage() {
   // -------------------------------------------------------------
   if (!committee) {
     return (
-      <div className="min-h-screen bg-[#FFFDF9] flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-2xl p-8 border border-amber-200 shadow-md text-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white/90 backdrop-blur-md rounded-2xl p-8 border border-amber-200 shadow-md text-center">
           <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mx-auto mb-4">
             <AlertCircle className="w-7 h-7 text-sindoor-600" />
           </div>
@@ -457,7 +457,7 @@ export default function OrganizerDashboardPage() {
   // FULL ACTIVE ORGANIZER DASHBOARD
   // -------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-[#FFFDF9] text-[#22150F]">
+    <div className="min-h-screen bg-transparent text-[#22150F]">
       
       {/* ------------------------------------------------------- */}
       {/* PRINT-ONLY OFFICIAL GATE POSTER (Visible on print only) */}
@@ -621,7 +621,7 @@ export default function OrganizerDashboardPage() {
           {/* --------------------------------------------------- */}
           {/* LEFT COLUMN: PANDAL DYNAMIC QR CODE SYSTEM (5 cols) */}
           {/* --------------------------------------------------- */}
-          <div className="lg:col-span-5 bg-white rounded-2xl p-6 sm:p-7 border border-amber-200/80 shadow-xs flex flex-col justify-between">
+          <div className="lg:col-span-5 bg-white/85 backdrop-blur-md rounded-2xl p-6 sm:p-7 border border-amber-200/80 shadow-xs flex flex-col justify-between">
             <div>
               
               <div className="flex items-center justify-between mb-3">
@@ -726,7 +726,7 @@ export default function OrganizerDashboardPage() {
           <div className="lg:col-span-7 space-y-6">
 
             {/* GIANT REAL-TIME VOTE COUNTER HERO CARD */}
-            <div className="bg-white rounded-2xl p-6 sm:p-8 border border-amber-200/80 shadow-xs relative overflow-hidden">
+            <div className="bg-white/85 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-amber-200/80 shadow-xs relative overflow-hidden">
               
               {/* Decorative Background Glow */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-amber-100/50 via-rose-50/30 to-transparent rounded-full blur-3xl pointer-events-none -mr-16 -mt-16"></div>
@@ -784,7 +784,7 @@ export default function OrganizerDashboardPage() {
             </div>
 
             {/* 4 CATEGORY AWARD BREAKDOWN */}
-            <div className="bg-white rounded-2xl p-6 sm:p-7 border border-amber-200/80 shadow-xs">
+            <div className="bg-white/85 backdrop-blur-md rounded-2xl p-6 sm:p-7 border border-amber-200/80 shadow-xs">
               <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700">
@@ -881,7 +881,7 @@ export default function OrganizerDashboardPage() {
             </div>
 
             {/* LIVE FEED REASSURANCE CARD */}
-            <div className="bg-white rounded-2xl p-6 border border-amber-200/80 shadow-xs">
+            <div className="bg-white/85 backdrop-blur-md rounded-2xl p-6 border border-amber-200/80 shadow-xs">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-sindoor-600" />

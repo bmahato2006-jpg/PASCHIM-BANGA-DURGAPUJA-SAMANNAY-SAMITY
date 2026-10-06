@@ -209,7 +209,7 @@ export default function PandalVotingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FFFDF9] text-[#22150F] flex flex-col justify-between selection:bg-marigold-200 selection:text-amber-950 overflow-x-hidden">
+    <div className="min-h-screen bg-transparent text-[#22150F] flex flex-col justify-between selection:bg-marigold-200 selection:text-amber-950 overflow-x-hidden">
       
       {/* Top Header / Branding */}
       <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl border-b border-amber-200/60 shadow-xs">

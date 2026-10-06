@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-[#FFFDF9] flex flex-col items-center justify-center px-4 relative z-50">
+    <div className="min-h-screen bg-transparent flex flex-col items-center justify-center px-4 relative z-50">
       
       {/* Ambient Radial Festive Glow */}
       <div 
