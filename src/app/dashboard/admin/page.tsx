@@ -260,7 +260,7 @@ export default function MasterAdminDashboardPage() {
   // -----------------------------------------------------------------
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-slate-950/95 flex items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3 text-slate-200">
           <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
           <p className="text-sm font-semibold tracking-wide">
@@ -273,7 +273,7 @@ export default function MasterAdminDashboardPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
+      <div className="min-h-screen bg-slate-950/95 flex items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
         <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl text-center space-y-6">
           <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mx-auto">
             <Lock className="w-8 h-8" />
@@ -321,7 +321,7 @@ export default function MasterAdminDashboardPage() {
   // 5. MASTER ADMIN DASHBOARD - PROFESSIONAL SLATE & INDIGO PALETTE
   // -----------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white font-sans">
+    <div className="min-h-screen bg-slate-950/95 text-slate-100 selection:bg-indigo-500 selection:text-white font-sans">
       
       {/* Top Professional Admin Bar */}
       <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 shadow-md">
