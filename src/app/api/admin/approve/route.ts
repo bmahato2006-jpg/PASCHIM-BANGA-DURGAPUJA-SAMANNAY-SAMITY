@@ -127,36 +127,42 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 5. Trigger Fast2SMS API after successful DB update
+    // 5. Trigger Fast2SMS API using JSON and the 'q' (Quick) Route
     const apiKey = process.env.FAST2SMS_API_KEY || '';
     let smsSent = false;
     let smsData: any = null;
+    const phoneToSend = resolvedPhone || String(phone || '').trim();
+    const nameToSend = resolvedName || committeeName || 'Committee';
 
-    if (apiKey && resolvedPhone) {
-      const smsMessage = `Congratulations! Your Durga Puja Committee ${resolvedName} has been approved. You can now login to view your Live Voting QR Code.`;
-      const postBody = `route=v3&sender_id=FTWSMS&message=${encodeURIComponent(smsMessage)}&language=english&flash=0&numbers=${encodeURIComponent(resolvedPhone)}`;
-
+    if (apiKey && phoneToSend) {
       try {
-        const fast2smsRes = await fetch('https://www.fast2sms.com/dev/bulkV2', {
+        const smsResponse = await fetch('https://www.fast2sms.com/dev/bulkV2', {
           method: 'POST',
           headers: {
-            authorization: apiKey,
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'authorization': apiKey,
+            'Content-Type': 'application/json',
           },
-          body: postBody,
+          body: JSON.stringify({
+            route: 'q',
+            message: `Congrats! ${nameToSend} is approved for Paschim Banga Durgapuja.`,
+            language: 'english',
+            flash: 0,
+            numbers: String(phoneToSend).trim(),
+          }),
         });
 
-        smsData = await fast2smsRes.json().catch(() => ({}));
-        console.log('Fast2SMS dispatch response:', smsData);
+        const smsResult = await smsResponse.json().catch(() => ({}));
+        console.log('Fast2SMS Response:', smsResult);
+        smsData = smsResult;
 
-        if (fast2smsRes.ok && (smsData.return === true || smsData.status_code === 200)) {
+        if (smsResponse.ok && (smsResult.return === true || smsResult.status_code === 200)) {
           smsSent = true;
         }
       } catch (smsErr) {
         console.error('Fast2SMS dispatch error:', smsErr);
       }
     } else {
-      console.warn('Fast2SMS skipped. API Key present?', !!apiKey, 'Phone present?', !!resolvedPhone);
+      console.warn('Fast2SMS skipped. API Key present?', !!apiKey, 'Phone present?', !!phoneToSend);
     }
 
     return NextResponse.json(

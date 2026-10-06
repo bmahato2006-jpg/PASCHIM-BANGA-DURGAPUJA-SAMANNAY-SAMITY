@@ -27,22 +27,23 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const messageText = `Congratulations! Your Durga Puja Committee ${committeeName} has been approved. You can now login to view your Live Voting QR Code.`;
-
-    // Construct urlencoded body according to Fast2SMS API requirements
-    const postBody = `route=v3&sender_id=FTWSMS&message=${encodeURIComponent(messageText)}&language=english&flash=0&numbers=${encodeURIComponent(cleanPhone)}`;
-
     const response = await fetch('https://www.fast2sms.com/dev/bulkV2', {
       method: 'POST',
       headers: {
-        authorization: apiKey,
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'authorization': apiKey,
+        'Content-Type': 'application/json',
       },
-      body: postBody,
+      body: JSON.stringify({
+        route: 'q',
+        message: `Congrats! ${committeeName} is approved for Paschim Banga Durgapuja.`,
+        language: 'english',
+        flash: 0,
+        numbers: String(cleanPhone).trim(),
+      }),
     });
 
     const data = await response.json().catch(() => ({}));
-    console.log('Fast2SMS API response:', data);
+    console.log('Fast2SMS Response:', data);
 
     if (response.ok && (data.return === true || data.status_code === 200)) {
       return NextResponse.json({
