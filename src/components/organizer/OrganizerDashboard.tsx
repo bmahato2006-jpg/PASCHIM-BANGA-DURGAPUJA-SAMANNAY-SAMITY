@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
+import { isSuperAdmin } from '@/lib/admin';
 import { auth, onAuthStateChanged, signOut } from '@/lib/firebase';
 import { getCommitteeByUser } from '@/lib/committeeService';
 import toast from 'react-hot-toast';
@@ -514,6 +516,17 @@ export const OrganizerDashboard: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-2.5">
+                {/* VIP Pass: Super Admin Button strictly for designated email */}
+                {isSuperAdmin(user?.email) && (
+                  <Link
+                    href="/dashboard/admin"
+                    className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-700 text-white text-xs font-black shadow-md flex items-center gap-1.5 hover:from-amber-400 hover:to-indigo-500 active:scale-95 transition border border-amber-300/40"
+                    title="সুপার অ্যাডমিন কন্ট্রোল প্যানেল (Super Admin Panel)"
+                  >
+                    <span>👑 Super Admin Panel</span>
+                  </Link>
+                )}
+
                 <button
                   type="button"
                   onClick={() => {

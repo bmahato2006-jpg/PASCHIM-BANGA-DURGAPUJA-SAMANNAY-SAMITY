@@ -62,13 +62,7 @@ interface CommitteeItem {
   resolvedVotes?: number;
 }
 
-// Configurable Admin email whitelist placeholder
-const ADMIN_EMAIL_WHITELIST = [
-  'admin@durgapur.gov.in',
-  'superadmin@durgapuja.org',
-  'president@pbds.org',
-  'bmahato2006@gmail.com'
-];
+import { SUPER_ADMIN_EMAIL, isSuperAdmin } from '@/lib/admin';
 
 export default function MasterAdminDashboardPage() {
   const router = useRouter();
@@ -87,19 +81,32 @@ export default function MasterAdminDashboardPage() {
   const [selectedWard, setSelectedWard] = useState<string>('all');
   const [votingEnabled, setVotingEnabled] = useState<boolean>(true);
 
-  // 1. Verify Authentication State
+  // 1. Verify Authentication & Enforce Strict Client-Side RBAC Guard
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setAuthLoading(false);
+
+      if (!currentUser) {
+        // Redirection Guard: unauthenticated user forced to login
+        router.replace('/organizer/auth');
+      } else if (!isSuperAdmin(currentUser.email)) {
+        // Strict RBAC Guard: non-Super Admin user rejected and redirected immediately
+        toast.error('অননুমোদিত প্রবেশাধিকার! শুধুমাত্র অনুমোদিত সুপার অ্যাডমিন প্রবেশ করতে পারবেন। (Access Denied: Super Admin only)', {
+          id: 'admin-access-denied-toast',
+          duration: 4000,
+        });
+        router.replace('/dashboard/organizer');
+      }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   // 2. Fetch all committees and pandal vote tallies via real-time onSnapshot listeners
+  // Attached STRICTLY when user is authenticated as Super Admin
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || !user || !isSuperAdmin(user.email)) return;
 
     let unsubCommittees: (() => void) | null = null;
     let unsubPandals: (() => void) | null = null;
@@ -160,7 +167,7 @@ export default function MasterAdminDashboardPage() {
       if (unsubCommittees) unsubCommittees();
       if (unsubPandals) unsubPandals();
     };
-  }, [authLoading]);
+  }, [authLoading, user]);
 
   // Dynamic ranking: calculate resolved votes and sort descending
   const rankedCommittees = useMemo(() => {
@@ -256,7 +263,7 @@ export default function MasterAdminDashboardPage() {
   };
 
   // -----------------------------------------------------------------
-  // 4. ROUTE PROTECTION: AUTH LOADING & UNAUTHENTICATED STATES
+  // 4. ROUTE PROTECTION: AUTH LOADING, UNAUTHENTICATED, & RBAC GUARDS
   // -----------------------------------------------------------------
   if (authLoading) {
     return (
@@ -264,52 +271,53 @@ export default function MasterAdminDashboardPage() {
         <div className="flex flex-col items-center gap-3 text-slate-200">
           <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
           <p className="text-sm font-semibold tracking-wide">
-            প্রশাসনিক নিরাপত্তা যাচাই করা হচ্ছে (Verifying Admin Session)...
+            সুপার অ্যাডমিন অধিবেশন যাচাই করা হচ্ছে (Verifying Super Admin Access)...
           </p>
         </div>
       </div>
     );
   }
 
-  if (!user) {
+  // Strict Client-Side RBAC Guard: Unauthenticated OR Not the Designated Super Admin
+  if (!user || !isSuperAdmin(user.email)) {
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl text-center space-y-6">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mx-auto">
+        <div className="max-w-md w-full bg-slate-900 border border-rose-500/40 rounded-3xl p-8 shadow-2xl text-center space-y-6">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mx-auto">
             <Lock className="w-8 h-8" />
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-2xl font-black tracking-tight text-white">
-              মাস্টার অ্যাডমিন লগইন প্রয়োজন
+            <h2 className="text-xl font-black tracking-tight text-white">
+              অননুমোদিত প্রবেশাধিকার (Access Denied)
             </h2>
             <p className="text-xs text-slate-400 leading-relaxed">
-              সুপার অ্যাডমিন গ্লোবাল কন্ট্রোল প্যানেল অ্যাক্সেস করতে অনুগ্রহ করে অনুমোদিত অ্যাডমিনিস্ট্রেটর অ্যাকাউন্ট দিয়ে সাইন-ইন করুন।
+              সুপার অ্যাডমিন কন্ট্রোল প্যানেল শুধুমাত্র মনোনীত সুপার অ্যাডমিন অ্যাকাউন্টের জন্য সংরক্ষিত। আপনাকে আয়োজক ড্যাশবোর্ডে পুনর্নির্দেশ করা হচ্ছে...
+            </p>
+            <p className="text-[11px] text-rose-300 font-mono mt-1">
+              (Super Admin Panel is strictly restricted. Redirecting to Organizer Dashboard...)
             </p>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400 text-left space-y-1.5 font-mono">
-            <div className="flex items-center gap-2 text-indigo-400 font-bold">
+          <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-400 text-left space-y-1 font-mono">
+            <div className="flex items-center gap-2 text-rose-400 font-bold">
               <ShieldCheck className="w-4 h-4" />
-              <span>Route Protection: Active</span>
+              <span>RBAC Security Gate: Active</span>
             </div>
-            <p>Access Level: Super Admin Control Center</p>
+            <p className="truncate">Current Session: {user?.email || 'Unauthenticated'}</p>
+            <p className="text-slate-500">Authorized: VIP Pass Only ({SUPER_ADMIN_EMAIL})</p>
           </div>
 
-          <div className="space-y-3 pt-2">
-            <Link
-              href="/organizer/auth?mode=login"
-              className="w-full py-3.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2"
-            >
-              <ShieldCheck className="w-4 h-4" />
-              অ্যাডমিন লগইন করুন (Admin Sign In)
-            </Link>
+          <div className="flex justify-center py-2">
+            <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
+          </div>
 
+          <div className="space-y-3 pt-1">
             <Link
-              href="/"
-              className="inline-block text-xs font-semibold text-slate-500 hover:text-slate-300 transition-colors"
+              href="/dashboard/organizer"
+              className="w-full py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
             >
-              ← সাধারণ ভক্তদের পাতায় ফিরুন
+              আয়োজক ড্যাশবোর্ডে ফিরে যান (Return to Organizer Dashboard)
             </Link>
           </div>
         </div>
@@ -328,16 +336,16 @@ export default function MasterAdminDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 font-black">
-              <ShieldCheck className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 via-indigo-600 to-purple-700 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 text-lg font-black">
+              👑
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base sm:text-lg font-black tracking-tight text-white leading-none">
                   মাস্টার অ্যাডমিন ড্যাশবোর্ড
                 </h1>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30">
-                  Super Admin
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                  VIP Pass Active
                 </span>
               </div>
               <span className="text-[11px] text-slate-400 font-medium">
@@ -347,13 +355,23 @@ export default function MasterAdminDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Quick Switch to Organizer Live Desk */}
+            <Link
+              href="/dashboard/organizer"
+              className="px-3 py-1.5 rounded-xl border border-indigo-500/40 hover:border-indigo-400 text-xs font-bold text-indigo-300 hover:text-white bg-indigo-950/60 hover:bg-indigo-900/60 flex items-center gap-1.5 transition-all"
+            >
+              <span>←</span>
+              <span className="hidden sm:inline">আয়োজক ডেস্ক (Organizer Desk)</span>
+              <span className="sm:hidden">ডেস্ক</span>
+            </Link>
+
             <div className="hidden md:flex flex-col text-right">
-              <span className="text-xs font-bold text-slate-200 truncate max-w-[220px]">
-                {user.email || user.displayName || 'Authorized Admin'}
+              <span className="text-xs font-bold text-amber-300 truncate max-w-[220px]">
+                {user.email || user.displayName || 'Super Admin'}
               </span>
               <span className="text-[10px] text-emerald-400 font-medium flex items-center justify-end gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                সুরক্ষিত অ্যাডমিন সেশন (Secure)
+                অনুমোদিত সুপার অ্যাডমিন (Authorized)
               </span>
             </div>
 

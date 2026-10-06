@@ -22,6 +22,7 @@ import {
   Vote
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isSuperAdmin } from '@/lib/admin';
 
 export const Navbar: React.FC<{ 
   activeTab?: string; 
@@ -176,6 +177,17 @@ export const Navbar: React.FC<{
             {/* Right Action Area */}
             <div className="flex items-center gap-2">
               
+              {/* VIP Pass: Super Admin Button strictly for designated email (Desktop) */}
+              {isSuperAdmin(user?.email) && (
+                <Link
+                  href="/dashboard/admin"
+                  className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black text-white bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-700 hover:from-amber-400 hover:to-indigo-500 shadow-md border border-amber-300/40 transition-all active:scale-95 shrink-0"
+                  title="সুপার অ্যাডমিন কন্ট্রোল প্যানেল (Super Admin Panel)"
+                >
+                  <span>👑 Super Admin Panel</span>
+                </Link>
+              )}
+
               {/* Desktop Only Actions: Hidden on Mobile */}
               {isOrganizer && user ? (
                 <div className="hidden md:flex items-center gap-2">
@@ -355,6 +367,21 @@ export const Navbar: React.FC<{
                   <LogOut className="w-4 h-4 text-red-500" />
                   <span>Sign Out (Organizer Mode)</span>
                 </button>
+              )}
+
+              {/* VIP Pass: Super Admin Button strictly for designated email (Mobile) */}
+              {isSuperAdmin(user?.email) && (
+                <Link
+                  href="/dashboard/admin"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-white bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-700 shadow-md border border-amber-300/40 touch-manipulation active:scale-[0.98]"
+                >
+                  <span className="text-base">👑</span>
+                  <div className="flex flex-col items-start leading-tight">
+                    <span>Super Admin Panel</span>
+                    <span className="text-[10px] text-amber-200">সুপার অ্যাডমিন কন্ট্রোল প্যানেল</span>
+                  </div>
+                </Link>
               )}
 
 

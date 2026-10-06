@@ -18,6 +18,7 @@ import {
   onSnapshot,
   FirebaseUser 
 } from '@/lib/firebase';
+import { isSuperAdmin } from '@/lib/admin';
 import { 
   QrCode, 
   Vote, 
@@ -193,6 +194,12 @@ export default function OrganizerDashboardPage() {
 
               // Redirection Guard: Authenticated user has NO associated committee document
               if (!isCancelled) {
+                if (isSuperAdmin(user.email)) {
+                  // Super Admin VIP pass: do not force redirect to setup
+                  setCommittee(null);
+                  setCommitteeLoading(false);
+                  return;
+                }
                 toast.error('আপনার অ্যাকাউন্টে কোনো নিবন্ধিত দুর্গাপূজা কমিটি পাওয়া যায়নি। অনুগ্রহ করে নিবন্ধন সম্পন্ন করুন। (No registered committee found. Redirecting to registration...)', {
                   id: 'no-committee-redirect-toast',
                   duration: 4000,
@@ -204,6 +211,11 @@ export default function OrganizerDashboardPage() {
             } catch (err) {
               console.error('Strict committee query error:', err);
               if (!isCancelled) {
+                if (isSuperAdmin(user.email)) {
+                  setCommittee(null);
+                  setCommitteeLoading(false);
+                  return;
+                }
                 setCommittee(null);
                 setCommitteeLoading(false);
                 router.replace('/organizer/setup');
@@ -408,6 +420,59 @@ export default function OrganizerDashboardPage() {
   // NO REGISTERED COMMITTEE FOUND STATE (REDIRECTION GUARD)
   // -------------------------------------------------------------
   if (!committee) {
+    if (isSuperAdmin(user.email)) {
+      return (
+        <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white/95 backdrop-blur-md rounded-2xl p-8 border border-amber-300 shadow-xl text-center space-y-5">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-100 to-indigo-100 border border-amber-300 flex items-center justify-center text-3xl mx-auto shadow-sm">
+              👑
+            </div>
+
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-gradient-to-r from-amber-500 to-indigo-600 text-white shadow-xs mb-2">
+                <span>VIP PASS ACTIVE</span>
+              </div>
+              <h2 className="text-xl font-black text-gray-900 tracking-tight">
+                সুপার অ্যাডমিন অধিবেশন (Super Admin Session)
+              </h2>
+              <p className="text-xs text-gray-600 mt-1">
+                লগইন করা অ্যাকাউন্ট: <strong className="text-gray-900">{user.email}</strong>
+              </p>
+              <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                আপনার কাছে সমগ্র পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতির মাস্টার কন্ট্রোল অ্যাক্সেস রয়েছে। আপনি সরাসরি সুপার অ্যাডমিন প্যানেল পরিচালনা করতে পারেন।
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-2">
+              <Link
+                href="/dashboard/admin"
+                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-700 hover:from-amber-400 hover:to-indigo-500 text-white font-black text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 border border-amber-300/40"
+              >
+                <span>👑 Super Admin Panel</span>
+                <span className="text-xs font-medium opacity-90">(মাস্টার অ্যাডমিন কন্ট্রোল)</span>
+              </Link>
+
+              <Link
+                href="/organizer/setup"
+                className="w-full py-2.5 px-4 rounded-xl border border-amber-300 text-amber-950 font-semibold text-xs hover:bg-amber-50 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Building2 className="w-3.5 h-3.5 text-amber-700" />
+                একটি টেস্ট মণ্ডপ কমিটি নিবন্ধন করুন (Register Test Committee)
+              </Link>
+
+              <button
+                onClick={handleSignOut}
+                className="w-full py-2 px-4 rounded-xl border border-gray-200 text-gray-600 font-medium text-xs hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <LogOut className="w-3.5 h-3.5 text-gray-500" />
+                লগআউট (Sign Out)
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white/90 backdrop-blur-md rounded-2xl p-8 border border-amber-200 shadow-md text-center">
@@ -537,6 +602,18 @@ export default function OrganizerDashboardPage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* VIP Pass: Super Admin Button strictly for designated email */}
+            {isSuperAdmin(user?.email) && (
+              <Link
+                href="/dashboard/admin"
+                className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-700 hover:from-amber-400 hover:to-indigo-500 text-white font-extrabold text-xs sm:text-sm shadow-md hover:shadow-lg transition-all border border-amber-300/40 group shrink-0 active:scale-95"
+                title="সুপার অ্যাডমিন কন্ট্রোল প্যানেল (Super Admin Panel)"
+              >
+                <span className="text-sm sm:text-base group-hover:scale-110 transition-transform">👑</span>
+                <span>Super Admin Panel</span>
+              </Link>
+            )}
+
             <div className="hidden md:flex flex-col text-right">
               <span className="text-xs font-bold text-gray-900 truncate max-w-[200px]">
                 {secretaryName}
@@ -596,6 +673,17 @@ export default function OrganizerDashboardPage() {
           </div>
 
           <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+            {/* VIP Pass: Super Admin Button in Hero Banner strictly for designated email */}
+            {isSuperAdmin(user?.email) && (
+              <Link
+                href="/dashboard/admin"
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 via-indigo-600 to-purple-700 hover:from-amber-400 hover:to-indigo-500 text-white border border-amber-300/40 text-xs font-black shadow-md flex items-center gap-2 transition-all active:scale-95"
+              >
+                <span>👑</span>
+                <span>Super Admin Panel</span>
+              </Link>
+            )}
+
             <Link
               href={`/vote/${committeeId}`}
               target="_blank"
