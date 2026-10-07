@@ -1,107 +1,169 @@
 rules_version = '2';
 
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: /committees/{committeeId}
+// Document ID: Committee slug or unique ID (e.g., 'bagbazar-sarbojanin')
+// Fields:
+//   - user_id: string (required, 1..128 chars, immutable) - Auth UID of registering organizer
+//   - userId: string (optional, 1..128 chars) - Query alias for user_id
+//   - uid: string (optional, 1..128 chars) - Query alias for user_id
+//   - committee_name: string (required, 1..200 chars) - Official puja committee name
+//   - slug: string (optional, 1..100 chars) - URL slug
+//   - ward: string (optional, 0..50 chars) - Ward identifier
+//   - secretary_name: string (optional, 0..100 chars) - Contact secretary name
+//   - contact_number: string (optional, 0..30 chars) - Contact telephone/mobile
+//   - email: string (optional, 0..100 chars) - Organizer email address
+//   - theme: string (optional, 0..200 chars) - Pandal theme description
+//   - budget: string (optional, 0..50 chars) - Estimated budget
+//   - status: string (optional) - Approval state ('pending', 'approved', 'rejected')
+//   - total_votes: int/number (optional) - Live vote counter
+//   - votes: map (optional) - Category vote breakdowns
+//   - updated_at: string/timestamp (optional) - ISO date string or timestamp
+//   - server_created_at: timestamp (optional) - Server timestamp at creation
+//
+// Collection: /pandals/{pandalId}
+// Document ID: Pandal slug or unique ID
+// Fields:
+//   - id: string (optional, 1..128 chars) - Pandal identifier
+//   - name: string (optional, 1..200 chars) - Pandal display name
+//   - clubName: string (optional, 1..200 chars) - Sponsoring club name
+//   - ward: string (optional, 0..50 chars) - Ward identifier
+//   - theme: string (optional, 0..200 chars) - Pandal theme
+//   - status: string (optional) - Approval state
+//   - total_votes: int/number (optional) - Aggregated vote counter
+//   - votes: map (optional) - Category vote breakdown
+//   - updated_at: string/timestamp (optional) - ISO date string or timestamp
+//   - server_created_at: timestamp (optional) - Server timestamp at creation
+//
+// Collection: /votes_log/{voteId}
+// Document ID: Composite key ({user_uid}_{pandal_id} or {user_uid}_cat_{category})
+// Fields:
+//   - id: string (optional, 1..128 chars) - Vote ID
+//   - user_uid: string (required, 1..128 chars, immutable) - Auth UID of voter
+//   - pandal_id: string (optional, 1..128 chars) - Target pandal ID
+//   - category: string (optional, 1..64 chars) - Vote category
+//   - timestamp: timestamp/string (optional) - Timestamp ballot was cast
+//
+// ===============================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ===============================================================
-    // Paschim Banga DurgaPuja Samannay Samity
-    // High-Scale Production Firestore Security Rules
-    // Engineered for Anonymous & Authenticated Voter Protection
+    // Helper Functions
     // ===============================================================
 
-    // Helper: Check if user is authenticated (standard or anonymous)
+    // Check if user is authenticated (standard or anonymous)
     function isAuthenticated() {
       return request.auth != null;
     }
 
-    // Helper: Verify voter ownership matching their Firebase UID
-    function isVoter(userId) {
+    // Check if user is the designated super admin
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.email == 'admin111205@gmail.com';
+    }
+
+    // Check if user owns the resource based on provided userId
+    function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    // ===============================================================
-    // 1. votes_log Collection
-    // ===============================================================
-    // Documents:
-    // - Primary ballot: {user_uid}_{pandal_id}
-    // - Category token lock: {user_uid}_cat_{category}
-    //
-    // Security Guarantees:
-    // - Completely prevents double-voting by requiring doc to be new
-    // - Enforces voter UID binding: request.auth.uid == user_uid
-    // - Blocks collection listing to prevent mass voter scraping
-    // - Completely immutable: update and delete are strictly denied
-    match /votes_log/{voteId} {
-      // Prohibit list queries to safeguard voter privacy
-      allow list: if false;
+    // Domain validator for committee data
+    function isValidCommitteeData(data) {
+      return data.user_id is string &&
+        data.user_id.size() > 0 &&
+        data.user_id.size() <= 128 &&
+        data.committee_name is string &&
+        data.committee_name.size() > 0 &&
+        data.committee_name.size() <= 200;
+    }
 
-      // Only the individual voter can inspect their own cast ballot
-      allow get: if isVoter(resource.data.user_uid);
+    // ===============================================================
+    // 1. committees Collection
+    // ===============================================================
+    // Durga Puja Committees & Club Organizers
+    match /committees/{committeeId} {
+      // Read: Publicly readable by anyone
+      allow read: if true;
 
-      // Create ballot document:
-      // Must be authenticated, UID must match, and document must NOT already exist
+      // Create: Only authenticated organizer matching request.auth.uid == request.resource.data.user_id
+      // with valid data, and cannot set status: 'approved' directly (default pending)
       allow create: if isAuthenticated() &&
-                      request.auth.uid == request.resource.data.user_uid &&
-                      !exists(/databases/$(database)/documents/votes_log/$(voteId)) &&
-                      request.resource.data.user_uid is string &&
-                      request.resource.data.user_uid.size() > 0 &&
-                      (!('pandal_id' in request.resource.data) || request.resource.data.pandal_id is string) &&
-                      (!('category' in request.resource.data) || request.resource.data.category is string);
+                      request.auth.uid == request.resource.data.user_id &&
+                      isValidCommitteeData(request.resource.data) &&
+                      (!('status' in request.resource.data) || request.resource.data.status != 'approved');
 
-      // Ballots cannot be modified or retracted once cast
-      allow update, delete: if false;
+      // Update:
+      // a) Admin (isAdmin()): Allowed to update any field (including approving status).
+      // b) Organizer (isOwner(resource.data.user_id)): Can update their own committee details,
+      //    cannot modify status, and cannot transfer ownership.
+      // c) Vote increment: Users/voters can ONLY increment total_votes by exactly 1,
+      //    cannot touch status, and only affect vote-related keys.
+      allow update: if isAdmin() ||
+                      (
+                        isOwner(resource.data.user_id) &&
+                        request.resource.data.user_id == resource.data.user_id &&
+                        isValidCommitteeData(request.resource.data) &&
+                        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])
+                      ) ||
+                      (
+                        request.resource.data.total_votes == resource.data.get('total_votes', 0) + 1 &&
+                        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']) &&
+                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['total_votes', 'votes', 'updated_at'])
+                      );
+
+      // Delete: Only Admin (isAdmin())
+      allow delete: if isAdmin();
     }
 
     // ===============================================================
     // 2. pandals Collection
     // ===============================================================
     // Pandal profiles and live leaderboard counters
-    //
-    // Fields:
-    // - total_votes: integer counter
-    // - votes: map containing category votes (e.g. idol, theme, lighting, eco)
-    // - updated_at: server timestamp
     match /pandals/{pandalId} {
-      // Publicly readable by everyone (voters, guests, leaderboard ranking)
+      // Read: Publicly readable by anyone
       allow read: if true;
 
-      // Creation allowed by authenticated users or initial seeding
+      // Create: Authenticated users or initial seeding
       allow create: if isAuthenticated() ||
                       resource == null ||
                       !exists(/databases/$(database)/documents/pandals/$(pandalId));
 
-      // Updates strictly enforce atomic increment by exactly 1 on total_votes
-      // Handles both existing pandals and documents with initial total_votes = 0
-      allow update: if (
-        request.resource.data.total_votes == resource.data.get('total_votes', 0) + 1
-      );
+      // Update: Only allow total_votes to be incremented strictly by 1 (or admin maintenance)
+      allow update: if isAdmin() ||
+                      request.resource.data.total_votes == resource.data.get('total_votes', 0) + 1;
 
-      // Super Admin can delete pandals
-      allow delete: if isAuthenticated() && request.auth.token.email == 'admin111205@gmail.com';
+      // Delete: Only Admin (isAdmin())
+      allow delete: if isAdmin();
     }
 
     // ===============================================================
-    // 3. committees Collection
+    // 3. votes_log Collection
     // ===============================================================
-    // Registered Durga Puja Committees & Club Organizers
-    match /committees/{committeeId} {
-      // Publicly readable for visitor pandal exploration
-      allow read: if true;
+    // Ballots and category token locks
+    match /votes_log/{voteId} {
+      // List: Prohibited to safeguard voter privacy and prevent scraping
+      allow list: if false;
 
-      // Only authenticated organizer matching user_id can create or update
+      // Get: Allowed only for voter owner (request.auth.uid == resource.data.user_uid)
+      allow get: if isAuthenticated() && request.auth.uid == resource.data.user_uid;
+
+      // Create: Authenticated voter where request.auth.uid == request.resource.data.user_uid
+      // and document does not already exist
       allow create: if isAuthenticated() &&
-                      request.auth.uid == request.resource.data.user_id &&
-                      request.resource.data.user_id is string &&
-                      request.resource.data.committee_name is string;
+                      request.auth.uid == request.resource.data.user_uid &&
+                      !exists(/databases/$(database)/documents/votes_log/$(voteId)) &&
+                      request.resource.data.user_uid is string &&
+                      request.resource.data.user_uid.size() > 0 &&
+                      request.resource.data.user_uid.size() <= 128 &&
+                      (!('pandal_id' in request.resource.data) || (request.resource.data.pandal_id is string && request.resource.data.pandal_id.size() <= 128)) &&
+                      (!('category' in request.resource.data) || (request.resource.data.category is string && request.resource.data.category.size() <= 64));
 
-      // Organizer or Super Admin (admin111205@gmail.com) can update committees
-      allow update: if isAuthenticated() && (
-                      (request.auth.uid == resource.data.user_id && request.resource.data.user_id == resource.data.user_id) ||
-                      request.auth.token.email == 'admin111205@gmail.com'
-                    );
-
-      // Super Admin can delete committees
-      allow delete: if isAuthenticated() && request.auth.token.email == 'admin111205@gmail.com';
+      // Update, Delete: Denied (ballots are strictly immutable)
+      allow update, delete: if false;
     }
 
     // ===============================================================

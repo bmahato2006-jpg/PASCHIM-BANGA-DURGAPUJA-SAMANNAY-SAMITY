@@ -117,8 +117,13 @@ export default function VoterPanelPage() {
     getOrSignInAnonymousUser().catch(() => {});
 
     if (typeof window !== 'undefined' && rawId) {
-      // Check if this pandal has already been voted for
-      const isPandalVoted = localStorage.getItem(`hasVoted_${rawId}`) === 'true';
+      // Check if this committee has already been voted for (via localStorage or persistent cookie)
+      let isPandalVoted = localStorage.getItem(`hasVoted_${rawId}`) === 'true';
+      if (!isPandalVoted && document.cookie) {
+        isPandalVoted = document.cookie
+          .split(';')
+          .some((c) => c.trim().startsWith(`hasVoted_${rawId}=true`));
+      }
       setHasVotedThisPandal(isPandalVoted);
 
       // Check exhausted category tokens
@@ -237,10 +242,15 @@ export default function VoterPanelPage() {
           localStorage.setItem(`hasVoted_${rawId}`, 'true');
           localStorage.setItem(`exhaustedCategory_${category.id}`, 'true');
           localStorage.setItem(`votedCategory_${rawId}`, `${category.bengali} (${category.name})`);
+          document.cookie = `hasVoted_${rawId}=true; path=/; max-age=31536000; SameSite=Lax`;
         } catch {}
       } else if (res.status === 409) {
         toast.error(data.message || 'আপনি ইতোমধ্যে এই পূজাকে ভোট প্রদান করেছেন বা এই টোকেনটি ব্যবহার করেছেন। (Already voted or token used)');
         setHasVotedThisPandal(true);
+        try {
+          localStorage.setItem(`hasVoted_${rawId}`, 'true');
+          document.cookie = `hasVoted_${rawId}=true; path=/; max-age=31536000; SameSite=Lax`;
+        } catch {}
       } else {
         toast.error(data.message || 'ভোট জমা দিতে ব্যর্থ হয়েছে। অনুগ্রহ করে পুনরায় চেষ্টা করুন। (Unable to record vote)');
       }
@@ -329,17 +339,53 @@ export default function VoterPanelPage() {
               )}
             </div>
 
-            {/* Voting Status / Prompt */}
-            <div className="pt-1">
-              {hasVotedThisPandal && isMounted ? (
-                <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center justify-center gap-2 shadow-2xs">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>
-                    আপনি এই পূজাকে ভোট প্রদান করেছেন: <strong>{votedCategoryName || 'মূল্যবান ভোট'}</strong>
-                  </span>
+            {/* Voting Status / Already Voted State vs Voting Cards */}
+            {hasVotedThisPandal && isMounted ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="py-8 px-6 sm:px-8 rounded-3xl bg-gradient-to-b from-emerald-50/90 via-white to-amber-50/40 border border-emerald-200/90 shadow-sm text-center space-y-4"
+              >
+                <div className="w-16 h-16 rounded-full bg-emerald-100 border-2 border-emerald-300 flex items-center justify-center mx-auto text-emerald-600 shadow-2xs">
+                  <CheckCircle2 className="w-9 h-9" />
                 </div>
-              ) : (
-                <div className="space-y-0.5">
+
+                <div className="space-y-1.5">
+                  <h2 className="text-lg sm:text-xl font-serif font-black text-gray-900 tracking-tight leading-snug">
+                    ধন্যবাদ! আপনি ইতোমধ্যে এই কমিটিকে ভোট প্রদান করেছেন।
+                  </h2>
+                  <p className="text-xs sm:text-sm font-bold text-emerald-800">
+                    Thank you! You have already voted for this committee.
+                  </p>
+                  {votedCategoryName && (
+                    <div className="pt-2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100/70 text-emerald-900 border border-emerald-300/80">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+                        <span>প্রদত্ত ভোট: {votedCategoryName}</span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                  <Link
+                    href="/"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-sindoor-600 hover:bg-sindoor-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95 touch-manipulation"
+                  >
+                    <QrCode className="w-4 h-4" />
+                    <span>অন্যান্য মণ্ডপ স্ক্যান করুন (Scan Other Pandals)</span>
+                  </Link>
+                </div>
+
+                <div className="pt-2 text-[11px] text-gray-500 flex items-center justify-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>ডিভাইস নিরাপত্তা যাচাইকৃত • ১ ডিভাইসে ১ ভোট নিয়ম কার্যকর</span>
+                </div>
+              </motion.div>
+            ) : (
+              <>
+                <div className="space-y-0.5 pt-1">
                   <p className="text-xs sm:text-sm font-bold text-gray-800">
                     এই পূজাকে সম্মানিত করতে নিচের ১টি বিভাগ বেছে নিন:
                   </p>
@@ -347,92 +393,85 @@ export default function VoterPanelPage() {
                     (Select 1 category token below to cast your verified ballot)
                   </p>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* The 4 Gamified Category Voting Cards */}
-          <div className="space-y-3 pt-1">
-            {CATEGORIES.map((cat) => {
-              const isExhausted = isMounted && exhaustedTokens.includes(cat.id);
-              const isCurrentSubmitting = isSubmitting && activeCategory === cat.id;
-              const isDisabled = isSubmitting || (isMounted && (hasVotedThisPandal || isExhausted));
+                {/* The 4 Gamified Category Voting Cards */}
+                <div className="space-y-3 pt-3">
+                  {CATEGORIES.map((cat) => {
+                    const isExhausted = isMounted && exhaustedTokens.includes(cat.id);
+                    const isCurrentSubmitting = isSubmitting && activeCategory === cat.id;
+                    const isDisabled = isSubmitting || (isMounted && isExhausted);
 
-              return (
-                <motion.button
-                  key={cat.id}
-                  whileHover={!isDisabled ? { scale: 1.015 } : {}}
-                  whileTap={!isDisabled ? { scale: 0.96 } : {}}
-                  onClick={() => handleVote(cat)}
-                  disabled={isDisabled}
-                  className={`w-full min-h-[72px] sm:min-h-[78px] px-4 sm:px-5 py-3.5 rounded-2xl border transition-all text-left flex items-center justify-between group relative overflow-hidden touch-manipulation ${
-                    isDisabled
-                      ? 'bg-gray-100/70 border-gray-200 opacity-60 cursor-not-allowed'
-                      : `bg-white/85 backdrop-blur-md border-amber-200/80 shadow-xs hover:shadow-lg active:scale-95 duration-75 ${cat.borderHover}`
-                  }`}
-                >
-                  {/* Subtle Gradient Accent */}
-                  {!isDisabled && (
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-r ${cat.gradient} opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}
-                    />
-                  )}
+                    return (
+                      <motion.button
+                        key={cat.id}
+                        whileHover={!isDisabled ? { scale: 1.015 } : {}}
+                        whileTap={!isDisabled ? { scale: 0.96 } : {}}
+                        onClick={() => handleVote(cat)}
+                        disabled={isDisabled}
+                        className={`w-full min-h-[72px] sm:min-h-[78px] px-4 sm:px-5 py-3.5 rounded-2xl border transition-all text-left flex items-center justify-between group relative overflow-hidden touch-manipulation ${
+                          isDisabled
+                            ? 'bg-gray-100/70 border-gray-200 opacity-60 cursor-not-allowed'
+                            : `bg-white/85 backdrop-blur-md border-amber-200/80 shadow-xs hover:shadow-lg active:scale-95 duration-75 ${cat.borderHover}`
+                        }`}
+                      >
+                        {/* Subtle Gradient Accent */}
+                        {!isDisabled && (
+                          <div
+                            className={`absolute inset-0 bg-gradient-to-r ${cat.gradient} opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}
+                          />
+                        )}
 
-                  {/* Left: Icon & Category Titles */}
-                  <div className="flex items-center gap-3.5 relative z-10">
-                    <div
-                      className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 shadow-2xs transition-transform group-hover:scale-105 ${
-                        isDisabled ? 'bg-gray-200 text-gray-400' : cat.iconBg
-                      }`}
-                    >
-                      {isCurrentSubmitting ? (
-                        <Loader2 className="w-5 h-5 animate-spin text-sindoor-600" />
-                      ) : (
-                        cat.icon
-                      )}
-                    </div>
+                        {/* Left: Icon & Category Titles */}
+                        <div className="flex items-center gap-3.5 relative z-10">
+                          <div
+                            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 shadow-2xs transition-transform group-hover:scale-105 ${
+                              isDisabled ? 'bg-gray-200 text-gray-400' : cat.iconBg
+                            }`}
+                          >
+                            {isCurrentSubmitting ? (
+                              <Loader2 className="w-5 h-5 animate-spin text-sindoor-600" />
+                            ) : (
+                              cat.icon
+                            )}
+                          </div>
 
-                    <div>
-                      <h2 className="text-base sm:text-lg font-black text-gray-900 tracking-tight leading-snug">
-                        {cat.bengali}
-                      </h2>
-                      <p className="text-xs text-amber-800 font-medium">
-                        {cat.name}
-                      </p>
-                    </div>
-                  </div>
+                          <div>
+                            <h2 className="text-base sm:text-lg font-black text-gray-900 tracking-tight leading-snug">
+                              {cat.bengali}
+                            </h2>
+                            <p className="text-xs text-amber-800 font-medium">
+                              {cat.name}
+                            </p>
+                          </div>
+                        </div>
 
-                  {/* Right: State / Badge */}
-                  <div className="relative z-10 text-right shrink-0">
-                    {isCurrentSubmitting ? (
-                      <span className="text-xs font-bold text-sindoor-600 bg-sindoor-50 px-3 py-1 rounded-full border border-sindoor-200 flex items-center gap-1">
-                        <Loader2 className="w-3 h-3 animate-spin" />
-                        <span>জমা হচ্ছে...</span>
-                      </span>
-                    ) : isExhausted ? (
-                      <div className="flex flex-col items-end">
-                        <span className="text-[11px] font-bold text-gray-600 bg-gray-200/80 px-2.5 py-0.5 rounded-full">
-                          ব্যবহৃত
-                        </span>
-                        <span className="text-[9px] text-gray-400">(Used)</span>
-                      </div>
-                    ) : hasVotedThisPandal && isMounted ? (
-                      <div className="flex flex-col items-end">
-                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                          ভোট সম্পন্ন
-                        </span>
-                        <span className="text-[9px] text-emerald-600">(Voted)</span>
-                      </div>
-                    ) : (
-                      <span className="text-xs font-black text-sindoor-600 group-hover:text-sindoor-700 bg-sindoor-50/80 group-hover:bg-sindoor-100/90 px-3 py-1.5 rounded-xl border border-sindoor-200/70 transition-all flex items-center gap-1 shadow-2xs">
-                        <span>ভোট দিন</span>
-                        <span className="text-[10px] font-normal opacity-80">(Vote)</span>
-                      </span>
-                    )}
-                  </div>
-                </motion.button>
-              );
-            })}
+                        {/* Right: State / Badge */}
+                        <div className="relative z-10 text-right shrink-0">
+                          {isCurrentSubmitting ? (
+                            <span className="text-xs font-bold text-sindoor-600 bg-sindoor-50 px-3 py-1 rounded-full border border-sindoor-200 flex items-center gap-1.5 shadow-2xs">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <span>জমা হচ্ছে...</span>
+                            </span>
+                          ) : isExhausted ? (
+                            <div className="flex flex-col items-end">
+                              <span className="text-[11px] font-bold text-gray-600 bg-gray-200/80 px-2.5 py-0.5 rounded-full">
+                                ব্যবহৃত
+                              </span>
+                              <span className="text-[9px] text-gray-400">(Used)</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs font-black text-sindoor-600 group-hover:text-sindoor-700 bg-sindoor-50/80 group-hover:bg-sindoor-100/90 px-3 py-1.5 rounded-xl border border-sindoor-200/70 transition-all flex items-center gap-1 shadow-2xs">
+                              <span>ভোট দিন</span>
+                              <span className="text-[10px] font-normal opacity-80">(Vote)</span>
+                            </span>
+                          )}
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Security & Token Rule Note */}
