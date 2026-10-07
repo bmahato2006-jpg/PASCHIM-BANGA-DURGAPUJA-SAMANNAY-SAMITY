@@ -407,44 +407,68 @@ export default function MasterAdminDashboardPage() {
     }
   };
 
-  // Export audit table as CSV
-  const handleExportCSV = () => {
-    if (rankedCommittees.length === 0) {
-      toast.error('রপ্তানি করার মতো কোনো ডেটা নেই (No data to export)');
+  // Convert committees state array to CSV string format and trigger browser download
+  const handleDownloadCSV = () => {
+    if (!committees || committees.length === 0) {
+      toast.error('ডাউনলোড করার মতো কোনো কমিটি ডেটা নেই (No committee data to download)');
       return;
     }
 
     const headers = [
-      'Rank',
+      'Sl No',
       'Committee ID',
       'Committee Name',
-      'Location / Ward',
-      'Status',
-      'Contact Number',
+      'Ward / Location',
+      'Secretary Name',
+      'Phone / Contact Number',
+      'Email',
       'Theme',
+      'Status',
       'Total Votes',
+      'Idol Votes',
+      'Theme Votes',
+      'Lighting Votes',
+      'Eco Votes',
     ];
-    const rows = rankedCommittees.map((c, index) => [
-      index + 1,
-      `"${c.id}"`,
-      `"${c.committee_name || ''}"`,
-      `"${c.ward || ''}"`,
-      `"${c.status || 'pending'}"`,
-      `"${c.contact_number || c.phone || ''}"`,
-      `"${c.theme || ''}"`,
-      c.resolvedVotes || 0,
-    ]);
 
-    const csvContent =
-      'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
+    const escapeCsv = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = committees.map((c, index) => {
+      const liveTotal = pandalVotes[c.id] !== undefined ? pandalVotes[c.id] : (c.total_votes || c.resolvedVotes || 0);
+      return [
+        index + 1,
+        escapeCsv(c.id),
+        escapeCsv(c.committee_name || c.name || c.clubName || ''),
+        escapeCsv(c.ward || ''),
+        escapeCsv(c.secretary_name || ''),
+        escapeCsv(c.phone || c.contact_number || ''),
+        escapeCsv(c.email || ''),
+        escapeCsv(c.theme || ''),
+        escapeCsv(c.status || 'pending'),
+        liveTotal,
+        c.votes?.idol || 0,
+        c.votes?.theme || 0,
+        c.votes?.lighting || 0,
+        c.votes?.eco || 0,
+      ].join(',');
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `durgapuja_audit_leaderboard_${new Date().toISOString().split('T')[0]}.csv`);
+    link.href = url;
+    link.setAttribute('download', `durgapuja_committees_data_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('অডিট সিএসভি সফলভাবে ডাউনলোড হয়েছে (CSV Exported Successfully)!');
+    URL.revokeObjectURL(url);
+
+    toast.success('কমিটি ডেটা (CSV) সফলভাবে ডাউনলোড হয়েছে (CSV Downloaded Successfully)!');
   };
 
   // -----------------------------------------------------------------
@@ -544,7 +568,17 @@ export default function MasterAdminDashboardPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Download Data (CSV) Button near top */}
+            <button
+              onClick={handleDownloadCSV}
+              className="px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-xs font-bold text-emerald-800 flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs"
+              title="Download Data (CSV)"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Download Data (CSV)</span>
+            </button>
+
             {/* Quick Switch to Organizer Live Desk */}
             <Link
               href="/dashboard/organizer"
@@ -599,7 +633,15 @@ export default function MasterAdminDashboardPage() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 self-start sm:self-auto">
+            <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+              <button
+                onClick={handleDownloadCSV}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold shadow-sm hover:shadow transition-all active:scale-95"
+              >
+                <Download className="w-3.5 h-3.5 text-amber-300" />
+                <span>Download Data (CSV)</span>
+              </button>
+
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                 <span>লাইভ ফায়ারস্টোর সিঙ্ক (Live Sync)</span>
@@ -779,11 +821,11 @@ export default function MasterAdminDashboardPage() {
               </button>
 
               <button
-                onClick={handleExportCSV}
+                onClick={handleDownloadCSV}
                 className="px-4 py-2.5 rounded-xl bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-sm active:scale-95"
               >
                 <Download className="w-4 h-4 text-amber-300" />
-                <span>অডিট লগ ডাউনলোড (Export CSV)</span>
+                <span>Download Data (CSV)</span>
               </button>
             </div>
           </div>

@@ -10,6 +10,7 @@
     "db:setup": "node scripts/setup-db.js"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "firebase": "^12.19.0",
