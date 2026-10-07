@@ -444,25 +444,41 @@ export default function HomePage() {
                     ))}
                   </div>
                 ) : (
-                  /* Empty state for search */
-                  <div className="p-12 text-center bg-white/80 backdrop-blur-md rounded-3xl border border-dashed border-amber-300">
+                  /* Empty state for search or clean initial database */
+                  <div className="p-12 text-center bg-white/80 backdrop-blur-md rounded-3xl border border-dashed border-amber-300 space-y-2">
                     <Building2 className="w-12 h-12 text-amber-300 mx-auto mb-3" />
                     <h3 className="font-serif font-bold text-lg text-gray-800">
-                      No participating pandals found
+                      {pandals.length === 0 
+                        ? 'এখনও কোনো মণ্ডপ নিবন্ধিত হয়নি' 
+                        : 'কোনো মণ্ডপ খুঁজে পাওয়া যায়নি'}
                     </h3>
-                    <p className="text-xs text-gray-500 mt-1 max-w-sm mx-auto">
-                      Try searching with a different name or select &ldquo;All Wards&rdquo; to view the complete directory.
+                    <p className="text-xs sm:text-sm font-semibold text-sindoor-700">
+                      {pandals.length === 0 
+                        ? 'No pandals registered yet' 
+                        : 'No matching pandals found'}
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearchQuery('');
-                        setSelectedWard('all');
-                      }}
-                      className="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-sindoor-600 bg-amber-50 border border-amber-200 hover:bg-amber-100"
-                    >
-                      Reset Filters
-                    </button>
+                    <p className="text-xs text-gray-500 max-w-sm mx-auto pt-1 leading-relaxed">
+                      {pandals.length === 0
+                        ? 'পূজা কমিটিগুলি বর্তমানে নিবন্ধনের প্রক্রিয়ায় রয়েছে। অনুমোদিত মণ্ডপগুলি এখানে সরাসরি প্রদর্শিত হবে।'
+                        : 'অন্য কোনো নাম বা এলাকা দিয়ে অনুসন্ধান করুন অথবা সম্পূর্ণ তালিকা দেখতে সব ওয়ার্ড নির্বাচন করুন।'}
+                    </p>
+                    <p className="text-[11px] text-gray-400 max-w-sm mx-auto">
+                      {pandals.length === 0
+                        ? '(Committees are currently registering for official evaluation. Approved pandals will appear here automatically.)'
+                        : '(Try searching with a different name or select "All Wards" to view the complete directory.)'}
+                    </p>
+                    {pandals.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearchQuery('');
+                          setSelectedWard('all');
+                        }}
+                        className="mt-4 px-4 py-2 rounded-xl text-xs font-bold text-sindoor-600 bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-all"
+                      >
+                        ফিল্টার রিসেট করুন (Reset Filters)
+                      </button>
+                    )}
                   </div>
                 )}
               </section>

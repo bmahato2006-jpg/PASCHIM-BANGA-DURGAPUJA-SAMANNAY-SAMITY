@@ -105,6 +105,8 @@ export default function VoterPanelPage() {
 
   // Real Committee info from Firestore
   const [committeeDetails, setCommitteeDetails] = useState<CommitteeDetails | null>(null);
+  const [isLoadingInfo, setIsLoadingInfo] = useState(true);
+  const [committeeNotFound, setCommitteeNotFound] = useState(false);
 
   // Local device state for instant feedback
   const [hasVotedThisPandal, setHasVotedThisPandal] = useState(false);
@@ -146,6 +148,7 @@ export default function VoterPanelPage() {
 
       // Fetch official committee document if exists
       const fetchCommitteeInfo = async () => {
+        setIsLoadingInfo(true);
         try {
           // Check committees collection
           const commSnap = await getDoc(doc(db, 'committees', rawId));
@@ -156,6 +159,8 @@ export default function VoterPanelPage() {
               ward: data.ward,
               theme: data.theme,
             });
+            setCommitteeNotFound(false);
+            setIsLoadingInfo(false);
             return;
           }
 
@@ -168,13 +173,24 @@ export default function VoterPanelPage() {
               ward: pData.ward || pData.zone,
               theme: pData.theme,
             });
+            setCommitteeNotFound(false);
+            setIsLoadingInfo(false);
+            return;
           }
+
+          // If neither exists, mark as not found
+          setCommitteeNotFound(true);
+          setIsLoadingInfo(false);
         } catch (e) {
           console.warn('Could not fetch committee doc:', e);
+          setIsLoadingInfo(false);
         }
       };
 
       fetchCommitteeInfo();
+    } else {
+      setIsLoadingInfo(false);
+      setCommitteeNotFound(true);
     }
   }, [rawId, fallbackName]);
 
@@ -320,27 +336,76 @@ export default function VoterPanelPage() {
             </div>
 
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-serif font-black text-gray-900 tracking-tight leading-snug">
-              {displayName}
+              {committeeNotFound ? 'মণ্ডপ খুঁজে পাওয়া যায়নি (Pandal Not Found)' : displayName}
             </h1>
 
             {/* Ward / Zone and Theme Badges if available */}
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-0.5">
-              {committeeDetails?.ward && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 border border-amber-200 text-amber-900">
-                  <MapPin className="w-3 h-3 text-amber-600" />
-                  <span>{committeeDetails.ward}</span>
-                </span>
-              )}
-              {committeeDetails?.theme && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 border border-orange-200 text-orange-900">
-                  <Sparkle className="w-3 h-3 text-orange-600" />
-                  <span>ভাবনা: {committeeDetails.theme}</span>
-                </span>
-              )}
-            </div>
+            {!committeeNotFound && (
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-0.5">
+                {committeeDetails?.ward && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 border border-amber-200 text-amber-900">
+                    <MapPin className="w-3 h-3 text-amber-600" />
+                    <span>{committeeDetails.ward}</span>
+                  </span>
+                )}
+                {committeeDetails?.theme && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 border border-orange-200 text-orange-900">
+                    <Sparkle className="w-3 h-3 text-orange-600" />
+                    <span>ভাবনা: {committeeDetails.theme}</span>
+                  </span>
+                )}
+              </div>
+            )}
 
-            {/* Voting Status / Already Voted State vs Voting Cards */}
-            {hasVotedThisPandal && isMounted ? (
+            {/* Loading / Pandal Not Found / Already Voted State vs Voting Cards */}
+            {isLoadingInfo ? (
+              <div className="py-12 flex flex-col items-center justify-center text-center space-y-3">
+                <Loader2 className="w-8 h-8 text-sindoor-600 animate-spin" />
+                <p className="text-xs sm:text-sm font-bold text-gray-700">মণ্ডপের বিবরণ যাচাই করা হচ্ছে...</p>
+                <p className="text-[11px] text-gray-400 font-medium">(Verifying pandal details from registry...)</p>
+              </div>
+            ) : committeeNotFound ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="py-8 px-6 sm:px-8 rounded-3xl bg-gradient-to-b from-amber-50/90 via-white to-orange-50/40 border border-amber-300/80 shadow-sm text-center space-y-4"
+              >
+                <div className="w-16 h-16 rounded-full bg-amber-100 border-2 border-amber-300 flex items-center justify-center mx-auto text-amber-700 shadow-2xs">
+                  <Building2 className="w-8 h-8" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <h2 className="text-lg sm:text-xl font-serif font-black text-gray-900 tracking-tight leading-snug">
+                    এই মণ্ডপটি এখনও নিবন্ধিত হয়নি
+                  </h2>
+                  <p className="text-xs sm:text-sm font-bold text-amber-900">
+                    This pandal is not registered yet
+                  </p>
+                  <p className="text-xs text-gray-600 max-w-sm mx-auto pt-1 leading-relaxed">
+                    পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতির অফিসিয়াল তালিকায় এই মণ্ডপটি এখনও তালিকাভুক্ত হয়নি বা অনুমোদন অপেক্ষমান রয়েছে।
+                  </p>
+                  <p className="text-[11px] text-gray-400 max-w-sm mx-auto">
+                    (This pandal is not yet registered or is awaiting administrative approval in the official directory.)
+                  </p>
+                </div>
+
+                <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+                  <Link
+                    href="/"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-sindoor-600 hover:bg-sindoor-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95 touch-manipulation"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>মূল পাতায় ফিরে যান (Back to Homepage)</span>
+                  </Link>
+                </div>
+
+                <div className="pt-2 text-[11px] text-gray-500 flex items-center justify-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                  <span>অফিসিয়াল যাচাইকরণ সক্রিয় • অননুমোদিত ভোটিং প্রতিহত</span>
+                </div>
+              </motion.div>
+            ) : hasVotedThisPandal && isMounted ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}

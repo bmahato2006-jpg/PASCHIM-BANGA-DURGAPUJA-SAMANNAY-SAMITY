@@ -25,7 +25,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export const LiveLeaderboard: React.FC<{ limit?: number }> = ({ limit = 5 }) => {
   const { pandals, openVotingModal, castVote, isOrganizer } = useApp();
   const [selectedFilter, setSelectedFilter] = useState<'overall' | VoteCategory>('overall');
-  const [isSimulatingLiveVotes, setIsSimulatingLiveVotes] = useState(true);
+  const [isSimulatingLiveVotes, setIsSimulatingLiveVotes] = useState(false);
   const [firestorePandals, setFirestorePandals] = useState<Pandal[]>([]);
 
   // Direct Firestore Leaderboard Query (Top 50 ordered by total_votes desc)
@@ -76,6 +76,8 @@ export const LiveLeaderboard: React.FC<{ limit?: number }> = ({ limit = 5 }) => 
             });
           });
           setFirestorePandals(list);
+        } else {
+          setFirestorePandals([]);
         }
       }, (err) => {
         console.warn('Firestore live leaderboard listener notice:', err);
@@ -278,150 +280,165 @@ export const LiveLeaderboard: React.FC<{ limit?: number }> = ({ limit = 5 }) => 
           </div>
         </div>
 
-        {/* FLUID GLIDING LEADERBOARD LIST WITH SMOOTH STAGGER CHILDREN */}
-        <motion.div
-          layout
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: { opacity: 0 },
-            visible: {
-              opacity: 1,
-              transition: {
-                staggerChildren: 0.08,
+        {/* FLUID GLIDING LEADERBOARD LIST OR CLEAN EMPTY STATE */}
+        {topPandals.length === 0 ? (
+          <div className="p-10 sm:p-12 text-center bg-white/80 backdrop-blur-md rounded-2xl sm:rounded-3xl border border-dashed border-amber-300 space-y-2 relative z-10">
+            <Trophy className="w-10 h-10 text-amber-300 mx-auto mb-2" />
+            <h3 className="font-serif font-bold text-base sm:text-lg text-gray-800">
+              এখনও কোনো মণ্ডপ তালিকাভুক্ত হয়নি
+            </h3>
+            <p className="text-xs text-gray-500 max-w-sm mx-auto">
+              লাইভ লিডারবোর্ডে এখনও কোনো মণ্ডপ ভোট পায়নি। ভোট গ্রহণ শুরু হলে ফলাফল এখানে রিয়েল-টাইমে প্রকাশিত হবে।
+            </p>
+            <p className="text-[11px] text-gray-400">
+              (No pandals registered in the live leaderboard yet. Standings will appear once votes are recorded.)
+            </p>
+          </div>
+        ) : (
+          <motion.div
+            layout
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.08,
+                },
               },
-            },
-          }}
-          className="space-y-3 relative z-10"
-        >
-          <AnimatePresence mode="popLayout">
-            {topPandals.map((pandal, index) => {
-              const votesForCategory = selectedFilter === 'overall' 
-                ? pandal.totalVotes 
-                : (pandal.votes[selectedFilter] || 0);
+            }}
+            className="space-y-3 relative z-10"
+          >
+            <AnimatePresence mode="popLayout">
+              {topPandals.map((pandal, index) => {
+                const votesForCategory = selectedFilter === 'overall' 
+                  ? pandal.totalVotes 
+                  : (pandal.votes[selectedFilter] || 0);
 
-              const votePercent = Math.min(100, Math.round((votesForCategory / (maxVotes || 1)) * 100));
-              const isRankOne = index === 0;
+                const votePercent = Math.min(100, Math.round((votesForCategory / (maxVotes || 1)) * 100));
+                const isRankOne = index === 0;
 
-              return (
-                <motion.div
-                  key={pandal.id}
-                  layout="position"
-                  variants={{
-                    hidden: { opacity: 0, y: 24, scale: 0.96 },
-                    visible: { 
-                      opacity: 1, 
-                      y: 0, 
-                      scale: 1,
-                      transition: {
-                        type: 'spring',
-                        stiffness: 350,
-                        damping: 28,
-                      }
-                    },
-                  }}
-                  whileHover={{ scale: 1.015, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className={`rounded-2xl p-3.5 sm:p-4.5 border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group relative overflow-hidden ${
-                    isRankOne
-                      ? 'bg-gradient-to-r from-amber-50/95 via-white/95 to-amber-50/90 border-2 border-amber-400 radiating-aura-gold'
-                      : 'bg-white/85 backdrop-blur-md border-amber-200/60 shadow-xs hover:shadow-md diya-glow-hover'
-                  }`}
-                >
-                  {/* Radiating subtle golden sweep for Rank #1 */}
-                  {isRankOne && (
-                    <motion.div
-                      animate={{ x: ['-100%', '200%'] }}
-                      transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
-                      className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-200/30 to-transparent pointer-events-none"
-                    />
-                  )}
+                return (
+                  <motion.div
+                    key={pandal.id}
+                    layout="position"
+                    variants={{
+                      hidden: { opacity: 0, y: 24, scale: 0.96 },
+                      visible: { 
+                        opacity: 1, 
+                        y: 0, 
+                        scale: 1,
+                        transition: {
+                          type: 'spring',
+                          stiffness: 350,
+                          damping: 28,
+                        }
+                      },
+                    }}
+                    whileHover={{ scale: 1.015, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className={`rounded-2xl p-3.5 sm:p-4.5 border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 group relative overflow-hidden ${
+                      isRankOne
+                        ? 'bg-gradient-to-r from-amber-50/95 via-white/95 to-amber-50/90 border-2 border-amber-400 radiating-aura-gold'
+                        : 'bg-white/85 backdrop-blur-md border-amber-200/60 shadow-xs hover:shadow-md diya-glow-hover'
+                    }`}
+                  >
+                    {/* Radiating subtle golden sweep for Rank #1 */}
+                    {isRankOne && (
+                      <motion.div
+                        animate={{ x: ['-100%', '200%'] }}
+                        transition={{ duration: 3.5, repeat: Infinity, ease: 'linear' }}
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-200/30 to-transparent pointer-events-none"
+                      />
+                    )}
 
-                  {/* Left: Rank, Image, Title & Progress */}
-                  <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-                    <div className="shrink-0 relative">
-                      {getRankBadge(index)}
-                      {isRankOne && (
-                        <div className="absolute -top-3 -right-1 text-amber-500 animate-bounce">
-                          <Crown className="w-4 h-4 fill-amber-400" />
-                        </div>
-                      )}
-                    </div>
-
-                    <img
-                      src={pandal.coverImage}
-                      alt={pandal.name}
-                      className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shrink-0 ${
-                        isRankOne ? 'ring-2 ring-amber-400 shadow-md' : 'ring-1 ring-amber-300'
-                      }`}
-                    />
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-sm sm:text-base text-gray-900 truncate group-hover:text-sindoor-600 transition-colors">
-                          {pandal.name}
-                        </h3>
+                    {/* Left: Rank, Image, Title & Progress */}
+                    <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                      <div className="shrink-0 relative">
+                        {getRankBadge(index)}
                         {isRankOne && (
-                          <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-200 to-yellow-300 text-amber-950 border border-amber-400 shadow-2xs">
-                            👑 Regional Champion
-                          </span>
+                          <div className="absolute -top-3 -right-1 text-amber-500 animate-bounce">
+                            <Crown className="w-4 h-4 fill-amber-400" />
+                          </div>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 truncate mt-0.5">
-                        {pandal.location} • <span className="text-amber-800 font-medium">Theme: {pandal.theme}</span>
-                      </p>
 
-                      {/* Smooth Spring Progress Bar */}
-                      <div className="mt-2 w-full max-w-md bg-amber-100/60 h-2 rounded-full overflow-hidden">
-                        <motion.div
-                          layout
-                          initial={{ width: 0 }}
-                          animate={{ width: `${votePercent}%` }}
-                          transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-                          className={`h-full rounded-full ${
-                            isRankOne 
-                              ? 'bg-gradient-to-r from-sindoor-500 via-marigold-500 to-amber-400' 
-                              : 'bg-gradient-to-r from-sindoor-500 to-marigold-500'
-                          }`}
-                        />
+                      <img
+                        src={pandal.coverImage}
+                        alt={pandal.name}
+                        className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover shrink-0 ${
+                          isRankOne ? 'ring-2 ring-amber-400 shadow-md' : 'ring-1 ring-amber-300'
+                        }`}
+                      />
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-sm sm:text-base text-gray-900 truncate group-hover:text-sindoor-600 transition-colors">
+                            {pandal.name}
+                          </h3>
+                          {isRankOne && (
+                            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-amber-200 to-yellow-300 text-amber-950 border border-amber-400 shadow-2xs">
+                              👑 Regional Champion
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 truncate mt-0.5">
+                          {pandal.location} • <span className="text-amber-800 font-medium">Theme: {pandal.theme}</span>
+                        </p>
+
+                        {/* Smooth Spring Progress Bar */}
+                        <div className="mt-2 w-full max-w-md bg-amber-100/60 h-2 rounded-full overflow-hidden">
+                          <motion.div
+                            layout
+                            initial={{ width: 0 }}
+                            animate={{ width: `${votePercent}%` }}
+                            transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                            className={`h-full rounded-full ${
+                              isRankOne 
+                                ? 'bg-gradient-to-r from-sindoor-500 via-marigold-500 to-amber-400' 
+                                : 'bg-gradient-to-r from-sindoor-500 to-marigold-500'
+                            }`}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Right: Vote Count & Dhak Beat Vote Button */}
-                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 relative z-10">
-                    <div className="text-left sm:text-right">
-                      <motion.span
-                        key={votesForCategory}
-                        initial={{ scale: 1.15, color: '#D9222A' }}
-                        animate={{ scale: 1, color: '#111827' }}
-                        transition={{ duration: 0.3 }}
-                        className="font-serif font-black text-base sm:text-lg block leading-tight"
-                      >
-                        {votesForCategory.toLocaleString()}
-                      </motion.span>
-                      <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">
-                        {selectedFilter === 'overall' ? 'Total Ballots' : `${selectedFilter} Count`}
-                      </span>
+                    {/* Right: Vote Count & Dhak Beat Vote Button */}
+                    <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100 relative z-10">
+                      <div className="text-left sm:text-right">
+                        <motion.span
+                          key={votesForCategory}
+                          initial={{ scale: 1.15, color: '#D9222A' }}
+                          animate={{ scale: 1, color: '#111827' }}
+                          transition={{ duration: 0.3 }}
+                          className="font-serif font-black text-base sm:text-lg block leading-tight"
+                        >
+                          {votesForCategory.toLocaleString()}
+                        </motion.span>
+                        <span className="text-[10px] text-gray-500 font-semibold uppercase tracking-wider">
+                          {selectedFilter === 'overall' ? 'Total Ballots' : `${selectedFilter} Count`}
+                        </span>
+                      </div>
+
+                      {!isOrganizer && (
+                        <DhakButton
+                          variant={isRankOne ? 'gold' : 'primary'}
+                          onClick={() => openVotingModal(pandal)}
+                          className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold flex items-center gap-1.5"
+                        >
+                          <Vote className="w-3.5 h-3.5" />
+                          <span>Vote</span>
+                        </DhakButton>
+                      )}
                     </div>
-
-                    {!isOrganizer && (
-                      <DhakButton
-                        variant={isRankOne ? 'gold' : 'primary'}
-                        onClick={() => openVotingModal(pandal)}
-                        className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold flex items-center gap-1.5"
-                      >
-                        <Vote className="w-3.5 h-3.5" />
-                        <span>Vote</span>
-                      </DhakButton>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </motion.div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </motion.div>
+        )}
 
         {/* Footnote */}
         <div className="mt-5 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 pt-3 border-t border-amber-200/50 gap-2 relative z-10">

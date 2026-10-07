@@ -91,7 +91,7 @@ const STORAGE_KEYS = {
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [pandals, setPandals] = useState<Pandal[]>(INITIAL_PANDALS);
+  const [pandals, setPandals] = useState<Pandal[]>([]);
   const [userVotes, setUserVotes] = useState<VoteRecord[]>([]);
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>([]);
   
@@ -151,9 +151,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const storedPandals = localStorage.getItem(STORAGE_KEYS.PANDALS);
       if (storedPandals) {
-        setPandals(JSON.parse(storedPandals));
-      } else {
-        localStorage.setItem(STORAGE_KEYS.PANDALS, JSON.stringify(INITIAL_PANDALS));
+        try {
+          const parsed = JSON.parse(storedPandals);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setPandals(parsed);
+          }
+        } catch {}
       }
 
       const storedVotes = localStorage.getItem(STORAGE_KEYS.VOTES);
@@ -255,28 +258,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let unsubscribeFirestore = () => {};
     try {
       const q = query(collection(db, 'pandals'), orderBy('total_votes', 'desc'), fbLimit(50));
-      unsubscribeFirestore = onSnapshot(q, (snapshot) => {
-        if (!snapshot.empty) {
-          setPandals((prev) => {
-            const updated = [...prev];
+      unsubscribeFirestore = onSnapshot(
+        q,
+        (snapshot) => {
+          if (!snapshot.empty) {
+            const liveList: Pandal[] = [];
             snapshot.forEach((d) => {
               const data = d.data();
-              const idx = updated.findIndex((p) => p.id === d.id);
-              const tv = typeof data.total_votes === 'number' ? data.total_votes : (data.totalVotes || 0);
-              if (idx >= 0) {
-                updated[idx] = {
-                  ...updated[idx],
-                  totalVotes: tv,
-                  votes: data.votes ? { ...updated[idx].votes, ...data.votes } : updated[idx].votes,
-                };
-              }
+              liveList.push({
+                id: d.id,
+                name: data.name || d.id,
+                clubName: data.clubName || data.name || 'Puja Committee',
+                location: typeof data.location === 'string' ? data.location : 'Paschim Bardhaman, West Bengal',
+                ward: data.ward || 'Ward 01',
+                nearLandmark: data.nearLandmark || '',
+                budget: data.budget || '₹25 Lakhs',
+                budgetNumber: data.budgetNumber || 25,
+                theme: data.theme || 'Traditional Durga Puja',
+                themeDescription: data.themeDescription || 'A grand artistic showcase for Durga Puja.',
+                presidentName: data.presidentName || '',
+                secretaryName: data.secretaryName || '',
+                contactNumber: data.contactNumber || '',
+                establishedYear: data.establishedYear || 1990,
+                coverImage: data.coverImage || 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&auto=format&fit=crop&q=80',
+                gallery: data.gallery || [],
+                votes: data.votes || { idol: 0, theme: 0, lighting: 0, eco: 0 },
+                totalVotes: typeof data.total_votes === 'number' ? data.total_votes : (data.totalVotes || 0),
+                tags: data.tags || ['2026'],
+                isEcoFriendly: !!data.isEcoFriendly,
+                visitsToday: data.visitsToday || 1,
+              });
             });
-            return updated;
-          });
+            setPandals(liveList);
+            try {
+              localStorage.setItem(STORAGE_KEYS.PANDALS, JSON.stringify(liveList));
+            } catch {}
+          } else {
+            setPandals([]);
+            try {
+              localStorage.removeItem(STORAGE_KEYS.PANDALS);
+            } catch {}
+          }
+        },
+        (err) => {
+          console.warn('Firestore pandals realtime sync notice:', err);
         }
-      }, (err) => {
-        console.warn('Firestore pandals realtime sync notice:', err);
-      });
+      );
     } catch (e) {
       console.warn('Firestore subscription error:', e);
     }
