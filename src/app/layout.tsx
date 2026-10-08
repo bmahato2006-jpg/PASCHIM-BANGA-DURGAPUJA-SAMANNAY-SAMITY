@@ -33,6 +33,15 @@ export const metadata: Metadata = {
     description: 'Vote for the best Durga Puja Pandal!',
     images: ['https://paschim-banga-durgapuja.vercel.app/logo.jpg'],
   },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png', sizes: '192x192' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', type: 'image/png', sizes: '180x180' },
+    ],
+  },
 };
 
 export default function RootLayout({
