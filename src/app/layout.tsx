@@ -11,6 +11,16 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://paschim-banga-durgapuja.vercel.app'),
   title: 'Paschim Banga DurgaPuja Live Voting',
   description: 'Vote for the best Durga Puja Pandal!',
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icon.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+  },
   openGraph: {
     title: 'Paschim Banga DurgaPuja Live Voting',
     description: 'Vote for the best Durga Puja Pandal!',
@@ -32,15 +42,6 @@ export const metadata: Metadata = {
     title: 'Paschim Banga DurgaPuja Live Voting',
     description: 'Vote for the best Durga Puja Pandal!',
     images: ['https://paschim-banga-durgapuja.vercel.app/logo.jpg'],
-  },
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon.png', type: 'image/png', sizes: '192x192' },
-    ],
-    apple: [
-      { url: '/apple-icon.png', type: 'image/png', sizes: '180x180' },
-    ],
   },
 };
 
