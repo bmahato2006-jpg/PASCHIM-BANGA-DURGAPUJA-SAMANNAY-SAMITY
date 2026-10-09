@@ -144,7 +144,7 @@ function OrganizerAuthContent() {
                 />
               </div>
               <span className="inline-block text-[10px] font-black tracking-wider uppercase text-amber-900 bg-amber-100/90 border border-amber-300 px-2.5 py-0.5 rounded-full mb-1.5">
-                অফিশিয়াল পিবিডিএস রেজিস্ট্রি (Official PBDS Registry)
+                অফিসিয়াল পিবিডিএস রেজিস্ট্রি (Official PBDS Registry)
               </span>
               <h1 className="text-2xl sm:text-3xl font-serif font-black text-gray-900 tracking-tight">
                 <span className="block text-xl sm:text-2xl font-sans font-bold text-gray-900 mb-0.5">কমিটি নিবন্ধন</span>
@@ -160,7 +160,7 @@ function OrganizerAuthContent() {
             <div className="space-y-2 mb-5 bg-amber-50/60 p-3.5 rounded-2xl border border-amber-200/70">
               <div className="flex items-center gap-2 text-xs text-amber-950 font-medium">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>তাত্ক্ষণিক গেট ভোটিং কিউআর কোড (Gate Voting QR)</span>
+                <span>তাৎক্ষণিক গেট ভোটিং কিউআর কোড (Gate Voting QR)</span>
               </div>
               <div className="flex items-center gap-2 text-xs text-amber-950 font-medium">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />

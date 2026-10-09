@@ -687,7 +687,7 @@ export default function MasterAdminDashboardPage() {
                 {pendingCommitteesCount > 0 && (
                   <span className="text-amber-700 flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-amber-600" />
-                    <span>অপেক্ষমান: {pendingCommitteesCount}</span>
+                    <span>অপেক্ষমাণ: {pendingCommitteesCount}</span>
                   </span>
                 )}
               </div>
@@ -874,7 +874,7 @@ export default function MasterAdminDashboardPage() {
                 >
                   <option value="all">সকল স্থিতি (All Statuses)</option>
                   <option value="approved">অনুমোদিত (Approved)</option>
-                  <option value="pending">অপেক্ষমান (Pending)</option>
+                  <option value="pending">অপেক্ষমাণ (Pending)</option>
                 </select>
 
                 {/* Ward Filter */}

@@ -383,7 +383,7 @@ export default function VoterPanelPage() {
                     This pandal is not registered yet
                   </p>
                   <p className="text-xs text-gray-600 max-w-sm mx-auto pt-1 leading-relaxed">
-                    পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতির অফিসিয়াল তালিকায় এই মণ্ডপটি এখনও তালিকাভুক্ত হয়নি বা অনুমোদন অপেক্ষমান রয়েছে।
+                    পশ্চিমবঙ্গ দুর্গাপূজা সমন্বয় সমিতির অফিসিয়াল তালিকায় এই মণ্ডপটি এখনও তালিকাভুক্ত হয়নি বা অনুমোদন অপেক্ষমাণ রয়েছে।
                   </p>
                   <p className="text-[11px] text-gray-400 max-w-sm mx-auto">
                     (This pandal is not yet registered or is awaiting administrative approval in the official directory.)

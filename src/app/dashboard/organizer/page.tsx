@@ -688,7 +688,7 @@ export default function OrganizerDashboardPage() {
             </h3>
             <ol className="text-xs text-gray-800 list-decimal list-inside space-y-1 font-medium">
               <li>আপনার স্মার্টফোনের ক্যামেরা বা গুগল লেন্স খুলুন।</li>
-              <li>উপরের কিউআর কোডটি স্ক্যান করে অফিশিয়াল পেজে যান।</li>
+              <li>উপরের কিউআর কোডটি স্ক্যান করে অফিসিয়াল পেজে যান।</li>
               <li>সেরা প্রতিমা, সেরা ভাবনা, আলোকসজ্জা ও পরিবেশবান্ধব বিভাগে আপনার মূল্যবান ভোট দিন।</li>
             </ol>
           </div>
@@ -848,7 +848,7 @@ export default function OrganizerDashboardPage() {
                       মণ্ডপ কিউআর কোড (Pandal Gate QR Code)
                     </h3>
                     <span className="text-[11px] text-gray-500 font-medium">
-                      অফিশিয়াল মণ্ডপ ভোটিং কিউআর (Official Gate Voting QR)
+                      অফিসিয়াল মণ্ডপ ভোটিং কিউআর (Official Gate Voting QR)
                     </span>
                   </div>
                 </div>
@@ -1009,7 +1009,7 @@ export default function OrganizerDashboardPage() {
                   </h3>
                 </div>
                 <span className="text-[11px] text-gray-500 font-medium">
-                  ৪টি অফিশিয়াল বিভাগ (4 Official Categories)
+                  ৪টি অফিসিয়াল বিভাগ (4 Official Categories)
                 </span>
               </div>
 
@@ -1111,7 +1111,7 @@ export default function OrganizerDashboardPage() {
               <div className="space-y-2 text-xs text-gray-600">
                 <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
                   <span>ভোটার পরিচয় যাচাই (Voter Verification):</span>
-                  <span className="font-semibold text-gray-800">ফায়ারবেস অ্যাথ ও ডিভাইস আইডি (Firebase Auth & Device ID)</span>
+                  <span className="font-semibold text-gray-800">ফায়ারবেস অথ ও ডিভাইস আইডি (Firebase Auth & Device ID)</span>
                 </div>
                 <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
                   <span>দ্বৈত ভোট প্রতিরোধ (Anti-Duplicate):</span>
